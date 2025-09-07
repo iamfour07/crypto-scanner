@@ -1,9 +1,11 @@
+import os
 import requests
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from CoinListNew import CoinList
 from CCI_Calculater import calculate_cci
+from Alert import send_telegram_message
 
 # --- Configuration ---
 resolution = "60"
@@ -17,11 +19,12 @@ ENABLE_RSI14 = True
 NEAR_EMA_THRESHOLD = 0.005
 CCI_BUY = 98
 CCI_SELL = -98
-RSI_BUY = 62
+RSI_BUY = 72
 RSI_SELL = 40
 RSI_PERIOD = 21
 
 IST = timezone(timedelta(hours=5, minutes=30))
+
 
 # --- Helper Functions ---
 def convert_to_ist_12h(timestamp_ms):
@@ -139,19 +142,28 @@ with ThreadPoolExecutor(max_workers=10) as executor:
                 sell_signals.append(result)
 
 # --- Print Results ---
-print("\n================== SCAN RESULTS ==================")
+message_lines = ["<b>📊 Hourly Crypto Scan Results</b>\n"]
+
 if buy_signals:
-    print("\n🟢 BUY Signals:")
+    message_lines.append("\n🟢 BUY Signals:\n")
     for res in buy_signals:
-        print(f"{res['pair']} | Close: {res['close']} | EMA288: {res['ema_288']} | CCI200: {res['cci_200']} | RSI: {res['rsi']}")
+        line = f"{res['pair']} | RSI: {res['rsi']}\n"
+        message_lines.append(line)
 else:
-    print("\nNo BUY signals at this time.")
+    message_lines.append("No BUY signals at this time.")
 
 if sell_signals:
-    print("\n🔴 SELL Signals:")
+    message_lines.append("\n🔴 SELL Signals:\n")
     for res in sell_signals:
-        print(f"{res['pair']} | Close: {res['close']} | EMA288: {res['ema_288']} | CCI200: {res['cci_200']} | RSI: {res['rsi']}")
+        line = f"{res['pair']} | RSI: {res['rsi']}\n"
+        message_lines.append(line)
 else:
-    print("\nNo SELL signals at this time.")
+    message_lines.append("\nNo SELL signals at this time.")
 
-print("=================================================")
+message_lines.append("\n===============================")
+
+# Join all lines into a single message
+final_message = "\n".join(message_lines)
+
+# Send to Telegram
+send_telegram_message(final_message)
