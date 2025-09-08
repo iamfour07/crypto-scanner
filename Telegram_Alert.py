@@ -1,5 +1,4 @@
 import os
-import html
 
 import requests
 bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -9,7 +8,7 @@ def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         "chat_id": chat_id,
-        "text": html.escape(message),  # Escape special characters like < > &
+        "text": message,  # Escape special characters like < > &
     }
     try:
         response = requests.post(url, data=payload)
