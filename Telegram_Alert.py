@@ -10,7 +10,6 @@ def send_telegram_message(message):
     payload = {
         "chat_id": chat_id,
         "text": html.escape(message),  # Escape special characters like < > &
-        "parse_mode": "Markdown"
     }
     try:
         response = requests.post(url, data=payload)
