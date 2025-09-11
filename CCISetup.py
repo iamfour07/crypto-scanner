@@ -18,7 +18,11 @@ RSI_THRESHOLD = 50
 CCI_PERIOD = 200
 CCI_UPPER = 200
 CCI_LOWER = -200
-PREV_CANDLES = 5  # number of previous candles to check for false signal
+PREV_CANDLES = 10 # number of previous candles to check for false signal
+
+# --- Risk Management ---
+MAX_RISK = 100   # INR
+LEVERAGE = 10    # leverage
 
 # --- Fetch active USDT futures coins ---
 def get_active_usdt_coins():
@@ -33,16 +37,25 @@ def get_active_usdt_coins():
 
 CoinList = get_active_usdt_coins()
 
-# --- Helper Functions ---
-def calculate_rsi(close_prices, period=100):
-    delta = close_prices.diff()
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
-    avg_gain = gain.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
+
+
+def calculate_position(entry, stop_loss, max_risk=MAX_RISK, leverage=LEVERAGE):
+    risk_per_coin = abs(entry - stop_loss)
+    if risk_per_coin <= 0:
+        return 0
+    qty = int((max_risk * leverage) / risk_per_coin)
+    return qty
+
+def calculate_targets(entry, stop_loss, signal_type):
+    risk = abs(entry - stop_loss)
+    targets = {}
+    if signal_type == "BUY":
+        for rr in range(1, 6):
+            targets[f"1:{rr}"] = float(round(entry + rr * risk, 6))
+    else:  # SELL
+        for rr in range(1, 6):
+            targets[f"1:{rr}"] = float(round(entry - rr * risk, 6))
+    return targets
 
 # --- Core function ---
 def fetch_and_check(pair):
@@ -66,11 +79,8 @@ def fetch_and_check(pair):
         # last closed candle
         last_candle = df.iloc[-2]
 
-        # Calculate RSI & CCI
-        df['rsi'] = calculate_rsi(df['close'], RSI_PERIOD)
+        # Calculate CCI only
         df['cci'] = calculate_cci(df['high'], df['low'], df['close'], period=CCI_PERIOD)
-
-        last_rsi = df['rsi'].iloc[-2]
         last_cci = df['cci'].iloc[-2]
 
         # previous N candles for false signal check
@@ -78,31 +88,43 @@ def fetch_and_check(pair):
 
         signal_type = None
 
-        # BUY: First time CCI crosses above 200 and RSI > 50
-        if last_cci > CCI_UPPER and last_rsi > RSI_THRESHOLD:
+        # BUY: First time CCI crosses above 200
+        if last_cci > CCI_UPPER:
             if all(prev_cci_window <= CCI_UPPER):
                 signal_type = "BUY"
 
-        # SELL: First time CCI crosses below -200 and RSI < 50
-        elif last_cci < CCI_LOWER and last_rsi < RSI_THRESHOLD:
+        # SELL: First time CCI crosses below -200
+        elif last_cci < CCI_LOWER:
             if all(prev_cci_window >= CCI_LOWER):
                 signal_type = "SELL"
 
         if signal_type:
+            if signal_type == "BUY":
+                entry_price = last_candle['high']
+                stop_loss = last_candle['low']
+            else:  # SELL
+                entry_price = last_candle['low']
+                stop_loss = last_candle['high']
+
+            qty = calculate_position(entry_price, stop_loss)
+            targets = calculate_targets(entry_price, stop_loss, signal_type)
+
             return {
                 "pair": pair,
                 "close": last_candle['close'],
                 "high": last_candle['high'],
                 "low": last_candle['low'],
                 "volume": last_candle['volume'],
-                "rsi": round(last_rsi, 2),
                 "cci": round(last_cci, 2),
-                "signal": signal_type
+                "signal": signal_type,
+                "entry": entry_price,
+                "stop_loss": stop_loss,
+                "quantity": qty,
+                "targets": targets
             }
 
     except Exception as e:
         print(f"Error fetching {pair}: {e}")
-
     return None
 
 # --- Scan all coins ---
@@ -131,14 +153,22 @@ if buy_signals or sell_signals:
         for res in buy_signals:
             pair_safe = html.escape(res['pair'])
             link = f"https://coindcx.com/futures/{res['pair']}"
-            message_lines.append(f"{pair_safe} \nClose: {res['close']}\nVolume: {res['volume']}\nCCI: {res['cci']} \nRSI: {res['rsi']}\n{link}\n")
+            message_lines.append(
+                f"{pair_safe}\nEntry (High): {res['entry']}\nStop-loss (Low): {res['stop_loss']}\n"
+                f"CCI: {res['cci']}\n"
+                f"Targets: {res['targets']}\n{link}\n"
+            )
 
     if sell_signals:
         message_lines.append("\n🔴 SELL Signals:\n")
         for res in sell_signals:
             pair_safe = html.escape(res['pair'])
             link = f"https://coindcx.com/futures/{res['pair']}"
-            message_lines.append(f"{pair_safe} \nClose: {res['close']}\nVolume: {res['volume']}\nCCI: {res['cci']} \nRSI: {res['rsi']}\n{link}\n")
+            message_lines.append(
+                f"{pair_safe}\nEntry (Low): {res['entry']}\nStop-loss (High): {res['stop_loss']}\n"
+                f"\nCCI: {res['cci']}\n"
+                f"Targets: {res['targets']}\n{link}\n"
+            )
 
     message_lines.append("\n===============================")
     final_message = "\n".join(message_lines)
