@@ -2,8 +2,11 @@ name: Hourly Crypto Scanner
 
 on:
   schedule:
-    - cron: '30 * * * *'  # every hour at 0 minutes
+    - cron: '30 * * * *'  # every hour at minute 30
   workflow_dispatch:
+
+permissions:
+  contents: write   # required for pushing changes
 
 jobs:
   run-scanner:
@@ -11,10 +14,10 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4   # v4 is the latest
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
@@ -28,3 +31,11 @@ jobs:
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    - name: Commit Watchlist Updates
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add buy_watchlist.json sell_watchlist.json || true
+        git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"
+        git push
