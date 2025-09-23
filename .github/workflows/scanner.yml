@@ -27,7 +27,7 @@ jobs:
         pip install pandas requests
 
     - name: Run Scanner
-      run: python RSI_MACD.py
+      run: python BB_SuperTrend.py
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -36,6 +36,6 @@ jobs:
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git add buy_watchlist.json sell_watchlist.json || true
+        git add buy_watchlist.json sell_watchlist.json Supertrend_buy_watchlist.json Supertrend_sell_watchlist.json|| true
         git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"
         git push
