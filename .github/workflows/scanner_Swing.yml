@@ -5,6 +5,9 @@ on:
     - cron: '30 * * * *'   # every hour at minute 30
   workflow_dispatch:
 
+permissions:
+  contents: write   # required for pushing changes
+
 jobs:
   run-new-scanner:
     runs-on: ubuntu-latest
@@ -26,8 +29,8 @@ jobs:
     - name: Run New Scanner
       run: python BB_RSI.py
       env:
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
+        TELEGRAM_BOT_TOKEN_Swing: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
+        TELEGRAM_CHAT_ID_Swing: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
 
     - name: Commit Watchlist Updates
       run: |
