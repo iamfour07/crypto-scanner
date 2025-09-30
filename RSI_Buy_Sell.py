@@ -14,8 +14,8 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # RSI settings
 RSI_PERIOD = 21
-RSI_OVERBOUGHT = 75
-RSI_OVERSOLD = 25
+RSI_OVERBOUGHT = 70
+RSI_OVERSOLD = 30
 
 # =========================
 # FETCH ACTIVE COINS
