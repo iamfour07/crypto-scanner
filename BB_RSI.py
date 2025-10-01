@@ -117,7 +117,6 @@ def fetch_coin_data(pair):
 
     df['pair'] = pair
     return df
-
 # =========================
 # MAIN SCANNER
 # =========================
@@ -137,30 +136,33 @@ def main():
                     continue
 
                 pair = df['pair'].iloc[0]
-                last = df.iloc[-1]   # current running HA candle
-                prev = df.iloc[-2]   # previous HA candle
+                prev = df.iloc[-2]  # last closed HA candle
 
                 # -------------------
                 # BUY LOGIC
                 # -------------------
-                if last['HA_Low'] <= last['lower']:
-                    new_buy_candidates.add(pair)
-
+                # Step 1: Check existing buy watchlist for RSI
                 if pair in buy_watchlist:
-                    if last['rsi'] > 50:
-                        buy_signals.append((pair, last))
-                        buy_watchlist.remove(pair)
+                    if prev['rsi'] > 50:
+                        buy_signals.append((pair, prev))
+                        buy_watchlist.remove(pair)  # remove only when RSI > 50
+
+                # Step 2: Check BB + HA condition to add to watchlist
+                if prev['HA_Low'] <= prev['lower']:
+                    new_buy_candidates.add(pair)
 
                 # -------------------
                 # SELL LOGIC
                 # -------------------
-                if last['HA_High'] >= last['upper']:
-                    new_sell_candidates.add(pair)
-
+                # Step 1: Check existing sell watchlist for RSI
                 if pair in sell_watchlist:
-                    if last['rsi'] < 50:
-                        sell_signals.append((pair, last))
-                        sell_watchlist.remove(pair)
+                    if prev['rsi'] < 50:
+                        sell_signals.append((pair, prev))
+                        sell_watchlist.remove(pair)  # remove only when RSI < 50
+
+                # Step 2: Check BB + HA condition to add to sell watchlist
+                if prev['HA_High'] >= prev['upper']:
+                    new_sell_candidates.add(pair)
 
             except Exception as e:
                 print(f"Error processing coin {futures[future]}: {e}")
@@ -196,6 +198,7 @@ def main():
         message_lines.append("\n===============================")
         final_message = "\n".join(message_lines)
         send_telegram_message(final_message)
+
 
 if __name__ == "__main__":
     main()
