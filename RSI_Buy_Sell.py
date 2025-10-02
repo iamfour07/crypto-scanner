@@ -14,8 +14,11 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # RSI settings
 RSI_PERIOD = 21
-RSI_OVERBOUGHT = 75
-RSI_OVERSOLD = 25
+RSI_OVERBOUGHT = 73
+RSI_OVERSOLD = 27
+
+# Track alerted coins (state memory)
+alerted_coins = {}   # { "BTCUSDT": "overbought" / "oversold" / "neutral" }
 
 # =========================
 # FETCH ACTIVE COINS
@@ -71,13 +74,34 @@ def fetch_coin_data(pair):
     last_rsi = df['rsi'].iloc[-1]
     last_candle = df.iloc[-1]
 
+    # Check existing state
+    coin_state = alerted_coins.get(pair, "neutral")
+
+    buy_signal = False
+    sell_signal = False
+
+    # RSI conditions
+    if last_rsi > RSI_OVERBOUGHT:
+        if coin_state != "overbought":   # only trigger once
+            buy_signal = True
+            alerted_coins[pair] = "overbought"
+
+    elif last_rsi < RSI_OVERSOLD:
+        if coin_state != "oversold":     # only trigger once
+            sell_signal = True
+            alerted_coins[pair] = "oversold"
+
+    else:
+        # Reset to neutral so alerts can fire again next time
+        alerted_coins[pair] = "neutral"
+
     return {
         "pair": pair,
         "close": last_candle['close'],
         "rsi": round(last_rsi, 1),
         "volume": last_candle['volume'],
-        "buy_signal": last_rsi > RSI_OVERBOUGHT,
-        "sell_signal": last_rsi < RSI_OVERSOLD,
+        "buy_signal": buy_signal,
+        "sell_signal": sell_signal,
     }
 
 # =========================
