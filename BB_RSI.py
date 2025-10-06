@@ -14,7 +14,7 @@ limit_hours = 1000
 IST = timezone(timedelta(hours=5, minutes=30))
 
 # Bollinger settings
-BB_PERIOD = 20
+BB_PERIOD = 200
 BB_STD = 3
 
 # RSI
