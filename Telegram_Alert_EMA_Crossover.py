@@ -1,8 +1,7 @@
-
 import os
 import requests
-bot_token = "8449258086:AAEwiLWhaNGqzHBqLMP51y5AFnqXi4FYOxk"
-chat_id = -1003024572760 
+bot_token = os.environ.get("TELEGRAM_BOT_TOKEN_21_EMA")
+chat_id = os.environ.get("TELEGRAM_CHAT_ID_21_EMA") #
 
 def Telegram_Alert_EMA_Crossover(message):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -18,7 +17,3 @@ def Telegram_Alert_EMA_Crossover(message):
             print("⚠️ Failed to send message:", response.text)
     except Exception as e:
         print("⚠️ Error:", e)
-
-
-
-
