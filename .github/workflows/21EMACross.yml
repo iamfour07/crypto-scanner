@@ -1,4 +1,4 @@
-name: Hourly Crypto Scanner
+name: Hourly 21 EMA Scanner
 
 on:
   schedule:
