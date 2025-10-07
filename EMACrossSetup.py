@@ -1,4 +1,3 @@
-
 import requests
 import pandas as pd
 from datetime import datetime, timezone, timedelta
@@ -17,7 +16,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 RSI_PERIOD = 21
 RSI_THRESHOLD = 51  # custom condition
 
-EMA1 = 5   # short EMA
+EMA1 = 4   # short EMA
 EMA2 = 21  # long EMA
 
 # =========================
@@ -106,7 +105,8 @@ def fetch_coin_data(pair):
 
         for _, row in next_two.iterrows():
             # Red candle → close < open
-            if row['close'] < row['open']:
+            # ✅ New condition: low >= EMA21 (pullback above EMA21)
+            if row['close'] < row['open'] and row['low'] >= row[f'ema{EMA2}']:
                 entry = row['high']
                 stoploss = row['low']
                 break
@@ -117,7 +117,8 @@ def fetch_coin_data(pair):
 
         for _, row in next_two.iterrows():
             # Green candle → close > open
-            if row['close'] > row['open']:
+            # ✅ New condition: high <= EMA21 (pullback below EMA21)
+            if row['close'] > row['open'] and row['high'] <= row[f'ema{EMA2}']:
                 entry = row['low']
                 stoploss = row['high']
                 break
@@ -151,8 +152,8 @@ def main():
             except Exception as e:
                 print(f"Error processing coin: {e}")
 
-    bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)[:5]
-    bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)[:5]
+    bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)
+    bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
 
     # =========================
     # TELEGRAM MESSAGE
@@ -161,7 +162,7 @@ def main():
         message_lines = [f"📊 21 EMA Crossover\n"]
 
         if bullish:
-            message_lines.append("🟢 Bullish EMA5>EMA21 Cross + Pullback Entry:\n")
+            message_lines.append("🟢 Bullish EMA5>EMA21 Cross + Pullback Entry (Low ≥ EMA21):\n")
             for res in bullish:
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
@@ -172,7 +173,7 @@ def main():
                 )
 
         if bearish:
-            message_lines.append("\n🔴 Bearish EMA5<EMA21 Cross + Pullback Entry:\n")
+            message_lines.append("\n🔴 Bearish EMA5<EMA21 Cross + Pullback Entry (High ≤ EMA21):\n")
             for res in bearish:
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
