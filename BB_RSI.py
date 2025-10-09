@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import html
-from Telegram_Alert_Swing import send_telegram_message_swing
+from Telegram_Alert_Swing import send_telegram_message
 
 # =========================
 # CONFIGURATION
@@ -170,8 +170,8 @@ def main():
 
         message_lines.append("\n===============================")
         final_message = "\n".join(message_lines)
-        print(final_message)
-        send_telegram_message_swing(final_message)
+        # print(final_message)
+        send_telegram_message(final_message)
    
 if __name__ == "__main__":
     main()
