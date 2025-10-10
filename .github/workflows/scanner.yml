@@ -1,4 +1,4 @@
-name: Hourly Crypto Scanner
+name: Momentum Scanner
 
 on:
   schedule:
