@@ -28,7 +28,7 @@ def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()
-    return resp.json()  # active USDT-margined futures [web:1]
+    return resp.json()
 
 def extract_pair(item):
     if isinstance(item, str):
@@ -49,7 +49,6 @@ def sign_payload(secret: str, body: dict) -> tuple[str, str]:
 # API CALLS
 # =========================
 def fetch_pair_stats(pair: str):
-    # Signed stats (provides price_change_percent with "1D") [web:1]
     body = {"timestamp": int(round(time.time() * 1000))}
     payload, signature = sign_payload(API_SECRET, body)
     url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
@@ -63,7 +62,6 @@ def fetch_pair_stats(pair: str):
     return resp.json()
 
 def fetch_candles_via_from_to(pair: str):
-    # Public candlesticks with from/to, resolution=60, pcode=f [web:1][web:3]
     now = int(datetime.now(timezone.utc).timestamp())  # seconds
     from_time = now - limit_hours * 3600
     url = "https://public.coindcx.com/market_data/candlesticks"
@@ -97,27 +95,19 @@ def compute_ema(df: pd.DataFrame, span: int, col: str = "close", out: str = None
 
 def get_recent_crossover(pair: str):
     """
-    Determine if the most recent closed candle has a fresh EMA9/EMA100 crossover.
-    Returns a tuple (cross_down, cross_up):
-      - cross_down = EMA9 crossed below EMA100 on the last closed candle
-      - cross_up   = EMA9 crossed above EMA100 on the last closed candle
+    Returns (cross_down, cross_up) on the most recent closed candle:
+      - cross_down = EMA9 crossed below EMA100
+      - cross_up   = EMA9 crossed above EMA100
     """
     df = fetch_candles_via_from_to(pair)
-    if df is None:
+    if df is None or len(df) < 122:
         return (False, False)
-    # Need at least 120 + 2 bars to stabilize EMA100 and compare last two bars
-    if len(df) < 122:
-        return (False, False)
-
     compute_ema(df, 9, "close", "ema9")
     compute_ema(df, 100, "close", "ema100")
-
-    # Use the last two completed candles (prev = -2, last = -1)
     prev = df.iloc[-2]
     last = df.iloc[-1]
     prev_diff = prev["ema9"] - prev["ema100"]
     last_diff = last["ema9"] - last["ema100"]
-
     cross_down = (prev_diff >= 0) and (last_diff < 0)
     cross_up   = (prev_diff <= 0) and (last_diff > 0)
     return (cross_down, cross_up)
@@ -133,7 +123,6 @@ def process_pair(pair: str):
         row["pc_1d"] = pc.get("1D")
     except Exception as e:
         row["error"] = f"stats_failed: {e}"
-
     try:
         row["prev_close"] = fetch_prev_close_via_from_to(pair)
     except Exception as e:
@@ -155,13 +144,11 @@ def fmt_price(x):
         return ""
     return f"{x:.4f}" if x < 1 else f"{x:.2f}"
 
-
-
 # =========================
 # MAIN
 # =========================
 def main():
-    # 1) Discover pairs [web:1]
+    # 1) Discover pairs
     raw = get_active_usdt_coins()
     pairs = []
     for it in raw:
@@ -177,7 +164,7 @@ def main():
         for fut in as_completed(futs):
             results.append(fut.result())
 
-    # 3) Split by 1D%
+    # 3) Split by 1D% and sort
     winners, losers = [], []
     for r in results:
         pc1d = r.get("pc_1d")
@@ -187,41 +174,18 @@ def main():
             elif pc1d < 0:
                 losers.append(r)
 
-    # Sort by 1D%
     winners.sort(key=lambda x: x.get("pc_1d") if isinstance(x.get("pc_1d"), (int, float)) else float("-inf"), reverse=True)
     losers.sort(key=lambda x: x.get("pc_1d") if isinstance(x.get("pc_1d"), (int, float)) else float("inf"))
 
-    # 4) Apply EMA filters for recent crossover
-    # For Gainers (buy): EMA9 just crossed below EMA100
-    filtered_gainers = []
-    for r in winners:
-        try:
-            down, up = get_recent_crossover(r["pair"])
-            if down:
-                filtered_gainers.append(r)
-        except Exception:
-            pass
+    # 3b) Slice BEFORE any EMA work (only 10 symbols total)
+    top5_gainers = winners[:5]
+    top5_losers  = losers[:5]
 
-    # For Losers (sell): EMA9 just crossed above EMA100
-    filtered_losers = []
-    for r in losers:
-        try:
-            down, up = get_recent_crossover(r["pair"])
-            if up:
-                filtered_losers.append(r)
-        except Exception:
-            pass
-
-    # Keep top 5 after EMA filters
-    top5_gainers = winners[:5]   # highest positive 1D%
-    top5_losers  = losers[:5]    # most negative 1D%
-
-    # 4) Apply EMA filters only to these 10 coins
+    # 4) Apply EMA filters ONLY to these 10
     filtered_gainers = []
     for r in top5_gainers:
         try:
             down, up = get_recent_crossover(r["pair"])
-            # For Gainers (buy): EMA9 just crossed below EMA100
             if down:
                 filtered_gainers.append(r)
         except Exception:
@@ -231,17 +195,14 @@ def main():
     for r in top5_losers:
         try:
             down, up = get_recent_crossover(r["pair"])
-            # For Losers (sell): EMA9 just crossed above EMA100
             if up:
                 filtered_losers.append(r)
         except Exception:
             pass
 
-    # 5) Build requested format
+    # 5) Build and send only if there is content
     if filtered_gainers or filtered_losers:
-
         lines = []
-
         if filtered_gainers:
             lines.append("🏆 Gainers (buy)")
             for r in filtered_gainers:
@@ -252,7 +213,6 @@ def main():
                 lines.append(f"1D%-{pc1d}")
                 lines.append(f"close price- {close}")
                 lines.append("")
-
         if filtered_losers:
             lines.append("🔻Losers (sell)")
             for r in filtered_losers:
