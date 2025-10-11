@@ -2,7 +2,7 @@ name: Hourly 21 EMA Scanner
 
 on:
   schedule:
-    - cron: '30 * * * *'  # every hour at minute 30
+    - cron: '*/14 * * * *'  # every hour at minute 30
   workflow_dispatch:
 
 permissions:
