@@ -1,3 +1,4 @@
+import os
 import hmac
 import hashlib
 import json
@@ -14,16 +15,44 @@ from Telegram_Alert import send_telegram_message
 API_KEY = "xxx"
 API_SECRET = "yyy"
 
-# Candle settings (match prior working code)
-resolution = "60"   # 1-hour candles
-limit_hours = 1000  # history window for from/to
+# Candles
+resolution = "60"    # 1-hour candles
+limit_hours = 500    # enough for stable EMA100, faster than 1000
 IST = timezone(timedelta(hours=5, minutes=30))
-
 MAX_WORKERS = 10
 
+# Thresholds
+BUY_THRESHOLD = -25.0   # 1D% <= -15 goes into BuyWatchlist
+SELL_THRESHOLD = 25.0   # 1D% >= +15 goes into SellWatchlist
+
+# Watchlist files
+BUY_FILE  = "BuyWatchlist.json"
+SELL_FILE = "SellWatchlist.json"
+
 # =========================
-# DISCOVERY
+# WATCHLIST HELPERS
 # =========================
+def load_watchlist(filename):
+    if os.path.exists(filename):
+        try:
+            with open(filename, "r") as f:
+                return set(json.load(f))
+        except Exception:
+            return set()
+    return set()
+
+def save_watchlist(filename, data_set):
+    with open(filename, "w") as f:
+        json.dump(list(data_set), f)
+
+# =========================
+# API HELPERS
+# =========================
+def sign_payload(secret: str, body: dict) -> tuple[str, str]:
+    payload = json.dumps(body, separators=(",", ":"))
+    signature = hmac.new(secret.encode("utf-8"), payload.encode(), hashlib.sha256).hexdigest()
+    return payload, signature
+
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     resp = requests.get(url, timeout=30)
@@ -37,17 +66,6 @@ def extract_pair(item):
         return item.get("pair") or item.get("symbol") or item.get("market")
     return None
 
-# =========================
-# AUTH / SIGN
-# =========================
-def sign_payload(secret: str, body: dict) -> tuple[str, str]:
-    payload = json.dumps(body, separators=(",", ":"))
-    signature = hmac.new(secret.encode("utf-8"), payload.encode(), hashlib.sha256).hexdigest()
-    return payload, signature
-
-# =========================
-# API CALLS
-# =========================
 def fetch_pair_stats(pair: str):
     body = {"timestamp": int(round(time.time() * 1000))}
     payload, signature = sign_payload(API_SECRET, body)
@@ -62,7 +80,7 @@ def fetch_pair_stats(pair: str):
     return resp.json()
 
 def fetch_candles_via_from_to(pair: str):
-    now = int(datetime.now(timezone.utc).timestamp())  # seconds
+    now = int(datetime.now(timezone.utc).timestamp())
     from_time = now - limit_hours * 3600
     url = "https://public.coindcx.com/market_data/candlesticks"
     params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
@@ -77,60 +95,48 @@ def fetch_candles_via_from_to(pair: str):
             df[col] = df[col].astype(float)
     return df
 
-def fetch_prev_close_via_from_to(pair: str):
-    df = fetch_candles_via_from_to(pair)
-    if df is None or len(df) < 2:
-        return None
-    prev = df.iloc[-2]
-    return float(prev["close"])
-
 # =========================
-# EMA / CROSSOVER
+# EMA LOGIC
 # =========================
-def compute_ema(df: pd.DataFrame, span: int, col: str = "close", out: str = None):
-    if out is None:
-        out = f"ema_{span}"
-    df[out] = df[col].ewm(span=span, adjust=False).mean()
+def ema_cols(df: pd.DataFrame):
+    df["ema9"] = df["close"].ewm(span=9, adjust=False).mean()
+    df["ema100"] = df["close"].ewm(span=100, adjust=False).mean()
     return df
 
-def get_recent_crossover(pair: str):
+def just_crossed_above_on_prev(df: pd.DataFrame) -> bool:
     """
-    Returns (cross_down, cross_up) on the most recent closed candle:
-      - cross_down = EMA9 crossed below EMA100
-      - cross_up   = EMA9 crossed above EMA100
+    Check if EMA9 just crossed ABOVE EMA100 on the previous closed candle (current-1).
+    That means looking at bars prev-1 and prev:
+      prev-1: ema9 <= ema100
+      prev:   ema9 >  ema100
     """
-    df = fetch_candles_via_from_to(pair)
     if df is None or len(df) < 122:
-        return (False, False)
-    compute_ema(df, 9, "close", "ema9")
-    compute_ema(df, 100, "close", "ema100")
-    prev = df.iloc[-2]
-    last = df.iloc[-1]
-    prev_diff = prev["ema9"] - prev["ema100"]
-    last_diff = last["ema9"] - last["ema100"]
-    cross_down = (prev_diff >= 0) and (last_diff < 0)
-    cross_up   = (prev_diff <= 0) and (last_diff > 0)
-    return (cross_down, cross_up)
+        return False
+    df = ema_cols(df)
+    prev_idx = -2
+    prev1_idx = -3
+    prev1_diff = df["ema9"].iloc[prev1_idx] - df["ema100"].iloc[prev1_idx]
+    prev_diff  = df["ema9"].iloc[prev_idx]  - df["ema100"].iloc[prev_idx]
+    return (prev1_diff <= 0) and (prev_diff > 0)
+
+def just_crossed_below_on_prev(df: pd.DataFrame) -> bool:
+    """
+    Check if EMA9 just crossed BELOW EMA100 on the previous closed candle (current-1).
+    That means looking at bars prev-1 and prev:
+      prev-1: ema9 >= ema100
+      prev:   ema9 <  ema100
+    """
+    if df is None or len(df) < 122:
+        return False
+    df = ema_cols(df)
+    prev_idx = -2
+    prev1_idx = -3
+    prev1_diff = df["ema9"].iloc[prev1_idx] - df["ema100"].iloc[prev1_idx]
+    prev_diff  = df["ema9"].iloc[prev_idx]  - df["ema100"].iloc[prev_idx]
+    return (prev1_diff >= 0) and (prev_diff < 0)
 
 # =========================
-# PROCESS
-# =========================
-def process_pair(pair: str):
-    row = {"pair": pair, "prev_close": None, "pc_1d": None, "error": None}
-    try:
-        stats = fetch_pair_stats(pair)
-        pc = stats.get("price_change_percent", {})
-        row["pc_1d"] = pc.get("1D")
-    except Exception as e:
-        row["error"] = f"stats_failed: {e}"
-    try:
-        row["prev_close"] = fetch_prev_close_via_from_to(pair)
-    except Exception as e:
-        row["error"] = (row["error"] + f"; candles_failed: {e}") if row["error"] else f"candles_failed: {e}"
-    return row
-
-# =========================
-# OUTPUT HELPERS
+# FORMAT
 # =========================
 def fmt_pct(x):
     return "" if x is None else f"{x:.2f}"
@@ -148,7 +154,11 @@ def fmt_price(x):
 # MAIN
 # =========================
 def main():
-    # 1) Discover pairs
+    # Load persistent watchlists
+    buy_watch  = load_watchlist(BUY_FILE)
+    sell_watch = load_watchlist(SELL_FILE)
+
+    # 1) Active pairs
     raw = get_active_usdt_coins()
     pairs = []
     for it in raw:
@@ -157,73 +167,101 @@ def main():
             pairs.append(p)
     pairs = list(dict.fromkeys(pairs))
 
-    # 2) Process all (stats + prev close)
-    results = []
+    # 2) Fetch 1D% for all, and candles only for symbols to be checked later
+    def get_1d(pair):
+        try:
+            stats = fetch_pair_stats(pair)
+            pc = stats.get("price_change_percent", {})
+            return pair, pc.get("1D")
+        except Exception:
+            return pair, None
+
+    one_d = {}
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futs = {ex.submit(process_pair, p): p for p in pairs}
+        futs = {ex.submit(get_1d, p): p for p in pairs}
         for fut in as_completed(futs):
-            results.append(fut.result())
+            pair, v = fut.result()
+            one_d[pair] = v
 
-    # 3) Split by 1D% and sort
-    winners, losers = [], []
-    for r in results:
-        pc1d = r.get("pc_1d")
-        if isinstance(pc1d, (int, float)):
-            if pc1d > 0:
-                winners.append(r)
-            elif pc1d < 0:
-                losers.append(r)
+    # 3) Update watchlists by thresholds
+    # BuyWatchlist: 1D% <= -15
+    # SellWatchlist: 1D% >= +15
+    for pair, v in one_d.items():
+        if isinstance(v, (int, float)):
+            if v <= BUY_THRESHOLD:
+                buy_watch.add(pair)
+            if v >= SELL_THRESHOLD:
+                sell_watch.add(pair)
 
-    winners.sort(key=lambda x: x.get("pc_1d") if isinstance(x.get("pc_1d"), (int, float)) else float("-inf"), reverse=True)
-    losers.sort(key=lambda x: x.get("pc_1d") if isinstance(x.get("pc_1d"), (int, float)) else float("inf"))
-
-    # 3b) Slice BEFORE any EMA work (only 10 symbols total)
-    top5_gainers = winners[:5]
-    top5_losers  = losers[:5]
-
-    # 4) Apply EMA filters ONLY to these 10
-    filtered_gainers = []
-    for r in top5_gainers:
+    # 4) EMA checks only on the current contents of watchlists
+    def check_buy(pair):
+        # 9 EMA just crossed above 100 EMA on previous candle
         try:
-            down, up = get_recent_crossover(r["pair"])
-            if down:
-                filtered_gainers.append(r)
+            df = fetch_candles_via_from_to(pair)
+            if just_crossed_above_on_prev(df):
+                prev_close = float(df["close"].iloc[-2]) if df is not None and len(df) >= 2 else None
+                return {"pair": pair, "pc_1d": one_d.get(pair), "prev_close": prev_close}
         except Exception:
             pass
+        return None
 
-    filtered_losers = []
-    for r in top5_losers:
+    def check_sell(pair):
+        # 9 EMA just crossed below 100 EMA on previous candle
         try:
-            down, up = get_recent_crossover(r["pair"])
-            if up:
-                filtered_losers.append(r)
+            df = fetch_candles_via_from_to(pair)
+            if just_crossed_below_on_prev(df):
+                prev_close = float(df["close"].iloc[-2]) if df is not None and len(df) >= 2 else None
+                return {"pair": pair, "pc_1d": one_d.get(pair), "prev_close": prev_close}
         except Exception:
             pass
+        return None
 
-    # 5) Build and send only if there is content
-    if filtered_gainers or filtered_losers:
-        lines = []
-        if filtered_gainers:
-            lines.append("🏆 Gainers (buy)")
-            for r in filtered_gainers:
-                pair = r["pair"]
-                pc1d = fmt_pct(r.get("pc_1d"))
-                close = fmt_price(r.get("prev_close"))
-                lines.append(f"Pair- {pair}")
-                lines.append(f"1D%-{pc1d}")
-                lines.append(f"close price- {close}")
-                lines.append("")
-        if filtered_losers:
-            lines.append("🔻Losers (sell)")
-            for r in filtered_losers:
-                pair = r["pair"]
-                pc1d = fmt_pct(r.get("pc_1d"))
-                close = fmt_price(r.get("prev_close"))
-                lines.append(f"Pair- {pair}")
-                lines.append(f"1D%-{pc1d}")
-                lines.append(f"close price- {close}")
-                lines.append("")
+    buy_hits, sell_hits = [], []
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+        futs = {ex.submit(check_buy, p): ("buy", p) for p in list(buy_watch)}
+        futs.update({ex.submit(check_sell, p): ("sell", p) for p in list(sell_watch)})
+        for fut in as_completed(futs):
+            kind, symbol = futs[fut]
+            res = fut.result()
+            if res:
+                if kind == "buy":
+                    buy_hits.append(res)
+                    buy_watch.discard(symbol)  # remove only when signal triggers
+                else:
+                    sell_hits.append(res)
+                    sell_watch.discard(symbol)
+
+    # 5) Persist updated watchlists
+    save_watchlist(BUY_FILE, buy_watch)
+    save_watchlist(SELL_FILE, sell_watch)
+
+    # 6) Send signals if any
+    lines = []
+    if buy_hits:
+        lines.append("🟢 Buy signals")
+        for r in buy_hits:
+            pair = r["pair"]
+            pc1d = fmt_pct(r.get("pc_1d"))
+            close = fmt_price(r.get("prev_close"))
+            lines.append(f"Pair- {pair}")
+            lines.append(f"1D%-{pc1d}")
+            lines.append(f"close price- {close}")
+            lines.append("")
+    if sell_hits:
+        lines.append("🔴 Sell signals")
+        for r in sell_hits:
+            pair = r["pair"]
+            pc1d = fmt_pct(r.get("pc_1d"))
+            close = fmt_price(r.get("prev_close"))
+            lines.append(f"Pair- {pair}")
+            lines.append(f"1D%-{pc1d}")
+            lines.append(f"close price- {close}")
+            lines.append("")
+    if lines:
         send_telegram_message("\n".join(lines))
+        # print("\n".join(lines))
+    # Silent if no signals this scan
 
 if __name__ == "__main__":
     main()
