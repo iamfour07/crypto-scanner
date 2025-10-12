@@ -13,9 +13,9 @@ limit_hours = 1000  # fetch 1000 hours history
 IST = timezone(timedelta(hours=5, minutes=30))
 
 # RSI settings
-USE_RSI = False
 RSI_PERIOD = 21
 RSI_THRESHOLD = 50  # custom condition
+USE_RSI = False
 
 EMA1 = 4   # short EMA
 EMA2 = 21  # long EMA
@@ -120,12 +120,12 @@ def fetch_coin_data(symbol):
         prev[f'ema{EMA1}'] < prev[f'ema{EMA2}'] and
         last[f'ema{EMA1}'] > last[f'ema{EMA2}'] and
         (not USE_RSI or (last_rsi is not None and last_rsi > RSI_THRESHOLD))
-
     )
     bearish_cross = (
         prev[f'ema{EMA1}'] > prev[f'ema{EMA2}'] and
         last[f'ema{EMA1}'] < last[f'ema{EMA2}'] and
         (not USE_RSI or (last_rsi is not None and last_rsi < RSI_THRESHOLD))
+
     )
 
     entry = stoploss = None
