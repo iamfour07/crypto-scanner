@@ -8,26 +8,31 @@ from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
 # =========================
 # CONFIGURATION
 # =========================
-BASE_URL = "https://api.india.delta.exchange"
-CANDLES_ENDPOINT = f"{BASE_URL}/v2/history/candles"
-
-resolution = "15m"     # e.g., "60m" for 1-hour bars on Delta
-limit_hours = 1000
-
+resolution = "15m"   # 1-hour candles
+limit_hours = 1000  # fetch 1000 hours history
 IST = timezone(timedelta(hours=5, minutes=30))
 
 # RSI settings
 RSI_PERIOD = 21
-RSI_THRESHOLD = 51
+RSI_THRESHOLD = 50  # custom condition
 
-# EMA settings
-EMA1 = 4
-EMA2 = 21
+EMA1 = 4   # short EMA
+EMA2 = 21  # long EMA
 
 # =========================
-# FIXED SYMBOL LIST
+# FETCH ACTIVE COINS
 # =========================
-SymbolList = ["BTCUSD","ETHUSD","SOLUSD","XRPUSD","BNBUSD","DOGEUSD"]  # single symbol as requested
+def get_active_usdt_coins():
+    url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"Error fetching coins: {e}")
+        return []
+
+CoinList = ['BTCUSD',"ETHUSD",'SOLUSD',"XRPUSD","BNBUSD","DOGEUSD",'TRXUSD',"LINKUSD","SUIUSD","LTCUSD","ASTERUSD"]  # default list
 
 # =========================
 # INDICATOR: RSI
@@ -36,19 +41,23 @@ def calculate_rsi(close_prices, period=21):
     delta = close_prices.diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
+
     avg_gain = gain.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
     avg_loss = loss.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
+
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
 # =========================
-# FETCH & PROCESS ONE SYMBOL
+# FETCH & PROCESS ONE COIN
 # =========================
-def fetch_symbol_data(symbol):
+def fetch_coin_data(symbol):
     now = int(datetime.now(timezone.utc).timestamp())
     from_time = now - limit_hours * 3600
 
+    url = "https://api.india.delta.exchange/v2/history/candles"
+    headers = {"Accept": "application/json"}
     params = {
         "resolution": resolution,
         "symbol": symbol,
@@ -56,34 +65,56 @@ def fetch_symbol_data(symbol):
         "end": str(now)
     }
 
-    headers = {"Accept": "application/json"}
-    resp = requests.get(CANDLES_ENDPOINT, params=params, headers=headers, timeout=30)
-    resp.raise_for_status()
-    payload = resp.json()
+    try:
+        resp = requests.get(url, params=params, headers=headers, timeout=30)
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception as e:
+        print(f"⚠️ {symbol}: Delta API request failed: {e}")
+        return {
+            "pair": symbol,
+            "close": None,
+            "rsi": None,
+            "volume": None,
+            "bullish_cross": False,
+            "bearish_cross": False,
+            "entry": None,
+            "stoploss": None
+        }
 
     candles = payload.get("result", [])
-    if not candles or len(candles) < 3:
-        raise ValueError(f"Insufficient candles for {symbol}")
-
+    if not candles or all(c['close']==0 for c in candles):
+        print(f"⚠️ {symbol}: No usable candles returned by Delta")
+        return {
+            "pair": symbol,
+            "close": None,
+            "rsi": None,
+            "volume": None,
+            "bullish_cross": False,
+            "bearish_cross": False,
+            "entry": None,
+            "stoploss": None
+        }
     df = pd.DataFrame(candles)
     for col in ["open", "high", "low", "close", "volume"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     df = df.sort_values("time").reset_index(drop=True)
 
-    # EMAs
+    # EMA calculations
     df[f'ema{EMA1}'] = df['close'].ewm(span=EMA1, adjust=False).mean()
     df[f'ema{EMA2}'] = df['close'].ewm(span=EMA2, adjust=False).mean()
 
     # RSI
     df['rsi'] = calculate_rsi(df['close'], RSI_PERIOD)
 
-    # Use second-last (closed) candle
+    # Use last CLOSED candle
     last = df.iloc[-2]
     prev = df.iloc[-3]
 
     last_rsi = round(last['rsi'], 1) if pd.notnull(last['rsi']) else None
 
+    # Crossover logic
     bullish_cross = (
         prev[f'ema{EMA1}'] < prev[f'ema{EMA2}'] and
         last[f'ema{EMA1}'] > last[f'ema{EMA2}'] and
@@ -92,11 +123,12 @@ def fetch_symbol_data(symbol):
     bearish_cross = (
         prev[f'ema{EMA1}'] > prev[f'ema{EMA2}'] and
         last[f'ema{EMA1}'] < last[f'ema{EMA2}'] and
-        last_rsi is not None and last_rsi < RSI_THRESHOLD
+        last_rsi is not None and last_rsi > RSI_THRESHOLD
     )
 
     entry = stoploss = None
 
+    # ============ Post-Crossover Candle Logic ============
     if bullish_cross:
         crossover_index = len(df) - 2
         next_two = df.iloc[crossover_index+1:crossover_index+3]
@@ -116,7 +148,7 @@ def fetch_symbol_data(symbol):
                 break
 
     if entry is not None and stoploss is not None:
-       print(f"[DEBUG] Entry={entry:.2f} Stoploss={stoploss:.2f}")
+        print(f"✅ {symbol}: Bullish={bullish_cross}, Bearish={bearish_cross}, Entry={entry}, SL={stoploss}")
 
     return {
         "pair": symbol,
@@ -135,11 +167,8 @@ def fetch_symbol_data(symbol):
 def main():
     bullish, bearish = [], []
 
-    # Only BTCUSD
-    targets = SymbolList
-
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = {executor.submit(fetch_symbol_data, sym): sym for sym in targets}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fetch_coin_data, coin): coin for coin in CoinList}
         for future in as_completed(futures):
             try:
                 data = future.result()
@@ -148,19 +177,22 @@ def main():
                 elif data['bearish_cross'] and data['entry'] and data['stoploss']:
                     bearish.append(data)
             except Exception as e:
-                print(f"Error processing symbol: {e}")
+                print(f"Error processing coin: {e}")
 
     bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)
     bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
 
+    # =========================
+    # TELEGRAM MESSAGE
+    # =========================
     if bullish or bearish:
         message_lines = [f"📊 21 EMA Crossover\n"]
 
         if bullish:
-            message_lines.append("🟢 Bullish EMA4>EMA21 Cross + Pullback Entry (Low ≥ EMA21):\n")
+            message_lines.append("🟢 Bullish EMA5>EMA21 Cross + Pullback Entry (Low ≥ EMA21):\n")
             for res in bullish:
                 pair_safe = html.escape(res['pair'])
-                link = f"https://www.delta.exchange/app/futures/{res['pair']}"
+                link = f"https://coindcx.com/futures/{res['pair']}"
                 message_lines.append(
                     f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\n"
                     f"Entry: {res['entry']}\nStoploss: {res['stoploss']}\n"
@@ -168,10 +200,10 @@ def main():
                 )
 
         if bearish:
-            message_lines.append("\n🔴 Bearish EMA4<EMA21 Cross + Pullback Entry (High ≤ EMA21):\n")
+            message_lines.append("\n🔴 Bearish EMA5<EMA21 Cross + Pullback Entry (High ≤ EMA21):\n")
             for res in bearish:
                 pair_safe = html.escape(res['pair'])
-                link = f"https://www.delta.exchange/app/futures/{res['pair']}"
+                link = f"https://coindcx.com/futures/{res['pair']}"
                 message_lines.append(
                     f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\n"
                     f"Entry: {res['entry']}\nStoploss: {res['stoploss']}\n"
