@@ -92,7 +92,7 @@ def fetch_symbol_data(symbol):
     bearish_cross = (
         prev[f'ema{EMA1}'] > prev[f'ema{EMA2}'] and
         last[f'ema{EMA1}'] < last[f'ema{EMA2}'] and
-        last_rsi is not None and last_rsi > RSI_THRESHOLD
+        last_rsi is not None and last_rsi < RSI_THRESHOLD
     )
 
     entry = stoploss = None
