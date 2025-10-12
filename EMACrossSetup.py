@@ -79,8 +79,8 @@ def fetch_symbol_data(symbol):
     df['rsi'] = calculate_rsi(df['close'], RSI_PERIOD)
 
     # Use second-last (closed) candle
-    last = df.iloc[-1]
-    prev = df.iloc[-2]
+    last = df.iloc[-2]
+    prev = df.iloc[-3]
 
     last_rsi = round(last['rsi'], 1) if pd.notnull(last['rsi']) else None
 
