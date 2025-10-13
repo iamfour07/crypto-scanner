@@ -138,7 +138,7 @@ def main():
 
     bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)
     bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
-    Telegram_Alert_EMA_Crossover("New Alert")
+    
        
     if bullish or bearish:
         message_lines = [f"📊 21 EMA Red/Green Setup\n"]
