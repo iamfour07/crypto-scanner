@@ -74,8 +74,8 @@ def fetch_coin_data(symbol):
     # RSI
     df['rsi'] = calculate_rsi(df['close'], RSI_PERIOD)
 
-    last = df.iloc[-1]   # last closed candle
-    prev5 = df.iloc[-6:-1]  # previous 5 candles
+    last = df.iloc[-2]   # last closed candle
+    prev5 = df.iloc[-6:-2]  # previous 5 candles
 
     bullish = bearish = False
     last_rsi = round(last['rsi'], 1) if pd.notnull(last['rsi']) else None
