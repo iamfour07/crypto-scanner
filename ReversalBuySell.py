@@ -11,8 +11,8 @@ from Telegram_Alert_Swing import send_telegram_message
 resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 15
-upperLimit = 20      # For reversal short
-lowerLimit = -20     # For reversal long
+upperLimit = 20     # For reversal short
+lowerLimit = -20  # For reversal long
 ema_periods = [9, 30, 100]
 
 # Filters (set to False for pure crossover without candle-close logic)
@@ -135,7 +135,7 @@ def save_watchlist(buy_list, sell_list):
 def main():
     pairs = get_active_usdt_coins()
 
-    # Fetch 1D% changes
+    # Step 1: Fetch 1D changes
     changes = []
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
@@ -145,65 +145,90 @@ def main():
                 changes.append(res)
 
     df = pd.DataFrame(changes).dropna()
-    sell_watch = df[df["change"] >= upperLimit].sort_values("change", ascending=False).head(10)["pair"].tolist()
-    buy_watch  = df[df["change"] <= lowerLimit].sort_values("change", ascending=True).head(10)["pair"].tolist()
 
-    # print(f"Buy Watchlist: {buy_watch}")
-    # print(f"Sell Watchlist: {sell_watch}")
+    # Step 2: Find new candidates
+    new_sell_candidates = df[df["change"] >= upperLimit].sort_values("change", ascending=False)["pair"].tolist()
+    new_buy_candidates  = df[df["change"] <= lowerLimit].sort_values("change", ascending=True)["pair"].tolist()
 
-    # Processing helpers (collect results first; avoid mutating lists during iteration)
-    def process_pair_for_buy(pair):
+    # Step 3: Load old watchlists
+    try:
+        with open(SELL_FILE, "r") as f:
+            sell_watch = json.load(f)
+    except:
+        sell_watch = []
+
+    try:
+        with open(BUY_FILE, "r") as f:
+            buy_watch = json.load(f)
+    except:
+        buy_watch = []
+
+    # Step 4: Merge new + old (no duplicates)
+    sell_watch = list(set(sell_watch + new_sell_candidates))
+    buy_watch  = list(set(buy_watch + new_buy_candidates))
+
+    # ------------------------------
+    # Step 5: EMA SCAN on Watchlists
+    # ------------------------------
+    buy_signals = []
+    sell_signals = []
+
+    # --- Buy Watchlist Check ---
+    def process_buy(pair):
         df_c = fetch_last_n_candles(pair)
-        if df_c is None:
+        if df_c is None or len(df_c) < 3:
             return None
-        cross_up, _, bar_time = check_crossover_intrabar(df_c)
-        if not cross_up:
-            return None
-        # Debounce: only one signal per bar
-        if last_bar_time.get(("BUY", pair)) == bar_time:
-            return None
-        last_bar_time[("BUY", pair)] = bar_time
-        return pair
+        # Check EMA crossover on previous closed candle (-2)
+        prev = df_c.iloc[-2]
+        ema9 = prev["EMA_9"]
+        ema100 = prev["EMA_100"]
+        if ema9 > ema100:   # Cross above
+            return pair
+        return None
 
-    def process_pair_for_sell(pair):
+    # --- Sell Watchlist Check ---
+    def process_sell(pair):
         df_c = fetch_last_n_candles(pair)
-        if df_c is None:
+        if df_c is None or len(df_c) < 3:
             return None
-        _, cross_down, bar_time = check_crossover_intrabar(df_c)
-        if not cross_down:
-            return None
-        if last_bar_time.get(("SELL", pair)) == bar_time:
-            return None
-        last_bar_time[("SELL", pair)] = bar_time
-        return pair
+        # Check EMA crossover on previous closed candle (-2)
+        prev = df_c.iloc[-2]
+        ema9 = prev["EMA_9"]
+        ema100 = prev["EMA_100"]
+        if ema9 < ema100:   # Cross below
+            return pair
+        return None
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        buy_futs = [executor.submit(process_pair_for_buy, p) for p in buy_watch]
-        sell_futs = [executor.submit(process_pair_for_sell, p) for p in sell_watch]
+        buy_futs = [executor.submit(process_buy, p) for p in buy_watch]
+        sell_futs = [executor.submit(process_sell, p) for p in sell_watch]
 
-        buy_signals = [f.result() for f in as_completed(buy_futs)]
-        sell_signals = [f.result() for f in as_completed(sell_futs)]
+        buy_signals = [f.result() for f in as_completed(buy_futs) if f.result()]
+        sell_signals = [f.result() for f in as_completed(sell_futs) if f.result()]
 
-    buy_signals = [p for p in buy_signals if p]
-    sell_signals = [p for p in sell_signals if p]
-
-    # Optionally remove signaled pairs from watch lists
-    buy_watch = [p for p in buy_watch if p not in buy_signals]
-    sell_watch = [p for p in sell_watch if p not in sell_signals]
-
-    save_watchlist(buy_watch, sell_watch)
-
+    # ------------------------------
+    # Step 6: Handle Signals
+    # ------------------------------
     if buy_signals:
         print("🟢 Buy Signals:")
         for p in buy_signals:
             print(f"  {p}")
-        send_telegram_message("🟢 Buy Signals:\n" + "\n".join(f"  {p}" for p in buy_signals))
+        send_telegram_message("🟢 Buy Signals:\n" + "\n".join(buy_signals))
+        # Remove signaled from watchlist
+        buy_watch = [p for p in buy_watch if p not in buy_signals]
 
     if sell_signals:
         print("🔴 Sell Signals:")
         for p in sell_signals:
             print(f"  {p}")
-        send_telegram_message("🔴 Sell Signals:\n" + "\n".join(f"  {p}" for p in sell_signals))
+        send_telegram_message("🔴 Sell Signals:\n" + "\n".join(sell_signals))
+        # Remove signaled from watchlist
+        sell_watch = [p for p in sell_watch if p not in sell_signals]
+
+    # ------------------------------
+    # Step 7: Save Updated Watchlists
+    # ------------------------------
+    save_watchlist(buy_watch, sell_watch)
 
 if __name__ == "__main__":
     main()
