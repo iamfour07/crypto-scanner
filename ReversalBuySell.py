@@ -1,10 +1,10 @@
-
 import json
 import requests
 import pandas as pd
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from Telegram_Alert_Swing import send_telegram_message
+
 # =====================
 # CONFIG
 # =====================
@@ -12,7 +12,7 @@ resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 15
 upperLimit = 20     # For reversal short
-lowerLimit = -20  # For reversal long
+lowerLimit = -20    # For reversal long
 ema_periods = [9, 30, 100]
 
 # Filters (set to False for pure crossover without candle-close logic)
@@ -25,7 +25,6 @@ SELL_FILE = "SellWatchlist.json"
 
 # Debounce memory: last processed bar open time per pair
 last_bar_time = {}
-
 
 # ---------------------
 # Fetch active USDT coins
@@ -47,7 +46,6 @@ def fetch_pair_stats(pair):
             return None
         return {"pair": pair, "change": float(pc)}
     except Exception as e:
-        # Log and skip this pair
         print(f"[stats] {pair} error: {e}")
         return None
 
@@ -89,16 +87,14 @@ def fetch_last_n_candles(pair, n=200):
 
 # Intrabar EMA crossover (no candle close requirement)
 def check_crossover_intrabar(df):
-    # current bar and previous bar
-    cur = df.iloc[-1]       # live/last bar
-    prev = df.iloc[-2]      # prior bar
+    cur = df.iloc[-1]
+    prev = df.iloc[-2]
 
     ema9_cur = cur["EMA_9"]
     ema100_cur = cur["EMA_100"]
     ema9_prev = prev["EMA_9"]
     ema100_prev = prev["EMA_100"]
 
-    # raw crosses
     cross_up_raw = (ema9_prev <= ema100_prev) and (ema9_cur > ema100_cur + EPSILON)
     cross_dn_raw = (ema9_prev >= ema100_prev) and (ema9_cur < ema100_cur - EPSILON)
 
@@ -118,8 +114,6 @@ def check_crossover_intrabar(df):
     cross_up = cross_up_raw and slope_up and price_ok_up
     cross_down = cross_dn_raw and slope_dn and price_ok_dn
 
-    # Debounce per bar using bar start time if provided; else index timestamp if available
-    # CoinDCX candlesticks usually include "timestamp" or "time"
     bar_time_col = "timestamp" if "timestamp" in df.columns else ("time" if "time" in df.columns else None)
     cur_bar_time = int(cur[bar_time_col]) if (bar_time_col and pd.notna(cur[bar_time_col])) else df.index[-1]
 
@@ -178,11 +172,9 @@ def main():
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
             return None
-        # Check EMA crossover on previous closed candle (-2)
-        prev = df_c.iloc[-2]
-        ema9 = prev["EMA_9"]
-        ema100 = prev["EMA_100"]
-        if ema9 > ema100:   # Cross above
+        prev2 = df_c.iloc[-3]  # candle before previous
+        prev1 = df_c.iloc[-2]  # previous closed candle
+        if prev2["EMA_9"] <= prev2["EMA_100"] and prev1["EMA_9"] > prev1["EMA_100"]:
             return pair
         return None
 
@@ -191,11 +183,9 @@ def main():
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
             return None
-        # Check EMA crossover on previous closed candle (-2)
-        prev = df_c.iloc[-2]
-        ema9 = prev["EMA_9"]
-        ema100 = prev["EMA_100"]
-        if ema9 < ema100:   # Cross below
+        prev2 = df_c.iloc[-3]  # candle before previous
+        prev1 = df_c.iloc[-2]  # previous closed candle
+        if prev2["EMA_9"] >= prev2["EMA_100"] and prev1["EMA_9"] < prev1["EMA_100"]:
             return pair
         return None
 
@@ -214,7 +204,6 @@ def main():
         for p in buy_signals:
             print(f"  {p}")
         send_telegram_message("🟢 Buy Signals:\n" + "\n".join(buy_signals))
-        # Remove signaled from watchlist
         buy_watch = [p for p in buy_watch if p not in buy_signals]
 
     if sell_signals:
@@ -222,7 +211,6 @@ def main():
         for p in sell_signals:
             print(f"  {p}")
         send_telegram_message("🔴 Sell Signals:\n" + "\n".join(sell_signals))
-        # Remove signaled from watchlist
         sell_watch = [p for p in sell_watch if p not in sell_signals]
 
     # ------------------------------
