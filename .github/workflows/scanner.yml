@@ -1,8 +1,8 @@
 name: Momentum Scanner
 
 on:
-  schedule:
-    - cron: '30 * * * *'  # every hour at minute 30
+  # schedule:
+  #   - cron: '30 * * * *'  # every hour at minute 30
   workflow_dispatch:
 
 permissions:
@@ -27,7 +27,7 @@ jobs:
         pip install pandas requests
 
     - name: Run Scanner
-      run: python RSI_Buy_Sell.py
+      run: python momentum.py
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
