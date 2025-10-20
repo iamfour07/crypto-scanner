@@ -1,8 +1,10 @@
 [
-  "B-ZEREBRO_USDT",
-  "B-TRU_USDT",
-  "B-AUCTION_USDT",
-  "B-SWELL_USDT",
   "B-SNX_USDT",
-  "B-MLN_USDT"
+  "B-MLN_USDT",
+  "B-SWELL_USDT",
+  "B-TRU_USDT",
+  "B-PIPPIN_USDT",
+  "B-AUCTION_USDT",
+  "B-LA_USDT",
+  "B-ZEREBRO_USDT"
 ]
