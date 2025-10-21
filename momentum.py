@@ -8,7 +8,7 @@ from Telegram_Alert import send_telegram_message
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-ema_periods = [9, 100]
+ema_periods = [15, 60]
 resolution = "60"  # 1-hour candles
 limit_hours = 1000
 
@@ -86,8 +86,8 @@ def main():
         return
 
     # Step 2: Get top gainers and losers
-    top_gainers = df.sort_values("change", ascending=False).head(20)["pair"].tolist()
-    top_losers  = df.sort_values("change", ascending=True).head(20)["pair"].tolist()
+    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
+    top_losers  = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
 
     # Step 3: EMA Filter
     filtered_gainers = []
@@ -100,7 +100,7 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed above EMA100
-        if prev2["EMA_9"] <= prev2["EMA_100"] and prev1["EMA_9"] > prev1["EMA_100"]:
+        if prev2["EMA_15"] <= prev2["EMA_60"] and prev1["EMA_15"] > prev1["EMA_60"]:
             return pair
         return None
 
@@ -111,25 +111,24 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed below EMA100
-        if prev2["EMA_9"] >= prev2["EMA_100"] and prev1["EMA_9"] < prev1["EMA_100"]:
+        if prev2["EMA_15"] >= prev2["EMA_60"] and prev1["EMA_15"] < prev1["EMA_60"]:
             return pair
         return None
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         gain_futs = [executor.submit(check_gainer, p) for p in top_gainers]
         lose_futs = [executor.submit(check_loser, p) for p in top_losers]
-
         filtered_gainers = [f.result() for f in as_completed(gain_futs) if f.result()]
         filtered_losers = [f.result() for f in as_completed(lose_futs) if f.result()]
 
     # Step 4: Print & Telegram alerts
     if filtered_gainers:
-        msg = "🟢 Gainers (EMA9 crossed above EMA100 on prev candle):\n" + "\n".join(filtered_gainers)
+        msg = "🟢 Gainers (EMA15 crossed above EMA60 on prev candle):\n" + "\n".join(filtered_gainers)
         print(msg)
         send_telegram_message(msg)
 
     if filtered_losers:
-        msg = "🔴 Losers (EMA9 crossed below EMA100 on prev candle):\n" + "\n".join(filtered_losers)
+        msg = "🔴 Losers (EMA15 crossed below EMA60 on prev candle):\n" + "\n".join(filtered_losers)
         print(msg)
         send_telegram_message(msg)
 
