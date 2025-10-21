@@ -8,7 +8,7 @@ from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
 # =========================
 # CONFIGURATION
 # =========================
-resolution = "15m"
+resolution = "5m"
 limit_hours = 1000
 IST = timezone(timedelta(hours=5, minutes=30))
 
