@@ -13,7 +13,7 @@ limit_hours = 1000
 MAX_WORKERS = 15
 upperLimit = 20     # For reversal short
 lowerLimit = -20    # For reversal long
-ema_periods = [15, 30, 60]
+ema_periods = [9, 30, 100]
 
 # Filters (set to False for pure crossover without candle-close logic)
 USE_PRICE_FILTER = False     # require price to be above/below both EMAs after cross
@@ -90,10 +90,10 @@ def check_crossover_intrabar(df):
     cur = df.iloc[-1]
     prev = df.iloc[-2]
 
-    ema15_cur = cur["EMA_15"]
-    ema60_cur = cur["EMA_60"]
-    ema15_prev = prev["EMA_15"]
-    ema60_prev = prev["EMA_60"]
+    ema15_cur = cur["EMA_9"]
+    ema60_cur = cur["EMA_100"]
+    ema15_prev = prev["EMA_9"]
+    ema60_prev = prev["EMA_100"]
 
     cross_up_raw = (ema15_prev <= ema60_prev) and (ema15_cur > ema60_cur + EPSILON)
     cross_dn_raw = (ema15_prev >= ema60_prev) and (ema15_cur < ema60_cur - EPSILON)
@@ -174,7 +174,7 @@ def main():
             return None
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous closed candle
-        if prev2["EMA_15"] <= prev2["EMA_60"] and prev1["EMA_15"] > prev1["EMA_60"]:
+        if prev2["EMA_9"] <= prev2["EMA_100"] and prev1["EMA_9"] > prev1["EMA_100"]:
             return pair
         return None
 
@@ -185,7 +185,7 @@ def main():
             return None
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous closed candle
-        if prev2["EMA_15"] >= prev2["EMA_60"] and prev1["EMA_15"] < prev1["EMA_60"]:
+        if prev2["EMA_9"] >= prev2["EMA_100"] and prev1["EMA_9"] < prev1["EMA_100"]:
             return pair
         return None
 
