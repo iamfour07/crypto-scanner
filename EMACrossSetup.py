@@ -164,7 +164,7 @@ def main():
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
                 message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nADX: {res['adx']}\nVolume: {res['volume']}\n{link}\n"
+                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n{link}\n"
                 )
 
         if bearish:
@@ -173,7 +173,7 @@ def main():
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
                 message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nADX: {res['adx']}\nVolume: {res['volume']}\n{link}\n"
+                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n{link}\n"
                 )
 
         message_lines.append("\n===============================")
