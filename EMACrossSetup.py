@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import html
 from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
+from ADX_Calculater import calculate_adx   
 
 # =========================
 # CONFIGURATION
@@ -14,12 +15,15 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 EMA = 21
 USE_RSI = True
+USE_ADX = True      # ✅ Toggle ADX filter
 RSI_PERIOD = 21
 RSI_THRESHOLD_BULL = 50
 RSI_THRESHOLD_BEAR = 50
+ADX_PERIOD = 14
+ADX_THRESHOLD = 20  # ✅ Minimum ADX to confirm trend strength
 
-CoinList = ['BTCUSD',"ETHUSD",'SOLUSD',"XRPUSD","BNBUSD","DOGEUSD",'TRXUSD',
-            "LINKUSD","SUIUSD","LTCUSD","ASTERUSD"]
+CoinList = ['BTCUSD', "ETHUSD", 'SOLUSD', "XRPUSD", "BNBUSD", "DOGEUSD",
+            'TRXUSD', "LINKUSD", "SUIUSD", "LTCUSD", "ASTERUSD"]
 
 # =========================
 # RSI CALCULATION
@@ -71,20 +75,28 @@ def fetch_coin_data(symbol):
 
     # EMA21
     df[f'ema{EMA}'] = df['close'].ewm(span=EMA, adjust=False).mean()
+
     # RSI
     df['rsi'] = calculate_rsi(df['close'], RSI_PERIOD)
+
+    # ADX
+    df['adx'] = calculate_adx(df['high'], df['low'], df['close'], period=ADX_PERIOD)
 
     last = df.iloc[-1]   # last closed candle
     prev5 = df.iloc[-6:-1]  # previous 5 candles
 
     bullish = bearish = False
     last_rsi = round(last['rsi'], 1) if pd.notnull(last['rsi']) else None
+    last_adx = round(last['adx'], 1) if pd.notnull(last['adx']) else None
 
     # =========================
     # BUY SETUP
     # =========================
     if last['close'] < last['open'] and last['close'] > last[f'ema{EMA}']:
-        if not USE_RSI or (last_rsi is not None and last_rsi > RSI_THRESHOLD_BULL):
+        if (
+            (not USE_RSI or (last_rsi is not None and last_rsi > RSI_THRESHOLD_BULL)) and
+            (not USE_ADX or (last_adx is not None and last_adx > ADX_THRESHOLD))
+        ):
             for i in range(len(prev5) - 1):
                 c1 = prev5.iloc[i]
                 c2 = prev5.iloc[i + 1]
@@ -96,7 +108,10 @@ def fetch_coin_data(symbol):
     # SELL SETUP
     # =========================
     if last['close'] > last['open'] and last['close'] < last[f'ema{EMA}']:
-        if not USE_RSI or (last_rsi is not None and last_rsi < RSI_THRESHOLD_BEAR):
+        if (
+            (not USE_RSI or (last_rsi is not None and last_rsi < RSI_THRESHOLD_BEAR)) and
+            (not USE_ADX or (last_adx is not None and last_adx > ADX_THRESHOLD))
+        ):
             for i in range(len(prev5) - 1):
                 c1 = prev5.iloc[i]
                 c2 = prev5.iloc[i + 1]
@@ -104,8 +119,8 @@ def fetch_coin_data(symbol):
                     bearish = True
                     break
 
-    if bullish or bearish:
-        print(f"✅ {symbol}: Bullish={bullish}, Bearish={bearish}, Close={last['close']}, RSI={last_rsi}")
+    # if bullish or bearish:
+    #     print(f"✅ {symbol}: Bullish={bullish}, Bearish={bearish}, Close={last['close']}, RSI={last_rsi}, ADX={last_adx}")
 
     return {
         "pair": symbol,
@@ -113,7 +128,8 @@ def fetch_coin_data(symbol):
         "volume": float(last['volume']),
         "bullish": bullish,
         "bearish": bearish,
-        "rsi": last_rsi
+        "rsi": last_rsi,
+        "adx": last_adx
     }
 
 # =========================
@@ -138,27 +154,26 @@ def main():
 
     bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)
     bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
-    
-       
+
     if bullish or bearish:
-        message_lines = [f"📊 21 EMA Red/Green Setup\n"]
+        message_lines = [f"📊 21 EMA + RSI + ADX Setup\n"]
 
         if bullish:
-            message_lines.append("🟢 Buy Setup (Red Candle Above EMA21 + Recent Bullish Cross + RSI>50):\n")
+            message_lines.append("🟢 Buy Setup (Red Candle Above EMA21 + Bullish Cross + RSI>50 + ADX>20):\n")
             for res in bullish:
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
                 message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n{link}\n"
+                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nADX: {res['adx']}\nVolume: {res['volume']}\n{link}\n"
                 )
 
         if bearish:
-            message_lines.append("\n🔴 Sell Setup (Green Candle Below EMA21 + Recent Bearish Cross + RSI<50):\n")
+            message_lines.append("\n🔴 Sell Setup (Green Candle Below EMA21 + Bearish Cross + RSI<50 + ADX>20):\n")
             for res in bearish:
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
                 message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n{link}\n"
+                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nADX: {res['adx']}\nVolume: {res['volume']}\n{link}\n"
                 )
 
         message_lines.append("\n===============================")
