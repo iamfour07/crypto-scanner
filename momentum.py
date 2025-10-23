@@ -8,7 +8,7 @@ from Telegram_Alert import send_telegram_message
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-ema_periods = [15, 60]
+ema_periods = [14, 200]
 resolution = "60"  # 1-hour candles
 limit_hours = 1000
 
@@ -100,7 +100,7 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed above EMA100
-        if prev2["EMA_15"] <= prev2["EMA_60"] and prev1["EMA_15"] > prev1["EMA_60"]:
+        if prev2["EMA_14"] <= prev2["EMA_200"] and prev1["EMA_14"] > prev1["EMA_200"]:
             return pair
         return None
 
@@ -111,7 +111,7 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed below EMA100
-        if prev2["EMA_15"] >= prev2["EMA_60"] and prev1["EMA_15"] < prev1["EMA_60"]:
+        if prev2["EMA_14"] >= prev2["EMA_200"] and prev1["EMA_14"] < prev1["EMA_200"]:
             return pair
         return None
 
