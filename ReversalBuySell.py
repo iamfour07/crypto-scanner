@@ -13,7 +13,7 @@ limit_hours = 1000
 MAX_WORKERS = 15
 upperLimit = 20     # For reversal short
 lowerLimit = -20    # For reversal long
-ema_periods = [15, 30, 60]
+ema_periods = [9, 30, 100]
 
 # Filters (set to False for pure crossover without candle-close logic)
 USE_PRICE_FILTER = False     # require price to be above/below both EMAs after cross
