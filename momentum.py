@@ -97,8 +97,8 @@ def main():
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
             return None
-        prev2 = df_c.iloc[-3]  # candle before previous
-        prev1 = df_c.iloc[-2]  # previous candle
+        prev2 = df_c.iloc[-2]  # candle before previous
+        prev1 = df_c.iloc[-1]  # previous candle
         # Just crossed above EMA100
         if prev2["EMA_14"] <= prev2["EMA_200"] and prev1["EMA_14"] > prev1["EMA_200"]:
             return pair
@@ -108,8 +108,8 @@ def main():
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
             return None
-        prev2 = df_c.iloc[-3]  # candle before previous
-        prev1 = df_c.iloc[-2]  # previous candle
+        prev2 = df_c.iloc[-2]  # candle before previous
+        prev1 = df_c.iloc[-1]  # previous candle
         # Just crossed below EMA100
         if prev2["EMA_14"] >= prev2["EMA_200"] and prev1["EMA_14"] < prev1["EMA_200"]:
             return pair
