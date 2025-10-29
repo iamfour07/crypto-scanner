@@ -1,10 +1,10 @@
 [
-  "B-KERNEL_USDT",
   "B-HIPPO_USDT",
+  "B-DIA_USDT",
   "B-OG_USDT",
   "B-MAVIA_USDT",
-  "B-DIA_USDT",
-  "B-PIPPIN_USDT",
+  "B-PERP_USDT",
   "B-PHB_USDT",
-  "B-PERP_USDT"
+  "B-PIPPIN_USDT",
+  "B-KERNEL_USDT"
 ]
