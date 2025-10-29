@@ -1,8 +1,8 @@
 [
-  "B-DIA_USDT",
-  "B-KERNEL_USDT",
-  "B-PIPPIN_USDT",
-  "B-OG_USDT",
   "B-MAVIA_USDT",
-  "B-PERP_USDT"
+  "B-PERP_USDT",
+  "B-OG_USDT",
+  "B-KERNEL_USDT",
+  "B-DIA_USDT",
+  "B-PIPPIN_USDT"
 ]
