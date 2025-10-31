@@ -47,7 +47,7 @@ from ADX_Calculater import calculate_adx
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-ema_periods = [14, 200]
+ema_periods = [9, 200]
 resolution = "60"  # 1-hour candles
 limit_hours = 1000
 Adx_Limit = 20
