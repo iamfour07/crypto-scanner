@@ -158,7 +158,7 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed above EMA100
-        if prev2["EMA_14"] <= prev2["EMA_200"] and prev1["EMA_14"] > prev1["EMA_200"]:
+        if prev2["EMA_9"] <= prev2["EMA_200"] and prev1["EMA_9"] > prev1["EMA_200"]:
         # Compute ADX
             adx_series = calculate_adx(df_c["high"], df_c["low"], df_c["close"],28)
             if is_adx_pattern(adx_series):
@@ -174,7 +174,7 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed below EMA100
-        if prev2["EMA_14"] >= prev2["EMA_200"] and prev1["EMA_14"] < prev1["EMA_200"]:
+        if prev2["EMA_9"] >= prev2["EMA_200"] and prev1["EMA_9"] < prev1["EMA_200"]:
          # Compute ADX
             adx_series = calculate_adx(df_c["high"], df_c["low"], df_c["close"],28)
             if is_adx_pattern(adx_series):
