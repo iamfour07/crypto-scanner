@@ -1,16 +1,16 @@
 [
-  "B-DIA_USDT",
-  "B-AVA_USDT",
-  "B-PHB_USDT",
-  "B-PIPPIN_USDT",
-  "B-FLM_USDT",
-  "B-VIRTUAL_USDT",
-  "B-0G_USDT",
-  "B-OG_USDT",
   "B-KERNEL_USDT",
   "B-FARTCOIN_USDT",
-  "B-MAVIA_USDT",
-  "B-LUMIA_USDT",
   "B-HIPPO_USDT",
-  "B-PERP_USDT"
+  "B-PHB_USDT",
+  "B-MAVIA_USDT",
+  "B-VIRTUAL_USDT",
+  "B-PERP_USDT",
+  "B-DIA_USDT",
+  "B-FLM_USDT",
+  "B-0G_USDT",
+  "B-PIPPIN_USDT",
+  "B-LUMIA_USDT",
+  "B-AVA_USDT",
+  "B-OG_USDT"
 ]
