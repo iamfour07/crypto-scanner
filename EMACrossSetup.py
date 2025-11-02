@@ -76,9 +76,9 @@ def check_gainer(pair):
     if pd_high is None:
         return None
 
-    prev3 = df.iloc[-3]
-    prev2 = df.iloc[-2]  # breakout candle (-2)
-    prev1 = df.iloc[-1]  # pullback candle (-1)
+    prev3 = df.iloc[-4]
+    prev2 = df.iloc[-3]  # breakout candle (-2)
+    prev1 = df.iloc[-2]  # pullback candle (-1)
 
     breakout = prev2["close"] > pd_high
     pullback_is_red = prev1["close"] < prev1["open"]
@@ -126,9 +126,9 @@ def check_loser(pair):
     if pd_low is None:
         return None
 
-    prev3 = df.iloc[-3]
-    prev2 = df.iloc[-2]  # breakdown candle (-2)
-    prev1 = df.iloc[-1]  # pullback candle (-1)
+    prev3 = df.iloc[-4]
+    prev2 = df.iloc[-3]  # breakdown candle (-2)
+    prev1 = df.iloc[-2]  # pullback candle (-1)
 
     breakdown = prev2["close"] < pd_low
     pullback_is_green = prev1["close"] > prev1["open"]
