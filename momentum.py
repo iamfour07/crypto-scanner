@@ -35,22 +35,20 @@
 ===========================================================
 """
 
-
 import requests
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from Telegram_Alert import send_telegram_message
-from ADX_Calculater import calculate_adx   
 
 # =====================
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-ema_periods = [9, 200]
+ema_periods = [9, 50]
 resolution = "60"  # 1-hour candles
 limit_hours = 1000
-Adx_Limit = 20
+
 # ---------------------
 # Fetch active USDT coins
 def get_active_usdt_coins():
@@ -132,25 +130,6 @@ def main():
     filtered_gainers = []
     filtered_losers = []
 
-
-    # Check if ADX meets your relaxed pattern
-    def is_adx_pattern(adx_series):
-        if len(adx_series) < 4:
-            return False
-        # last closed candle
-        last = adx_series.iloc[-2]  # current -1
-        if last <= Adx_Limit:
-            return False
-
-        # previous 3 candles
-        prev3 = adx_series.iloc[-5:-2].tolist()  # current -2, -3, -4
-
-        # relaxed ascending: if any previous candle < last
-        for val in prev3:
-            if val < last:
-                return True
-        return False
-
     def check_gainer(pair):
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
@@ -158,13 +137,8 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed above EMA100
-        if prev2["EMA_9"] <= prev2["EMA_200"] and prev1["EMA_9"] > prev1["EMA_200"]:
-        # Compute ADX
-            adx_series = calculate_adx(df_c["high"], df_c["low"], df_c["close"],28)
-            if is_adx_pattern(adx_series):
-                last_close = prev1["close"]
-                last_adx = adx_series.iloc[-2]
-                return {"pair": pair, "close": last_close, "adx": round(last_adx, 2)}
+        if prev2["EMA_9"] <= prev2["EMA_50"] and prev1["EMA_9"] > prev1["EMA_50"]:
+            return pair
         return None
 
     def check_loser(pair):
@@ -174,13 +148,8 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed below EMA100
-        if prev2["EMA_9"] >= prev2["EMA_200"] and prev1["EMA_9"] < prev1["EMA_200"]:
-         # Compute ADX
-            adx_series = calculate_adx(df_c["high"], df_c["low"], df_c["close"],28)
-            if is_adx_pattern(adx_series):
-                last_close = prev1["close"]
-                last_adx = adx_series.iloc[-2]  
-                return {"pair": pair, "close": last_close, "adx": round(last_adx, 2)}
+        if prev2["EMA_9"] >= prev2["EMA_50"] and prev1["EMA_9"] < prev1["EMA_50"]:
+            return pair
         return None
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
@@ -191,18 +160,15 @@ def main():
 
     # Step 4: Print & Telegram alerts
     if filtered_gainers:
-        msg = "🟢 Gainers (EMA14 crossed above EMA200 + ADX pattern):\n"
-        for item in filtered_gainers:
-            msg += f"{item['pair']} | Close: {item['close']} | ADX: {item['adx']}\n"
-        # print(msg)
+        msg = "🟢 Gainers (EMA15 crossed above EMA60 on prev candle):\n" + "\n".join(filtered_gainers)
+        print(msg)
         send_telegram_message(msg)
 
     if filtered_losers:
-        msg = "🔴 Losers (EMA14 crossed below EMA200 + ADX pattern):\n"
-        for item in filtered_losers:
-             msg += f"{item['pair']} | Close: {item['close']} | ADX: {item['adx']}\n"
-        # print(msg)
+        msg = "🔴 Losers (EMA15 crossed below EMA60 on prev candle):\n" + "\n".join(filtered_losers)
+        print(msg)
         send_telegram_message(msg)
 
 if __name__ == "__main__":
     main()
+
