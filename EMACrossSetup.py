@@ -181,8 +181,8 @@ def main():
         print("⚠ No stats data received!")
         return
 
-    top_gainers = df.sort_values("change", ascending=False).head(20)["pair"].tolist()
-    top_losers = df.sort_values("change", ascending=True).head(20)["pair"].tolist()
+    top_gainers = df.sort_values("change", ascending=False).head(15)["pair"].tolist()
+    top_losers = df.sort_values("change", ascending=True).head(15)["pair"].tolist()
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         gainers = [f.result() for f in as_completed([executor.submit(check_gainer, p) for p in top_gainers]) if f.result()]
