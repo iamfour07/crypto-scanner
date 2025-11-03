@@ -1,11 +1,9 @@
 [
-  "B-ICP_USDT",
   "B-ARC_USDT",
-  "B-MINA_USDT",
-  "B-SCR_USDT",
-  "B-ALT_USDT",
+  "B-ICP_USDT",
   "B-ZK_USDT",
-  "B-0G_USDT",
   "B-DASH_USDT",
-  "B-ASTER_USDT"
+  "B-0G_USDT",
+  "B-MINA_USDT",
+  "B-SCR_USDT"
 ]
