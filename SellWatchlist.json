@@ -1,15 +1,16 @@
 [
-  "B-ZEC_USDT",
-  "B-SCRT_USDT",
   "B-BICO_USDT",
-  "B-ZEN_USDT",
-  "B-ARC_USDT",
-  "B-ZK_USDT",
-  "B-SOLV_USDT",
-  "B-DUSK_USDT",
+  "B-ALPINE_USDT",
+  "B-ZEC_USDT",
   "B-DASH_USDT",
+  "B-ALCH_USDT",
+  "B-ARC_USDT",
+  "B-AR_USDT",
   "B-ZEREBRO_USDT",
-  "B-MINA_USDT",
+  "B-SCRT_USDT",
+  "B-DUSK_USDT",
   "B-ICP_USDT",
-  "B-AR_USDT"
+  "B-ZEN_USDT",
+  "B-MINA_USDT",
+  "B-ZK_USDT"
 ]
