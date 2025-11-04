@@ -1,16 +1,16 @@
 [
-  "B-ZEREBRO_USDT",
-  "B-ALCH_USDT",
-  "B-BICO_USDT",
-  "B-ALPINE_USDT",
-  "B-AR_USDT",
-  "B-ICP_USDT",
   "B-MINA_USDT",
-  "B-SCRT_USDT",
+  "B-BICO_USDT",
+  "B-AR_USDT",
+  "B-ALPINE_USDT",
+  "B-ALCH_USDT",
+  "B-ZEREBRO_USDT",
   "B-DASH_USDT",
   "B-ZEC_USDT",
   "B-DUSK_USDT",
   "B-ZEN_USDT",
   "B-ARC_USDT",
-  "B-ZK_USDT"
+  "B-SCRT_USDT",
+  "B-ZK_USDT",
+  "B-ICP_USDT"
 ]
