@@ -1,13 +1,13 @@
 [
-  "B-ZEREBRO_USDT",
-  "B-ZK_USDT",
-  "B-SCRT_USDT",
-  "B-ARC_USDT",
-  "B-SOLV_USDT",
   "B-0G_USDT",
   "B-ICP_USDT",
-  "B-DUSK_USDT",
-  "B-ZEC_USDT",
   "B-ZEN_USDT",
-  "B-DASH_USDT"
+  "B-ZEREBRO_USDT",
+  "B-DASH_USDT",
+  "B-DUSK_USDT",
+  "B-ARC_USDT",
+  "B-ZK_USDT",
+  "B-SOLV_USDT",
+  "B-ZEC_USDT",
+  "B-SCRT_USDT"
 ]
