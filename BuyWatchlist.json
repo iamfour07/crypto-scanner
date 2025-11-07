@@ -1,12 +1,12 @@
 [
-  "B-HMSTR_USDT",
   "B-SPX_USDT",
-  "B-AI16Z_USDT",
-  "B-NIL_USDT",
-  "B-MITO_USDT",
   "B-ZK_USDT",
+  "B-AI16Z_USDT",
+  "B-MITO_USDT",
+  "B-NIL_USDT",
   "B-DASH_USDT",
+  "B-ZEN_USDT",
   "B-FARTCOIN_USDT",
-  "B-ALT_USDT",
-  "B-ZEN_USDT"
+  "B-HMSTR_USDT",
+  "B-ALT_USDT"
 ]
