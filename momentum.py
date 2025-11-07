@@ -45,7 +45,7 @@ from Telegram_Alert import send_telegram_message
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-ema_periods = [9, 50]
+ema_periods = [9, 100]
 resolution = "60"  # 1-hour candles
 limit_hours = 1000
 
