@@ -148,7 +148,7 @@ def main():
         prev2 = df_c.iloc[-3]  # candle before previous
         prev1 = df_c.iloc[-2]  # previous candle
         # Just crossed below EMA100
-        if prev2["EMA_9"] >= prev2["EMA_50"] and prev1["EMA_9"] < prev1["EMA_100"]:
+        if prev2["EMA_9"] >= prev2["EMA_100"] and prev1["EMA_9"] < prev1["EMA_100"]:
             return pair
         return None
 
