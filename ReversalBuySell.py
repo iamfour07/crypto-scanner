@@ -14,13 +14,20 @@ MAX_WORKERS = 15
 upperLimit = 20     # For reversal short
 lowerLimit = -20    # For reversal long
 
-# 🔥 Define EMA periods only here
+# 🔥 EMA periods
 EMA_FAST = 9
 EMA_SLOW = 30
 ema_periods = [EMA_FAST, EMA_SLOW]
 
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
+
+# =====================
+# TOGGLE OPTIONS
+# =====================
+ENABLE_BUY = False   # ✅ Set to True to enable BUY logic
+ENABLE_SELL = True   # ✅ Set to True to enable SELL logic
+# =====================
 
 
 # ---------------------
@@ -155,18 +162,26 @@ def main():
             return pair
         return None
 
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        buy_signals  = [f.result() for f in as_completed([executor.submit(check_buy, p) for p in buy_watch]) if f.result()]
-        sell_signals = [f.result() for f in as_completed([executor.submit(check_sell, p) for p in sell_watch]) if f.result()]
+    buy_signals, sell_signals = [], []
+
+    # Run BUY logic only if enabled
+    if ENABLE_BUY:
+        with ThreadPoolExecutor(MAX_WORKERS) as executor:
+            buy_signals = [f.result() for f in as_completed([executor.submit(check_buy, p) for p in buy_watch]) if f.result()]
+
+    # Run SELL logic only if enabled
+    if ENABLE_SELL:
+        with ThreadPoolExecutor(MAX_WORKERS) as executor:
+            sell_signals = [f.result() for f in as_completed([executor.submit(check_sell, p) for p in sell_watch]) if f.result()]
 
     # ------------------------------
     # ✅ ALERTS + REMOVE alert fired coins from watchlist
     # ------------------------------
-    if buy_signals:
+    if ENABLE_BUY and buy_signals:
         send_telegram_message("🟢 Buy (9 CROSS 30) Signals:\n" + "\n".join(buy_signals))
         buy_watch = [p for p in buy_watch if p not in buy_signals]
 
-    if sell_signals:
+    if ENABLE_SELL and sell_signals:
         send_telegram_message("🔴 Sell (9 CROSS 30) Signals:\n" + "\n".join(sell_signals))
         sell_watch = [p for p in sell_watch if p not in sell_signals]
 
