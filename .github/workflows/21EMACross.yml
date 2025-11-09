@@ -1,4 +1,4 @@
-name: Hourly 21 EMA Scanner
+name: Hourly Scanner
 
 on:
   # schedule:
