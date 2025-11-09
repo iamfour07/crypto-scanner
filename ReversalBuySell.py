@@ -163,11 +163,11 @@ def main():
     # ✅ ALERTS + REMOVE alert fired coins from watchlist
     # ------------------------------
     if buy_signals:
-        send_telegram_message("🟢 Buy Signals:\n" + "\n".join(buy_signals))
+        send_telegram_message("🟢 Buy (9 CROSS 30) Signals:\n" + "\n".join(buy_signals))
         buy_watch = [p for p in buy_watch if p not in buy_signals]
 
     if sell_signals:
-        send_telegram_message("🔴 Sell Signals:\n" + "\n".join(sell_signals))
+        send_telegram_message("🔴 Sell (9 CROSS 30) Signals:\n" + "\n".join(sell_signals))
         sell_watch = [p for p in sell_watch if p not in sell_signals]
 
     # Save updated lists
