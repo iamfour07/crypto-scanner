@@ -1,185 +1,220 @@
 import requests
 import pandas as pd
-from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import html
+from datetime import datetime, timezone, timedelta
 from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
-from ADX_Calculater import calculate_adx   
 
-# =========================
-# CONFIGURATION
-# =========================
-resolution = "15m"
-limit_hours = 1000
-IST = timezone(timedelta(hours=5, minutes=30))
+# =====================
+# CONFIG
+# =====================
+MAX_WORKERS = 15
+resolution = "60"  # 1-hour candles
+limit_hours = 1000  # Enough history for prev day calculation
 
-EMA = 21
-USE_RSI = True
-USE_ADX = True      # ✅ Toggle ADX filter
-RSI_PERIOD = 21
-RSI_THRESHOLD_BULL = 50
-RSI_THRESHOLD_BEAR = 50
-ADX_PERIOD = 14
-ADX_THRESHOLD = 20  # ✅ Minimum ADX to confirm trend strength
+RISK_PER_TRADE = 200  # ₹500 fixed risk per trade
 
-CoinList = ['BTCUSD', "ETHUSD", 'SOLUSD', "XRPUSD", "BNBUSD", "DOGEUSD",
-            'TRXUSD', "LINKUSD", "SUIUSD", "LTCUSD", "ASTERUSD"]
+# ---------------------
+def get_active_usdt_coins():
+    url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
-# =========================
-# RSI CALCULATION
-# =========================
-def calculate_rsi(close_prices, period=21):
-    delta = close_prices.diff()
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
-    avg_gain = gain.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
-
-# =========================
-# FETCH & PROCESS ONE COIN
-# =========================
-def fetch_coin_data(symbol):
-    now = int(datetime.now(timezone.utc).timestamp())
-    from_time = now - limit_hours * 3600
-
-    url = "https://api.india.delta.exchange/v2/history/candles"
-    headers = {"Accept": "application/json"}
-    params = {
-        "resolution": resolution,
-        "symbol": symbol,
-        "start": str(from_time),
-        "end": str(now)
-    }
-
+def fetch_pair_stats(pair):
     try:
-        resp = requests.get(url, params=params, headers=headers, timeout=30)
+        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
+        resp = requests.get(url, timeout=10)
         resp.raise_for_status()
-        payload = resp.json()
+        data = resp.json()
+        pc = data.get("price_change_percent", {}).get("1D")
+        if pc is None:
+            return None
+        return {"pair": pair, "change": float(pc)}
     except Exception as e:
-        print(f"⚠️ {symbol}: Delta API request failed: {e}")
+        # keep debug info
+        print(f"[stats] {pair} error: {e}")
         return None
 
-    candles = payload.get("result", [])
-    if not candles or all(c['close'] == 0 for c in candles):
-        print(f"⚠️ {symbol}: No usable candles returned by Delta")
+def fetch_candles(pair):
+    try:
+        now = int(datetime.now(timezone.utc).timestamp())
+        from_time = now - limit_hours * 3600
+        url = "https://public.coindcx.com/market_data/candlesticks"
+        params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+        if not data or len(data) < 10:
+            return None
+        df = pd.DataFrame(data)
+        df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True)
+        for col in ["open", "high", "low", "close"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df
+    except Exception as e:
+        print(f"[candles] {pair} error: {e}")
         return None
 
-    df = pd.DataFrame(candles)
-    for col in ["open", "high", "low", "close", "volume"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+def get_prev_day_hl(df):
+    utc_now = datetime.now(timezone.utc)
+    prev_day = (utc_now - timedelta(days=1)).date()
+    prev_rows = df[df["time"].dt.date == prev_day]
+    if prev_rows.empty:
+        return None, None
+    return prev_rows["high"].max(), prev_rows["low"].min()
 
-    df = df.sort_values("time").reset_index(drop=True)
 
-    # EMA21
-    df[f'ema{EMA}'] = df['close'].ewm(span=EMA, adjust=False).mean()
+# ---------------------
+# Gainer: fresh breakout candle (-2 closed > PD High) + pullback candle (-1 is red)
+# Use pullback candle close as ENTRY and pullback low as SL for RR/qty
+def check_gainer(pair):
+    df = fetch_candles(pair)
+    if df is None or len(df) < 6:
+        return None
 
-    # RSI
-    df['rsi'] = calculate_rsi(df['close'], RSI_PERIOD)
+    pd_high, _ = get_prev_day_hl(df)
+    if pd_high is None:
+        return None
 
-    # ADX
-    df['adx'] = calculate_adx(df['high'], df['low'], df['close'], period=ADX_PERIOD)
+    prev3 = df.iloc[-4]
+    prev2 = df.iloc[-3]  # breakout candle (-2)
+    prev1 = df.iloc[-2]  # pullback candle (-1)
 
-    last = df.iloc[-1]   # last closed candle
-    prev5 = df.iloc[-6:-1]  # previous 5 candles
+    breakout = prev2["close"] > pd_high
+    pullback_is_red = prev1["close"] < prev1["open"]
+    no_previous_break = not (prev3["close"] > pd_high)
 
-    bullish = bearish = False
-    last_rsi = round(last['rsi'], 1) if pd.notnull(last['rsi']) else None
-    last_adx = round(last['adx'], 1) if pd.notnull(last['adx']) else None
+    if not (breakout and pullback_is_red and no_previous_break):
+        return None
 
-    # =========================
-    # BUY SETUP
-    # =========================
-    if last['close'] < last['open'] and last['close'] > last[f'ema{EMA}']:
-        if (
-            (not USE_RSI or (last_rsi is not None and last_rsi > RSI_THRESHOLD_BULL)) and
-            (not USE_ADX or (last_adx is not None and last_adx > ADX_THRESHOLD))
-        ):
-            for i in range(len(prev5) - 1):
-                c1 = prev5.iloc[i]
-                c2 = prev5.iloc[i + 1]
-                if c1['close'] < c1[f'ema{EMA}'] and c2['close'] > c2[f'ema{EMA}']:
-                    bullish = True
-                    break
+    entry = float(prev1["close"])
+    sl = float(prev1["low"])
+    risk_per_unit = entry - sl
+    if risk_per_unit <= 0:
+        return None
 
-    # =========================
-    # SELL SETUP
-    # =========================
-    if last['close'] > last['open'] and last['close'] < last[f'ema{EMA}']:
-        if (
-            (not USE_RSI or (last_rsi is not None and last_rsi < RSI_THRESHOLD_BEAR)) and
-            (not USE_ADX or (last_adx is not None and last_adx > ADX_THRESHOLD))
-        ):
-            for i in range(len(prev5) - 1):
-                c1 = prev5.iloc[i]
-                c2 = prev5.iloc[i + 1]
-                if c1['close'] > c1[f'ema{EMA}'] and c2['close'] < c2[f'ema{EMA}']:
-                    bearish = True
-                    break
+    qty = RISK_PER_TRADE / risk_per_unit
+    # targets: 1:2 .. 1:5
+    targets = [entry + risk_per_unit * r for r in (2, 3, 4, 5)]
 
-    # if bullish or bearish:
-    #     print(f"✅ {symbol}: Bullish={bullish}, Bearish={bearish}, Close={last['close']}, RSI={last_rsi}, ADX={last_adx}")
+    # Format message exactly as you requested
+    msg = (
+        f"{pair}-\n"
+        f"Entry Price-{entry:.4f}\n"
+        f"Stop Loss-{sl:.4f}\n"
+        f"Qty-{qty:.4f}\n\n"
+        f"Risk Per trade-₹{RISK_PER_TRADE}\n"
+        f"----------------\n"
+        f"Risk Reward\n"
+        f"1:2- {targets[0]:.4f}\n"
+        f"1:3- {targets[1]:.4f}\n"
+        f"1:4- {targets[2]:.4f}\n"
+        f"1:5- {targets[3]:.4f}\n"
+    )
+    return msg
 
-    return {
-        "pair": symbol,
-        "close": float(last['close']),
-        "volume": float(last['volume']),
-        "bullish": bullish,
-        "bearish": bearish,
-        "rsi": last_rsi,
-        "adx": last_adx
-    }
 
-# =========================
-# MAIN SCANNER
-# =========================
+# ---------------------
+# Loser: fresh breakdown candle (-2 closed < PD Low) + pullback candle (-1 is green)
+# Use pullback candle close as ENTRY and pullback high as SL for RR/qty
+def check_loser(pair):
+    df = fetch_candles(pair)
+    if df is None or len(df) < 6:
+        return None
+
+    _, pd_low = get_prev_day_hl(df)
+    if pd_low is None:
+        return None
+
+    prev3 = df.iloc[-4]
+    prev2 = df.iloc[-3]  # breakdown candle (-2)
+    prev1 = df.iloc[-2]  # pullback candle (-1)
+
+    breakdown = prev2["close"] < pd_low
+    pullback_is_green = prev1["close"] > prev1["open"]
+    no_previous_break = not (prev3["close"] < pd_low)
+
+    if not (breakdown and pullback_is_green and no_previous_break):
+        return None
+
+    entry = float(prev1["close"])
+    sl = float(prev1["high"])
+    risk_per_unit = sl - entry
+    if risk_per_unit <= 0:
+        return None
+
+    qty = RISK_PER_TRADE / risk_per_unit
+    # targets: 1:2 .. 1:5 (downside targets)
+    targets = [entry - risk_per_unit * r for r in (2, 3, 4, 5)]
+
+    msg = (
+        f"{pair}-\n"
+        f"Entry Price-{entry:.4f}\n"
+        f"Stop Loss-{sl:.4f}\n"
+        f"Qty-{qty:.4f}\n\n"
+        f"Risk Per trade-₹{RISK_PER_TRADE}\n"
+        f"----------------\n"
+        f"Risk Reward\n"
+        f"1:2- {targets[0]:.4f}\n"
+        f"1:3- {targets[1]:.4f}\n"
+        f"1:4- {targets[2]:.4f}\n"
+        f"1:5- {targets[3]:.4f}\n"
+       
+    )
+    return msg
+
+
+# -----------------------------------------------------
 def main():
-    bullish, bearish = [], []
+    print("\n📊 Fetching active USDT futures...")
+    pairs = get_active_usdt_coins()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(fetch_coin_data, coin): coin for coin in CoinList}
-        for future in as_completed(futures):
-            try:
-                data = future.result()
-                if not data:
-                    continue
-                if data['bullish']:
-                    bullish.append(data)
-                elif data['bearish']:
-                    bearish.append(data)
-            except Exception as e:
-                print(f"Error processing coin: {e}")
+    changes = []
+    with ThreadPoolExecutor(MAX_WORKERS) as executor:
+        for fut in as_completed([executor.submit(fetch_pair_stats, p) for p in pairs]):
+            res = fut.result()
+            if res:
+                changes.append(res)
 
-    bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)
-    bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
+    df = pd.DataFrame(changes).dropna()
+    if df.empty:
+        print("⚠ No stats data received!")
+        return
 
-    if bullish or bearish:
-        message_lines = [f"📊 21 EMA + RSI + ADX Setup\n"]
+    top_gainers = df.sort_values("change", ascending=False).head(15)["pair"].tolist()
+    top_losers = df.sort_values("change", ascending=True).head(15)["pair"].tolist()
 
-        if bullish:
-            message_lines.append("🟢 Buy Setup (Red Candle Above EMA21 + Bullish Cross + RSI>50 + ADX>20):\n")
-            for res in bullish:
-                pair_safe = html.escape(res['pair'])
-                link = f"https://coindcx.com/futures/{res['pair']}"
-                message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n{link}\n"
-                )
+    with ThreadPoolExecutor(MAX_WORKERS) as executor:
+        gainers = [f.result() for f in as_completed([executor.submit(check_gainer, p) for p in top_gainers]) if f.result()]
+        losers = [f.result() for f in as_completed([executor.submit(check_loser, p) for p in top_losers]) if f.result()]
 
-        if bearish:
-            message_lines.append("\n🔴 Sell Setup (Green Candle Below EMA21 + Bearish Cross + RSI<50 + ADX>20):\n")
-            for res in bearish:
-                pair_safe = html.escape(res['pair'])
-                link = f"https://coindcx.com/futures/{res['pair']}"
-                message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n{link}\n"
-                )
+    # Console print
+    if gainers:
+        print("\n✅ Bullish Pullback Setups:")
+        print(*gainers, sep="\n\n")
+    else:
+        print("\n✅ Bullish Pullback Setups: None")
 
-        message_lines.append("\n===============================")
-        final_message = "\n".join(message_lines)
-        # print(final_message)
-        Telegram_Alert_EMA_Crossover(final_message)
+    if losers:
+        print("\n✅ Bearish Pullback Setups:")
+        print(*losers, sep="\n\n")
+    else:
+        print("\n✅ Bearish Pullback Setups: None")
+
+    # Telegram: send only when any setup exists
+    alerts = []
+    if gainers:
+        alerts.append("📈 Bullish Pullback Setups:\n\n" + "\n\n".join(gainers))
+    if losers:
+        alerts.append("📉 Bearish Pullback Setups:\n\n" + "\n\n".join(losers))
+
+    if alerts:
+        full_msg = "\n\n".join(alerts)
+        print("\n📨 Sending Telegram alert...")
+        Telegram_Alert_EMA_Crossover(full_msg)
+    else:
+        print("\n⏳ No setups found — no Telegram alert sent.")
+
 
 if __name__ == "__main__":
     main()
