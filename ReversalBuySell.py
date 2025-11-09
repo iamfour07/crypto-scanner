@@ -13,7 +13,11 @@ limit_hours = 1000
 MAX_WORKERS = 15
 upperLimit = 20     # For reversal short
 lowerLimit = -20    # For reversal long
-ema_periods = [9, 100]
+
+# 🔥 Define EMA periods only here
+EMA_FAST = 9
+EMA_SLOW = 30
+ema_periods = [EMA_FAST, EMA_SLOW]
 
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
@@ -65,7 +69,7 @@ def fetch_last_n_candles(pair, n=200):
         if len(df) > n:
             df = df.iloc[-n:]
 
-        # Compute EMAs
+        # ✅ Compute EMAs dynamically
         for p in ema_periods:
             df[f"EMA_{p}"] = df["close"].ewm(span=p, adjust=False).mean()
 
@@ -123,57 +127,48 @@ def main():
     sell_watch = list(set(sell_watch + new_sell_candidates))
     buy_watch = list(set(buy_watch + new_buy_candidates))
 
-
-    # ✅ EMA crossover check - BUY (same logic like sell)
+    # ✅ EMA crossover check - BUY
     def check_buy(pair):
         df_c = fetch_last_n_candles(pair)
-        if df_c is None: return None
+        if df_c is None:
+            return None
 
         prev2 = df_c.iloc[-3]
         prev1 = df_c.iloc[-2]
 
-        # ✅ Bullish crossover: EMA9 crosses ABOVE EMA100
-        if prev2["EMA_9"] <= prev2["EMA_100"] and prev1["EMA_9"] > prev1["EMA_100"]:
+        # Bullish crossover: fast EMA crosses ABOVE slow EMA
+        if prev2[f"EMA_{EMA_FAST}"] <= prev2[f"EMA_{EMA_SLOW}"] and prev1[f"EMA_{EMA_FAST}"] > prev1[f"EMA_{EMA_SLOW}"]:
             return pair
-
         return None
-
 
     # ✅ EMA crossover check - SELL
     def check_sell(pair):
         df_c = fetch_last_n_candles(pair)
-        if df_c is None: return None
+        if df_c is None:
+            return None
 
         prev2 = df_c.iloc[-3]
         prev1 = df_c.iloc[-2]
 
-        # ✅ Bearish crossover: EMA9 crosses BELOW EMA100
-        if prev2["EMA_9"] >= prev2["EMA_100"] and prev1["EMA_9"] < prev1["EMA_100"]:
+        # Bearish crossover: fast EMA crosses BELOW slow EMA
+        if prev2[f"EMA_{EMA_FAST}"] >= prev2[f"EMA_{EMA_SLOW}"] and prev1[f"EMA_{EMA_FAST}"] < prev1[f"EMA_{EMA_SLOW}"]:
             return pair
-
         return None
-
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         buy_signals  = [f.result() for f in as_completed([executor.submit(check_buy, p) for p in buy_watch]) if f.result()]
         sell_signals = [f.result() for f in as_completed([executor.submit(check_sell, p) for p in sell_watch]) if f.result()]
 
-
     # ------------------------------
     # ✅ ALERTS + REMOVE alert fired coins from watchlist
     # ------------------------------
     if buy_signals:
-        # print("🟢 Buy Signals:")
-        # print("\n".join(buy_signals))
         send_telegram_message("🟢 Buy Signals:\n" + "\n".join(buy_signals))
         buy_watch = [p for p in buy_watch if p not in buy_signals]
 
     if sell_signals:
-        # print("🔴 Sell Signals:")
-        # print("\n".join(sell_signals))
         send_telegram_message("🔴 Sell Signals:\n" + "\n".join(sell_signals))
         sell_watch = [p for p in sell_watch if p not in sell_signals]
-
 
     # Save updated lists
     save_watchlist(buy_watch, sell_watch)
