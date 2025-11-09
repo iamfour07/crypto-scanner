@@ -160,12 +160,12 @@ def main():
 
     # Step 4: Print & Telegram alerts
     if filtered_gainers:
-        msg = "🟢 Gainers (EMA15 crossed above EMA60 on prev candle):\n" + "\n".join(filtered_gainers)
+        msg = "🟢 Gainers (EMA 9 crossed above EMA 30 on prev candle):\n" + "\n".join(filtered_gainers)
         print(msg)
         send_telegram_message(msg)
 
     if filtered_losers:
-        msg = "🔴 Losers (EMA15 crossed below EMA60 on prev candle):\n" + "\n".join(filtered_losers)
+        msg = "🔴 Losers (EMA 9  crossed below EMA 30 on prev candle):\n" + "\n".join(filtered_losers)
         print(msg)
         send_telegram_message(msg)
 
