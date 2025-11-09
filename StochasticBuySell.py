@@ -19,7 +19,7 @@ import requests
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from Telegram_Alert import send_telegram_message
+from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
 
 # =====================
 # CONFIG
@@ -179,11 +179,11 @@ def main():
     if buy_signals:
         msg = "🟢 *BUY Signals (Top Gainers)* — %K cross above %D below 20:\n" + "\n".join(buy_signals)
         print(msg)
-        send_telegram_message(msg)
+        Telegram_Alert_EMA_Crossover(msg)
 
     if sell_signals:
         msg = "🔴 *SELL Signals (Top Losers)* — %K cross below %D above 80:\n" + "\n".join(sell_signals)
-        send_telegram_message(msg)
+        Telegram_Alert_EMA_Crossover(msg)
 
 if __name__ == "__main__":
     main()
