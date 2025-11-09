@@ -28,7 +28,7 @@ jobs:
         pip install pandas requests
 
     - name: Run Scanner
-      run: python SupertrendMomentum.py
+      run: python StochasticBuySell.py
       env:
         TELEGRAM_BOT_TOKEN_21_EMA: ${{ secrets.TELEGRAM_BOT_TOKEN_21_EMA }}
         TELEGRAM_CHAT_ID_21_EMA: ${{ secrets.TELEGRAM_CHAT_ID_21_EMA }}
