@@ -1,25 +1,42 @@
+"""
+===========================================================
+📊 COINDCX STOCHASTIC OSCILLATOR SCANNER (1-Hour Timeframe)
+===========================================================
+
+🔹 PURPOSE:
+    - Get Top 10 Gainers & Top 10 Losers (based on 1D change)
+    - On gainers: detect BUY signal (%K cross above %D below 20)
+    - On losers: detect SELL signal (%K cross below %D above 80)
+    - Send Telegram alerts for signals.
+
+🔹 INDICATOR:
+    Stochastic Oscillator (21, 5, 5)
+
+===========================================================
+"""
+
 import requests
 import pandas as pd
-from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import html
-from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
+from datetime import datetime, timezone
+from Telegram_Alert import send_telegram_message
 
-# =========================
-# CONFIGURATION
-# =========================
-resolution = "60"   # 1-hour candles
-limit_hours = 1000  # fetch 1000 hours history
-IST = timezone(timedelta(hours=5, minutes=30))
+# =====================
+# CONFIG
+# =====================
+MAX_WORKERS = 15
+resolution = "60"  # 1-hour candles
+limit_hours = 1000
 
-# Stochastic settings
+# Stochastic configuration
 STOCH_PERIOD = 21
 STOCH_K_SMOOTH = 5
 STOCH_D_SMOOTH = 5
 
-# =========================
-# FETCH ACTIVE COINS
-# =========================
+
+# =====================
+# Fetch active USDT coins
+# =====================
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     try:
@@ -27,132 +44,146 @@ def get_active_usdt_coins():
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        print(f"Error fetching coins: {e}")
+        print(f"[ERROR] Unable to fetch active pairs: {e}")
         return []
 
-CoinList = get_active_usdt_coins()
 
-# =========================
-# INDICATOR: STOCHASTIC OSCILLATOR
-# =========================
-def calculate_stochastic(df, k_period=14, k_smooth=3, d_smooth=3):
-    low_min = df['low'].rolling(window=k_period).min()
-    high_max = df['high'].rolling(window=k_period).max()
-
-    df['%K'] = 100 * (df['close'] - low_min) / (high_max - low_min)
-    df['%K'] = df['%K'].rolling(window=k_smooth).mean()
-    df['%D'] = df['%K'].rolling(window=d_smooth).mean()
-    return df
-
-# =========================
-# FETCH & PROCESS ONE COIN
-# =========================
-def fetch_coin_data(pair):
-    now = int(datetime.now(timezone.utc).timestamp())
-    from_time = now - limit_hours * 3600
-
-    url = "https://public.coindcx.com/market_data/candlesticks"
-    params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
-
-    resp = requests.get(url, params=params, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()['data']
-
-    df = pd.DataFrame(data)
-    df['close'] = df['close'].astype(float)
-    df['open'] = df['open'].astype(float)
-    df['high'] = df['high'].astype(float)
-    df['low'] = df['low'].astype(float)
-    df['volume'] = df['volume'].astype(float)
-
-    df = calculate_stochastic(df, STOCH_PERIOD, STOCH_K_SMOOTH, STOCH_D_SMOOTH)
-
-    # Use last CLOSED candle (not running one)
-    last = df.iloc[-2]
-    prev = df.iloc[-3]
-
-    last_k, last_d = last['%K'], last['%D']
-    prev_k, prev_d = prev['%K'], prev['%D']
-
-    # ✅ Latest candle crossover only
-    buy_signal = (
-        prev_k < prev_d and last_k > last_d and
-        last_k < 20 and last_d < 20
-    )
-
-    sell_signal = (
-        prev_k > prev_d and last_k < last_d and
-        last_k > 80 and last_d > 80
-    )
-
-    # Skip if Stochastic not valid (NaN due to rolling window)
-    if pd.isna(last_k) or pd.isna(last_d):
+# =====================
+# Fetch 1D % change
+# =====================
+def fetch_pair_stats(pair):
+    try:
+        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        pc = data.get("price_change_percent", {}).get("1D")
+        if pc is None:
+            return None
+        return {"pair": pair, "change": float(pc)}
+    except Exception as e:
+        print(f"[STATS ERROR] {pair}: {e}")
         return None
 
-    return {
-        "pair": pair,
-        "close": last['close'],
-        "%K": round(last_k, 2),
-        "%D": round(last_d, 2),
-        "volume": last['volume'],
-        "buy_signal": buy_signal,
-        "sell_signal": sell_signal,
-    }
 
-# =========================
-# MAIN SCANNER
-# =========================
+# =====================
+# Fetch last n candles + Stochastic Oscillator
+# =====================
+def fetch_last_n_candles(pair, n=200):
+    try:
+        now = int(datetime.now(timezone.utc).timestamp())
+        from_time = now - limit_hours * 3600
+        url = "https://public.coindcx.com/market_data/candlesticks"
+        params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+        if not data or len(data) < STOCH_PERIOD + 5:
+            return None
+
+        df = pd.DataFrame(data)
+        for col in ["open", "high", "low", "close"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        # Compute Stochastic Oscillator
+        low_min = df["low"].rolling(window=STOCH_PERIOD).min()
+        high_max = df["high"].rolling(window=STOCH_PERIOD).max()
+        df["%K"] = 100 * (df["close"] - low_min) / (high_max - low_min)
+        df["%K"] = df["%K"].rolling(window=STOCH_K_SMOOTH).mean()
+        df["%D"] = df["%K"].rolling(window=STOCH_D_SMOOTH).mean()
+        df = df.dropna().reset_index(drop=True)
+
+        if len(df) < 3:
+            return None
+        return df
+
+    except Exception as e:
+        print(f"[CANDLES ERROR] {pair}: {e}")
+        return None
+
+
+# =====================
+# MAIN LOGIC
+# =====================
 def main():
-    bullish, bearish = [], []
+    print("🚀 Fetching active USDT pairs...")
+    pairs = get_active_usdt_coins()
+    if not pairs:
+        print("❌ No pairs found.")
+        return
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(fetch_coin_data, coin): coin for coin in CoinList}
-        for future in as_completed(futures):
-            try:
-                data = future.result()
-                if not data:
-                    continue
-                if data['buy_signal']:
-                    bullish.append(data)
-                elif data['sell_signal']:
-                    bearish.append(data)
-            except Exception as e:
-                print(f"Error processing coin: {e}")
+    # Step 1: Get % change data
+    changes = []
+    with ThreadPoolExecutor(MAX_WORKERS) as executor:
+        futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
+        for fut in as_completed(futures):
+            res = fut.result()
+            if res:
+                changes.append(res)
 
-    bullish = sorted(bullish, key=lambda x: x['volume'], reverse=True)
-    bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
+    df = pd.DataFrame(changes).dropna()
+    if df.empty:
+        print("⚠️ No stats data available.")
+        return
 
-    # =========================
-    # TELEGRAM MESSAGE
-    # =========================
-    if bullish or bearish:
-        message_lines = [f"📊 Latest Stochastic Oscillator (14,3,3) Signal — {resolution}\n"]
+    # Step 2: Identify Top 10 gainers & losers
+    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
+    top_losers  = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
 
-        if bullish:
-            message_lines.append("🟢 **BUY Signal (%K cross above %D below 20)**\n")
-            for res in bullish:
-                pair_safe = html.escape(res['pair'])
-                link = f"https://coindcx.com/futures/{res['pair']}"
-                message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\n%K: {res['%K']}\n%D: {res['%D']}\n"
-                    f"Volume: {res['volume']}\n{link}\n"
-                )
+    # Step 3: Define signal checkers
+    def check_buy_signal(pair):
+        df_c = fetch_last_n_candles(pair)
+        if df_c is None:
+            return None
 
-        if bearish:
-            message_lines.append("\n🔴 **SELL Signal (%K cross below %D above 80)**\n")
-            for res in bearish:
-                pair_safe = html.escape(res['pair'])
-                link = f"https://coindcx.com/futures/{res['pair']}"
-                message_lines.append(
-                    f"{pair_safe}\nClose: {res['close']}\n%K: {res['%K']}\n%D: {res['%D']}\n"
-                    f"Volume: {res['volume']}\n{link}\n"
-                )
+        prev2 = df_c.iloc[-3]
+        prev1 = df_c.iloc[-2]
 
-        message_lines.append("\n===============================")
-        final_message = "\n".join(message_lines)
-        # print(final_message)
-        Telegram_Alert_EMA_Crossover(final_message)
-   
+        # 🟢 Bullish crossover: %K crosses above %D below 20
+        if (
+            prev2["%K"] < prev2["%D"]
+            and prev1["%K"] > prev1["%D"]
+            and prev1["%K"] < 20
+            and prev1["%D"] < 20
+        ):
+            return pair
+        return None
+
+    def check_sell_signal(pair):
+        df_c = fetch_last_n_candles(pair)
+        if df_c is None:
+            return None
+
+        prev2 = df_c.iloc[-3]
+        prev1 = df_c.iloc[-2]
+
+        # 🔴 Bearish crossover: %K crosses below %D above 80
+        if (
+            prev2["%K"] > prev2["%D"]
+            and prev1["%K"] < prev1["%D"]
+            and prev1["%K"] > 80
+            and prev1["%D"] > 80
+        ):
+            return pair
+        return None
+
+    # Step 4: Run checks in parallel
+    with ThreadPoolExecutor(MAX_WORKERS) as executor:
+        buy_futures = [executor.submit(check_buy_signal, p) for p in top_gainers]
+        sell_futures = [executor.submit(check_sell_signal, p) for p in top_losers]
+
+        buy_signals = [f.result() for f in as_completed(buy_futures) if f.result()]
+        sell_signals = [f.result() for f in as_completed(sell_futures) if f.result()]
+
+    # Step 5: Send Telegram Alerts
+    if buy_signals:
+        msg = "🟢 *BUY Signals (Top Gainers)* — %K cross above %D below 20:\n" + "\n".join(buy_signals)
+        print(msg)
+        send_telegram_message(msg)
+
+    if sell_signals:
+        msg = "🔴 *SELL Signals (Top Losers)* — %K cross below %D above 80:\n" + "\n".join(sell_signals)
+        send_telegram_message(msg)
 
 if __name__ == "__main__":
     main()
