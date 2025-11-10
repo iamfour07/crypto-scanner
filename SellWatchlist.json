@@ -1,14 +1,14 @@
 [
-  "B-COTI_USDT",
-  "B-PUMP_USDT",
-  "B-MYRO_USDT",
-  "B-KAVA_USDT",
-  "B-ACT_USDT",
   "B-STRK_USDT",
-  "B-ALCH_USDT",
   "B-WLFI_USDT",
-  "B-MELANIA_USDT",
+  "B-KAVA_USDT",
+  "B-PUMP_USDT",
   "B-EDEN_USDT",
-  "B-FET_USDT",
-  "B-TREE_USDT"
+  "B-ACT_USDT",
+  "B-MYRO_USDT",
+  "B-TREE_USDT",
+  "B-MELANIA_USDT",
+  "B-COTI_USDT",
+  "B-ALCH_USDT",
+  "B-FET_USDT"
 ]
