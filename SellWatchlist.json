@@ -1,13 +1,14 @@
 [
-  "B-WLFI_USDT",
-  "B-RESOLV_USDT",
-  "B-PUMP_USDT",
-  "B-COTI_USDT",
-  "B-ALCH_USDT",
-  "B-FORM_USDT",
   "B-TOWNS_USDT",
-  "B-STRK_USDT",
   "B-KAVA_USDT",
   "B-EDEN_USDT",
+  "B-PUMP_USDT",
+  "B-WLFI_USDT",
+  "B-FORM_USDT",
+  "B-ACT_USDT",
+  "B-ALCH_USDT",
+  "B-STRK_USDT",
+  "B-COTI_USDT",
+  "B-RESOLV_USDT",
   "B-ZEC_USDT"
 ]
