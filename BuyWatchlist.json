@@ -1,16 +1,16 @@
 [
-  "B-DUSK_USDT",
-  "B-AI16Z_USDT",
-  "B-MINA_USDT",
-  "B-1000RATS_USDT",
-  "B-TOWNS_USDT",
-  "B-ORDI_USDT",
   "B-RESOLV_USDT",
-  "B-SWELL_USDT",
-  "B-FET_USDT",
-  "B-ACT_USDT",
-  "B-FIL_USDT",
-  "B-FLUX_USDT",
   "B-SCRT_USDT",
-  "B-AR_USDT"
+  "B-AI16Z_USDT",
+  "B-TOWNS_USDT",
+  "B-FIL_USDT",
+  "B-AR_USDT",
+  "B-FET_USDT",
+  "B-MINA_USDT",
+  "B-FLUX_USDT",
+  "B-1000RATS_USDT",
+  "B-ORDI_USDT",
+  "B-ACT_USDT",
+  "B-SWELL_USDT",
+  "B-DUSK_USDT"
 ]

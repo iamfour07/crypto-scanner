@@ -1,13 +1,13 @@
 [
-  "B-ALCH_USDT",
   "B-EDEN_USDT",
-  "B-TREE_USDT",
-  "B-STRK_USDT",
-  "B-MELANIA_USDT",
-  "B-ACT_USDT",
-  "B-FET_USDT",
   "B-PUMP_USDT",
   "B-WLFI_USDT",
+  "B-ALCH_USDT",
+  "B-TREE_USDT",
+  "B-FET_USDT",
   "B-TRUMP_USDT",
-  "B-COTI_USDT"
+  "B-COTI_USDT",
+  "B-STRK_USDT",
+  "B-MELANIA_USDT",
+  "B-ACT_USDT"
 ]
