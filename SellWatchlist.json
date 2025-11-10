@@ -1,10 +1,12 @@
 [
-  "B-FORM_USDT",
   "B-PUMP_USDT",
-  "B-COTI_USDT",
-  "B-KAVA_USDT",
   "B-EDEN_USDT",
+  "B-STRK_USDT",
   "B-TOWNS_USDT",
+  "B-FORM_USDT",
+  "B-KAVA_USDT",
+  "B-ZEC_USDT",
+  "B-RESOLV_USDT",
   "B-ALCH_USDT",
-  "B-RESOLV_USDT"
+  "B-COTI_USDT"
 ]
