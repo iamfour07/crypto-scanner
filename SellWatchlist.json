@@ -1,11 +1,11 @@
 [
-  "B-FLUX_USDT",
   "B-LSK_USDT",
-  "B-RESOLV_USDT",
-  "B-FET_USDT",
   "B-UNI_USDT",
-  "B-WLFI_USDT",
-  "B-ALCH_USDT",
   "B-VELODROME_USDT",
-  "B-PUMP_USDT"
+  "B-WLFI_USDT",
+  "B-FLUX_USDT",
+  "B-FET_USDT",
+  "B-RESOLV_USDT",
+  "B-PUMP_USDT",
+  "B-ALCH_USDT"
 ]
