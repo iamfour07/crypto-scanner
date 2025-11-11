@@ -33,10 +33,3 @@ jobs:
         TELEGRAM_BOT_TOKEN_21_EMA: ${{ secrets.TELEGRAM_BOT_TOKEN_21_EMA }}
         TELEGRAM_CHAT_ID_21_EMA: ${{ secrets.TELEGRAM_CHAT_ID_21_EMA }}
 
-    - name: Commit Watchlist Updates
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add buy_watchlist.json sell_watchlist.json Supertrend_buy_watchlist.json Supertrend_sell_watchlist.json|| true
-        git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"
-        git push
