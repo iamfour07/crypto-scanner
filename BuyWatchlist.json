@@ -1,11 +1,13 @@
 [
-  "B-MYRO_USDT",
-  "B-SNX_USDT",
   "B-VVV_USDT",
-  "B-PLUME_USDT",
-  "B-ZEREBRO_USDT",
-  "B-PERP_USDT",
   "B-JTO_USDT",
+  "B-FLM_USDT",
+  "B-EDU_USDT",
+  "B-PLUME_USDT",
+  "B-HEMI_USDT",
+  "B-MYRO_USDT",
+  "B-PERP_USDT",
+  "B-SNX_USDT",
   "B-BAN_USDT",
-  "B-FLM_USDT"
+  "B-ZEREBRO_USDT"
 ]
