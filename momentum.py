@@ -1,31 +1,26 @@
 """
 ===========================================================
-📊 COINDCX EMA CROSSOVER SCANNER (1-Hour Timeframe)
+📊 COINDCX HEIKIN-ASHI REVERSAL SCANNER (1-Hour Timeframe)
 ===========================================================
 
 🔹 PURPOSE:
-    Detect bullish and bearish EMA crossovers among top
-    USDT futures coins on Coindcx and send Telegram alerts.
+    Detect bullish and bearish Heikin-Ashi reversal patterns
+    among top USDT futures coins on CoinDCX and send Telegram alerts.
 
-🔹 WORKFLOW (Step-by-Step Summary):
-    1. Fetch all active USDT futures pairs from Coindcx API.
-    2. Get each pair's 1-day percentage change using stats API.
-    3. Identify top 10 gainers and top 10 losers.
-    4. For these pairs, fetch recent 1-hour candle data.
-    5. Compute EMA(FAST) and EMA(SLOW) from closing prices.
-    6. Check for crossover patterns:
-        - Bullish → EMA_FAST crossed above EMA_SLOW on previous candle.
-        - Bearish → EMA_FAST crossed below EMA_SLOW on previous candle.
-    7. Send formatted alerts on Telegram.
+🔹 LOGIC:
+    Gainers → (-2 red, -1 green) both above EMA20 & EMA50 → Bullish reversal
+    Losers  → (-2 green, -1 red) both below EMA20 & EMA50 → Bearish reversal
+
+🔹 EXTRA:
+    Alert shows last two Heikin-Ashi Close prices with candle timestamp (IST)
 ===========================================================
 """
 
 import requests
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from Telegram_Alert import send_telegram_message
-from ADX_Calculater import calculate_adx   
 
 # =====================
 # CONFIG
@@ -34,20 +29,24 @@ MAX_WORKERS = 15
 resolution = "60"  # 1-hour candles
 limit_hours = 1000
 
-# ✅ Centralized EMA configuration
-EMA_FAST = 9
-EMA_SLOW = 100
-ema_periods = [EMA_FAST, EMA_SLOW]
+EMA_20 = 20
+EMA_50 = 50
+ema_periods = [EMA_20, EMA_50]
+
+# IST timezone offset (+5:30)
+IST_OFFSET = timedelta(hours=5, minutes=30)
+
 
 # ---------------------
-# Fetch active USDT coins
+# Fetch active USDT futures pairs
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     return resp.json()
 
-# Fetch 1D% change
+
+# Fetch 1D % change
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
@@ -62,8 +61,10 @@ def fetch_pair_stats(pair):
         print(f"[stats] {pair} error: {e}")
         return None
 
-# Fetch last n candles and compute EMAs
-def fetch_last_n_candles(pair, n=200):
+
+# ---------------------
+# Fetch candle data and compute Heikin-Ashi + EMAs
+def fetch_last_n_candles(pair, n=1000):
     try:
         now = int(datetime.now(timezone.utc).timestamp())
         from_time = now - limit_hours * 3600
@@ -76,35 +77,41 @@ def fetch_last_n_candles(pair, n=200):
             return None
 
         df = pd.DataFrame(data)
+        for col in ["open", "high", "low", "close"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        # Ensure numeric
-        for col in ["open", "high", "low", "close", "volume"]:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce")
+        df = df.tail(n).copy()
 
-        # Use last n rows
-        if len(df) > n:
-            df = df.iloc[-n:].copy()
+        # Compute EMAs
+        df[f"EMA_{EMA_20}"] = df["close"].ewm(span=EMA_20, adjust=False).mean()
+        df[f"EMA_{EMA_50}"] = df["close"].ewm(span=EMA_50, adjust=False).mean()
 
-        # ✅ Compute EMAs dynamically
-        for p in ema_periods:
-            df[f"EMA_{p}"] = df["close"].ewm(span=p, adjust=False).mean()
+        # Compute Heikin-Ashi candles
+        ha_df = pd.DataFrame()
+        ha_df["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
+        ha_df["HA_Open"] = 0.0
+        ha_df.loc[0, "HA_Open"] = (df.loc[0, "open"] + df.loc[0, "close"]) / 2
 
-        df = df.dropna(subset=[f"EMA_{p}" for p in ema_periods]).reset_index(drop=True)
+        for i in range(1, len(df)):
+            ha_df.loc[i, "HA_Open"] = (ha_df.loc[i - 1, "HA_Open"] + ha_df.loc[i - 1, "HA_Close"]) / 2
 
-        if len(df) < 3:
-            return None
+        ha_df["HA_High"] = df[["high", "open", "close"]].max(axis=1)
+        ha_df["HA_Low"] = df[["low", "open", "close"]].min(axis=1)
 
+        df = pd.concat([df, ha_df], axis=1)
+        df = df.dropna().reset_index(drop=True)
         return df
+
     except Exception as e:
         print(f"[candles] {pair} error: {e}")
         return None
+
 
 # ---------------------
 def main():
     print("Fetching active USDT pairs...")
     pairs = get_active_usdt_coins()
-    
+
     # Step 1: Fetch 1D changes
     changes = []
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
@@ -119,56 +126,116 @@ def main():
         print("No data fetched!")
         return
 
-    # Step 2: Get top gainers and losers
+    # Step 2: Top gainers and losers
     top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
-    top_losers  = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
+    top_losers = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
 
-    # Step 3: EMA Filter
     filtered_gainers = []
     filtered_losers = []
 
-    # ✅ Bullish crossover
+    # ==========================
+    # Bullish (Gainers)
+    # ==========================
     def check_gainer(pair):
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
             return None
+
         prev2 = df_c.iloc[-3]
         prev1 = df_c.iloc[-2]
 
-        # Just crossed above slow EMA
-        if prev2[f"EMA_{EMA_FAST}"] <= prev2[f"EMA_{EMA_SLOW}"] and prev1[f"EMA_{EMA_FAST}"] > prev1[f"EMA_{EMA_SLOW}"]:
+        cond_red_to_green = (
+            prev2["HA_Close"] < prev2["HA_Open"]
+            and prev1["HA_Close"] > prev1["HA_Open"]
+        )
+
+        cond_above_ema = (
+            prev1["HA_Close"] > prev1[f"EMA_{EMA_20}"]
+            and prev1["HA_Close"] > prev1[f"EMA_{EMA_50}"]
+            and prev2["HA_Close"] > prev2[f"EMA_{EMA_20}"]
+            and prev2["HA_Close"] > prev2[f"EMA_{EMA_50}"]
+        )
+
+        if cond_red_to_green and cond_above_ema:
             return pair
         return None
 
-    # ✅ Bearish crossover
+    # ==========================
+    # Bearish (Losers)
+    # ==========================
     def check_loser(pair):
         df_c = fetch_last_n_candles(pair)
         if df_c is None or len(df_c) < 3:
             return None
+
         prev2 = df_c.iloc[-3]
         prev1 = df_c.iloc[-2]
 
-        # Just crossed below slow EMA
-        if prev2[f"EMA_{EMA_FAST}"] >= prev2[f"EMA_{EMA_SLOW}"] and prev1[f"EMA_{EMA_FAST}"] < prev1[f"EMA_{EMA_SLOW}"]:
+        cond_green_to_red = (
+            prev2["HA_Close"] > prev2["HA_Open"]
+            and prev1["HA_Close"] < prev1["HA_Open"]
+        )
+
+        cond_below_ema = (
+            prev1["HA_Close"] < prev1[f"EMA_{EMA_20}"]
+            and prev1["HA_Close"] < prev1[f"EMA_{EMA_50}"]
+            and prev2["HA_Close"] < prev2[f"EMA_{EMA_20}"]
+            and prev2["HA_Close"] < prev2[f"EMA_{EMA_50}"]
+        )
+
+        if cond_green_to_red and cond_below_ema:
             return pair
         return None
 
+    # Run checks concurrently
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         gain_futs = [executor.submit(check_gainer, p) for p in top_gainers]
         lose_futs = [executor.submit(check_loser, p) for p in top_losers]
         filtered_gainers = [f.result() for f in as_completed(gain_futs) if f.result()]
         filtered_losers = [f.result() for f in as_completed(lose_futs) if f.result()]
 
-    # Step 4: Print & Telegram alerts
+    # ===================================================
+    # Step 4: Format Alerts with Two HA Close Prices (IST)
+    # ===================================================
+    def format_with_ha_close(pairs):
+        formatted = []
+        for pair in pairs:
+            df_c = fetch_last_n_candles(pair)
+            if df_c is not None and len(df_c) >= 2:
+                prev1 = df_c.iloc[-3]
+                last = df_c.iloc[-2]
+
+                ha_close_prev = round(prev1["HA_Close"], 4)
+                ha_close_last = round(last["HA_Close"], 4)
+
+                # Fix timestamp (CoinDCX gives milliseconds)
+                if "time" in df_c.columns:
+                    ts = float(last["time"])
+                    if ts > 1e12:  # milliseconds → seconds
+                        ts = ts / 1000
+                    ist_time = datetime.utcfromtimestamp(ts) + IST_OFFSET
+                    time_str = ist_time.strftime("%Y-%m-%d %I:%M %p IST")
+                else:
+                    time_str = ""
+
+                formatted.append(
+                    f"{pair} → HA_Close(-2)"
+                )
+        return formatted
+
+    # Step 5: Send Telegram alerts
     if filtered_gainers:
-        msg = f"🟢 Gainers (EMA{EMA_FAST} crossed above EMA{EMA_SLOW} on prev candle):\n" + "\n".join(filtered_gainers)
+        gain_msg_list = format_with_ha_close(filtered_gainers)
+        msg = "🟢 Bullish Heikin-Ashi Reversal (Above EMA20 & EMA50):\n" + "\n".join(gain_msg_list)
         print(msg)
         send_telegram_message(msg)
 
     if filtered_losers:
-        msg = f"🔴 Losers (EMA{EMA_FAST} crossed below EMA{EMA_SLOW} on prev candle):\n" + "\n".join(filtered_losers)
+        lose_msg_list = format_with_ha_close(filtered_losers)
+        msg = "🔴 Bearish Heikin-Ashi Reversal (Below EMA20 & EMA50):\n" + "\n".join(lose_msg_list)
         print(msg)
         send_telegram_message(msg)
+
 
 if __name__ == "__main__":
     main()
