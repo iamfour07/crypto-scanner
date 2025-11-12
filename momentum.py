@@ -141,8 +141,8 @@ def main():
         if df_c is None or len(df_c) < 3:
             return None
 
-        prev2 = df_c.iloc[-3]
-        prev1 = df_c.iloc[-2]
+        prev2 = df_c.iloc[-2]
+        prev1 = df_c.iloc[-1]
 
         cond_red_to_green = (
             prev2["HA_Close"] < prev2["HA_Open"]
@@ -168,8 +168,8 @@ def main():
         if df_c is None or len(df_c) < 3:
             return None
 
-        prev2 = df_c.iloc[-3]
-        prev1 = df_c.iloc[-2]
+        prev2 = df_c.iloc[-2]
+        prev1 = df_c.iloc[-1]
 
         cond_green_to_red = (
             prev2["HA_Close"] > prev2["HA_Open"]
@@ -202,8 +202,8 @@ def main():
         for pair in pairs:
             df_c = fetch_last_n_candles(pair)
             if df_c is not None and len(df_c) >= 2:
-                prev1 = df_c.iloc[-3]
-                last = df_c.iloc[-2]
+                prev1 = df_c.iloc[-2]
+                last = df_c.iloc[-1]
 
                 ha_close_prev = round(prev1["HA_Close"], 4)
                 ha_close_last = round(last["HA_Close"], 4)
