@@ -127,8 +127,8 @@ def main():
         return
 
     # Step 2: Top gainers and losers
-    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
-    top_losers = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
+    top_gainers = df.sort_values("change", ascending=False).head(5)["pair"].tolist()
+    top_losers = df.sort_values("change", ascending=True).head(5)["pair"].tolist()
 
     filtered_gainers = []
     filtered_losers = []
