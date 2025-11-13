@@ -150,10 +150,10 @@ def main():
         )
 
         cond_above_ema = (
-            prev1["HA_Close"] > prev1[f"EMA_{EMA_20}"]
-            and prev1["HA_Close"] > prev1[f"EMA_{EMA_50}"]
-            and prev2["HA_Close"] > prev2[f"EMA_{EMA_20}"]
-            and prev2["HA_Close"] > prev2[f"EMA_{EMA_50}"]
+            prev1["HA_Close"] >= prev1[f"EMA_{EMA_20}"]
+            and prev1["HA_Close"] >= prev1[f"EMA_{EMA_50}"]
+            and prev2["HA_Close"] >= prev2[f"EMA_{EMA_20}"]
+            and prev2["HA_Close"] >= prev2[f"EMA_{EMA_50}"]
         )
 
         if cond_red_to_green and cond_above_ema:
@@ -177,10 +177,10 @@ def main():
         )
 
         cond_below_ema = (
-            prev1["HA_Close"] < prev1[f"EMA_{EMA_20}"]
-            and prev1["HA_Close"] < prev1[f"EMA_{EMA_50}"]
-            and prev2["HA_Close"] < prev2[f"EMA_{EMA_20}"]
-            and prev2["HA_Close"] < prev2[f"EMA_{EMA_50}"]
+            prev1["HA_Close"] <= prev1[f"EMA_{EMA_20}"]
+            and prev1["HA_Close"] <= prev1[f"EMA_{EMA_50}"]
+            and prev2["HA_Close"] <= prev2[f"EMA_{EMA_20}"]
+            and prev2["HA_Close"] <= prev2[f"EMA_{EMA_50}"]
         )
 
         if cond_green_to_red and cond_below_ema:
