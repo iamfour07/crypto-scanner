@@ -1,10 +1,10 @@
 [
-  "B-ALCH_USDT",
-  "B-RESOLV_USDT",
-  "B-LA_USDT",
   "B-SUPER_USDT",
-  "B-ARC_USDT",
-  "B-MANTA_USDT",
+  "B-ALCH_USDT",
   "B-1000RATS_USDT",
-  "B-QNT_USDT"
+  "B-RESOLV_USDT",
+  "B-QNT_USDT",
+  "B-MANTA_USDT",
+  "B-ARC_USDT",
+  "B-LA_USDT"
 ]
