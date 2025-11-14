@@ -1,13 +1,13 @@
 [
-  "B-ALCH_USDT",
-  "B-EDU_USDT",
-  "B-PARTI_USDT",
+  "B-SUPER_USDT",
   "B-RESOLV_USDT",
   "B-1000000MOG_USDT",
-  "B-TRB_USDT",
-  "B-SUPER_USDT",
   "B-QNT_USDT",
   "B-ARC_USDT",
-  "B-MANTA_USDT",
-  "B-PAXG_USDT"
+  "B-PAXG_USDT",
+  "B-TRB_USDT",
+  "B-EDU_USDT",
+  "B-ALCH_USDT",
+  "B-PARTI_USDT",
+  "B-MANTA_USDT"
 ]
