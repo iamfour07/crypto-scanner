@@ -3,16 +3,15 @@
 📊 COINDCX HEIKIN-ASHI REVERSAL SCANNER (1-Hour Timeframe)
 ===========================================================
 
-🔹 PURPOSE:
-    Detect bullish and bearish Heikin-Ashi reversal patterns
-    among top USDT futures coins on CoinDCX and send Telegram alerts.
-
-🔹 LOGIC:
-    Bullish → (-3 red, -2 green) HA_Close above EMA20 & EMA50 (wicks allowed)
-    Bearish → (-3 green, -2 red) HA_Close below EMA20 & EMA50 (wicks allowed)
-
-🔹 EXTRA:
-    Alert shows last two Heikin-Ashi Close prices with candle timestamp (IST)
+Final Script:
+✓ HA candles
+✓ EMA on HA_Close
+✓ Reversal based on current -2 (SL) & -1 (Entry)
+✓ Bullish: -2 red → -1 green (Entry = -1 high, SL = -2 low)
+✓ Bearish: -2 green → -1 red (Entry = -1 low, SL = -2 high)
+✓ RR: 1:1, 1:2, 1:3, 1:4
+✓ Position sizing: Max margin ₹500, Leverage 5x, Max loss ₹100
+✓ Telegram alerts with candle colors and all levels
 ===========================================================
 """
 
@@ -26,19 +25,23 @@ from Telegram_Alert import send_telegram_message
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-resolution = "60"  # 1-hour candles
+resolution = "60"  
 limit_hours = 1000
 
 EMA_20 = 20
 EMA_50 = 50
-ema_periods = [EMA_20, EMA_50]
 
-# IST timezone offset (+5:30)
+# Position sizing config
+MAX_RISK = 100
+MARGIN_PER_TRADE = 500
+LEVERAGE = 5
+POSITION_SIZE = MARGIN_PER_TRADE * LEVERAGE  
+
+# IST timezone
 IST_OFFSET = timedelta(hours=5, minutes=30)
 
 
 # ---------------------
-# Fetch active USDT futures pairs
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     resp = requests.get(url, timeout=30)
@@ -46,7 +49,6 @@ def get_active_usdt_coins():
     return resp.json()
 
 
-# Fetch 1D % change
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
@@ -57,59 +59,63 @@ def fetch_pair_stats(pair):
         if pc is None:
             return None
         return {"pair": pair, "change": float(pc)}
-    except Exception as e:
-        print(f"[stats] {pair} error: {e}")
+    except:
         return None
 
 
 # ---------------------
-# Fetch candle data and compute Heikin-Ashi + EMAs
 def fetch_last_n_candles(pair, n=1000):
     try:
         now = int(datetime.now(timezone.utc).timestamp())
         from_time = now - limit_hours * 3600
+
         url = "https://public.coindcx.com/market_data/candlesticks"
-        params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
+        params = {
+            "pair": pair,
+            "from": from_time,
+            "to": now,
+            "resolution": resolution,
+            "pcode": "f"
+        }
+
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json().get("data", [])
-        if not data or len(data) < max(ema_periods) + 5:
+
+        if not data or len(data) < 60:
             return None
 
         df = pd.DataFrame(data)
+
         for col in ["open", "high", "low", "close"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
         df = df.tail(n).copy()
 
-        # ----------------------------
-        # 1) CREATE HEIKIN-ASHI FIRST
-        # ----------------------------
-        ha_df = pd.DataFrame()
-        ha_df["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-        ha_df["HA_Open"] = 0.0
-        ha_df.loc[0, "HA_Open"] = (df.loc[0, "open"] + df.loc[0, "close"]) / 2
+        # ----- HA CALC -----
+        ha = pd.DataFrame(index=df.index)
+        ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
+        ha["HA_Open"] = 0.0
+        ha.iloc[0, ha.columns.get_loc("HA_Open")] = (df.iloc[0]["open"] + df.iloc[0]["close"]) / 2
 
         for i in range(1, len(df)):
-            ha_df.loc[i, "HA_Open"] = (ha_df.loc[i - 1, "HA_Open"] + ha_df.loc[i - 1, "HA_Close"]) / 2
+            ha.iloc[i, ha.columns.get_loc("HA_Open")] = (
+                ha.iloc[i - 1]["HA_Open"] + ha.iloc[i - 1]["HA_Close"]
+            ) / 2
 
-        ha_df["HA_High"] = df[["high", "open", "close"]].max(axis=1)
-        ha_df["HA_Low"] = df[["low", "open", "close"]].min(axis=1)
+        ha["HA_High"] = df[["high", "open", "close"]].max(axis=1)
+        ha["HA_Low"] = df[["low", "open", "close"]].min(axis=1)
 
-        # Attach HA columns
-        df = pd.concat([df, ha_df], axis=1)
+        df = pd.concat([df.reset_index(drop=True), ha.reset_index(drop=True)], axis=1)
 
-        # ----------------------------
-        # 2) NOW CALCULATE EMA ON HA
-        # ----------------------------
+        # ----- EMA on HA_Close -----
         df[f"EMA_{EMA_20}"] = df["HA_Close"].ewm(span=EMA_20, adjust=False).mean()
         df[f"EMA_{EMA_50}"] = df["HA_Close"].ewm(span=EMA_50, adjust=False).mean()
 
         df = df.dropna().reset_index(drop=True)
         return df
 
-    except Exception as e:
-        print(f"[candles] {pair} error: {e}")
+    except:
         return None
 
 
@@ -118,133 +124,117 @@ def main():
     print("Fetching active USDT pairs...")
     pairs = get_active_usdt_coins()
 
-    # Step 1: Fetch 1D changes
+    # Fetch 1D changes
     changes = []
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
         for fut in as_completed(futures):
-            res = fut.result()
-            if res:
-                changes.append(res)
+            if fut.result():
+                changes.append(fut.result())
 
     df = pd.DataFrame(changes).dropna()
     if df.empty:
-        print("No data fetched!")
         return
 
-    # Step 2: Top gainers and losers
     top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
     top_losers = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
 
-    filtered_gainers = []
-    filtered_losers = []
-
-    # ==========================
-    # Bullish (Gainers)
-    # ==========================
-    def check_gainer(pair):
-        df_c = fetch_last_n_candles(pair)
-        if df_c is None or len(df_c) < 3:
-            return None
-
-        prev2 = df_c.iloc[-3]
-        prev1 = df_c.iloc[-2]
-
-        # HA Reversal: Red → Green
-        cond_red_to_green = (
-            prev2["HA_Close"] < prev2["HA_Open"]
-            and prev1["HA_Close"] > prev1["HA_Open"]
-        )
-
-        # Only HA_Close matters (touch or wick allowed)
-        cond_above_ema = (
-            prev1["HA_Close"] >= prev1[f"EMA_{EMA_20}"]
-            and prev1["HA_Close"] >= prev1[f"EMA_{EMA_50}"]
-            and prev2["HA_Close"] >= prev2[f"EMA_{EMA_20}"]
-            and prev2["HA_Close"] >= prev2[f"EMA_{EMA_50}"]
-        )
-
-        if cond_red_to_green and cond_above_ema:
-            return pair
-        return None
-
-    # ==========================
-    # Bearish (Losers)
-    # ==========================
-    def check_loser(pair):
-        df_c = fetch_last_n_candles(pair)
-        if df_c is None or len(df_c) < 3:
-            return None
-
-        prev2 = df_c.iloc[-3]
-        prev1 = df_c.iloc[-2]
-
-        # HA Reversal: Green → Red
-        cond_green_to_red = (
-            prev2["HA_Close"] > prev2["HA_Open"]
-            and prev1["HA_Close"] < prev1["HA_Open"]
-        )
-
-        # Only HA_Close matters (wick/touch allowed)
-        cond_below_ema = (
-            prev1["HA_Close"] <= prev1[f"EMA_{EMA_20}"]
-            and prev1["HA_Close"] <= prev1[f"EMA_{EMA_50}"]
-            and prev2["HA_Close"] <= prev2[f"EMA_{EMA_20}"]
-            and prev2["HA_Close"] <= prev2[f"EMA_{EMA_50}"]
-        )
-
-        if cond_green_to_red and cond_below_ema:
-            return pair
-        return None
-
-    # Run checks concurrently
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        gain_futs = [executor.submit(check_gainer, p) for p in top_gainers]
-        lose_futs = [executor.submit(check_loser, p) for p in top_losers]
-        filtered_gainers = [f.result() for f in as_completed(gain_futs) if f.result()]
-        filtered_losers = [f.result() for f in as_completed(lose_futs) if f.result()]
-
     # ===================================================
-    # Step 4: Format Alerts with Two HA Close Prices (IST)
+    # ALERT BUILDER
     # ===================================================
-    def format_with_ha_close(pairs):
-        formatted = []
+    def build_alert(pairs, bullish=True):
+        messages = []
         for pair in pairs:
             df_c = fetch_last_n_candles(pair)
-            if df_c is not None and len(df_c) >= 2:
-                prev1 = df_c.iloc[-3]
-                last = df_c.iloc[-2]
+            if df_c is None or len(df_c) < 3:
+                continue
 
-                ha_close_prev = round(prev1["HA_Close"], 4)
-                ha_close_last = round(last["HA_Close"], 4)
+            prev2 = df_c.iloc[-3]   # SL candle
+            prev1 = df_c.iloc[-2]   # Entry candle
 
-                # Fix timestamp (CoinDCX gives milliseconds)
-                if "time" in df_c.columns:
-                    ts = float(last["time"])
-                    if ts > 1e12:  # milliseconds → seconds
-                        ts = ts / 1000
-                    ist_time = datetime.utcfromtimestamp(ts) + IST_OFFSET
-                    time_str = ist_time.strftime("%Y-%m-%d %I:%M %p IST")
-                else:
-                    time_str = ""
+            # Candle colors
+            c2 = "GREEN" if prev2["HA_Close"] > prev2["HA_Open"] else "RED"
+            c1 = "GREEN" if prev1["HA_Close"] > prev1["HA_Open"] else "RED"
 
-                formatted.append(
-                    f"{pair} → HA_Close(-3): {ha_close_prev}, HA_Close(-2): {ha_close_last}, Time: {time_str}"
-                )
-        return formatted
+            # ----- Setup Logic -----
+            bullish_signal = (c2 == "RED" and c1 == "GREEN")
+            bearish_signal = (c2 == "GREEN" and c1 == "RED")
 
-    # Step 5: Send Telegram alerts
-    if filtered_gainers:
-        gain_msg_list = format_with_ha_close(filtered_gainers)
-        msg = "🟢 Bullish Heikin-Ashi Reversal (Above EMA20 & EMA50):\n" + "\n".join(gain_msg_list)
-        print(msg)
-        send_telegram_message(msg)
+            if bullish and not bullish_signal:
+                continue
+            if not bullish and not bearish_signal:
+                continue
 
-    if filtered_losers:
-        lose_msg_list = format_with_ha_close(filtered_losers)
-        msg = "🔴 Bearish Heikin-Ashi Reversal (Below EMA20 & EMA50):\n" + "\n".join(lose_msg_list)
-        print(msg)
-        send_telegram_message(msg)
+            # ----- Entry & SL -----
+            if bullish_signal:
+                entry = prev1["HA_High"]
+                sl = prev2["HA_Low"]
+            else:
+                entry = prev1["HA_Low"]
+                sl = prev2["HA_High"]
+
+            risk = abs(entry - sl)
+            if risk <= 0:
+                continue
+
+            # ----- Quantity -----
+            qty_risk = MAX_RISK / risk
+            qty_margin = POSITION_SIZE / entry
+            qty = int(min(qty_risk, qty_margin))
+            if qty <= 0:
+                continue
+
+            margin_used = (entry * qty) / LEVERAGE
+
+            # Targets
+            if bullish_signal:
+                t1 = entry + risk * 1
+                t2 = entry + risk * 2
+                t3 = entry + risk * 3
+                t4 = entry + risk * 4
+            else:
+                t1 = entry - risk * 1
+                t2 = entry - risk * 2
+                t3 = entry - risk * 3
+                t4 = entry - risk * 4
+
+            # Timestamp
+            ts = float(prev1["time"])
+            if ts > 1e12:
+                ts /= 1000
+
+            time_str = (datetime.utcfromtimestamp(ts) + IST_OFFSET).strftime("%Y-%m-%d %I:%M %p IST")
+
+            # ----- Build message -----
+            msg = (
+                f"Name: {pair}\n"
+                f"HA(-2): {round(prev2['HA_Close'],4)} ({c2})\n"
+                f"HA(-1): {round(prev1['HA_Close'],4)} ({c1})\n\n"
+                f"Entry: {round(entry,4)}\n"
+                f"Stop Loss: {round(sl,4)}\n"
+                f"Margin Used: ₹{round(margin_used,2)}\n\n"
+                f"🎯 Targets:\n"
+                f"• 1:2 → {round(t2,4)}\n"
+                f"• 1:3 → {round(t3,4)}\n"
+                f"• 1:4 → {round(t4,4)}\n"
+                f"-----------------------\n"
+            )
+
+            messages.append(msg)
+
+        return messages
+
+    # RUN
+    bullish_msgs = build_alert(top_gainers, bullish=True)
+    bearish_msgs = build_alert(top_losers, bullish=False)
+
+    if bullish_msgs:
+        # print("🟢 *Bullish HA Reversals*\n\n" + "\n".join(bullish_msgs))
+        send_telegram_message("🟢 *Bullish HA Reversals*\n\n" + "\n\n".join(bullish_msgs))
+
+    if bearish_msgs:
+        # print("🔴 *Bearish HA Reversals*\n\n" + "\n\n".join(bearish_msgs))
+        send_telegram_message("🔴 *Bearish HA Reversals*\n\n" + "\n\n".join(bearish_msgs))
 
 
 if __name__ == "__main__":
