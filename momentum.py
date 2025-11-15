@@ -8,8 +8,8 @@
     among top USDT futures coins on CoinDCX and send Telegram alerts.
 
 🔹 LOGIC:
-    Bullish → (-2 red, -1 green) HA_Close above EMA20 & EMA50 (wicks allowed)
-    Bearish → (-2 green, -1 red) HA_Close below EMA20 & EMA50 (wicks allowed)
+    Bullish → (-3 red, -2 green) HA_Close above EMA20 & EMA50 (wicks allowed)
+    Bearish → (-3 green, -2 red) HA_Close below EMA20 & EMA50 (wicks allowed)
 
 🔹 EXTRA:
     Alert shows last two Heikin-Ashi Close prices with candle timestamp (IST)
@@ -147,8 +147,8 @@ def main():
         if df_c is None or len(df_c) < 3:
             return None
 
-        prev2 = df_c.iloc[-2]
-        prev1 = df_c.iloc[-1]
+        prev2 = df_c.iloc[-3]
+        prev1 = df_c.iloc[-2]
 
         # HA Reversal: Red → Green
         cond_red_to_green = (
@@ -176,8 +176,8 @@ def main():
         if df_c is None or len(df_c) < 3:
             return None
 
-        prev2 = df_c.iloc[-2]
-        prev1 = df_c.iloc[-1]
+        prev2 = df_c.iloc[-3]
+        prev1 = df_c.iloc[-2]
 
         # HA Reversal: Green → Red
         cond_green_to_red = (
@@ -212,8 +212,8 @@ def main():
         for pair in pairs:
             df_c = fetch_last_n_candles(pair)
             if df_c is not None and len(df_c) >= 2:
-                prev1 = df_c.iloc[-2]
-                last = df_c.iloc[-1]
+                prev1 = df_c.iloc[-3]
+                last = df_c.iloc[-2]
 
                 ha_close_prev = round(prev1["HA_Close"], 4)
                 ha_close_last = round(last["HA_Close"], 4)
@@ -229,7 +229,7 @@ def main():
                     time_str = ""
 
                 formatted.append(
-                    f"{pair} → HA_Close(-2): {ha_close_prev}, HA_Close(-1): {ha_close_last}, Time: {time_str}"
+                    f"{pair} → HA_Close(-3): {ha_close_prev}, HA_Close(-2): {ha_close_last}, Time: {time_str}"
                 )
         return formatted
 
