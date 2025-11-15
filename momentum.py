@@ -213,10 +213,6 @@ def main():
                 f"Entry: {round(entry,4)}\n"
                 f"Stop Loss: {round(sl,4)}\n"
                 f"Margin Used: ₹{round(margin_used,2)}\n\n"
-                f"🎯 Targets:\n"
-                f"• 1:2 → {round(t2,4)}\n"
-                f"• 1:3 → {round(t3,4)}\n"
-                f"• 1:4 → {round(t4,4)}\n"
                 f"-----------------------\n"
             )
 
