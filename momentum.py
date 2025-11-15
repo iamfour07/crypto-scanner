@@ -8,8 +8,8 @@
     among top USDT futures coins on CoinDCX and send Telegram alerts.
 
 🔹 LOGIC:
-    Gainers → (-2 red, -1 green) both above EMA20 & EMA50 → Bullish reversal
-    Losers  → (-2 green, -1 red) both below EMA20 & EMA50 → Bearish reversal
+    Bullish → (-2 red, -1 green) HA_Close above EMA20 & EMA50 (wicks allowed)
+    Bearish → (-2 green, -1 red) HA_Close below EMA20 & EMA50 (wicks allowed)
 
 🔹 EXTRA:
     Alert shows last two Heikin-Ashi Close prices with candle timestamp (IST)
@@ -82,11 +82,9 @@ def fetch_last_n_candles(pair, n=1000):
 
         df = df.tail(n).copy()
 
-        # Compute EMAs
-        df[f"EMA_{EMA_20}"] = df["close"].ewm(span=EMA_20, adjust=False).mean()
-        df[f"EMA_{EMA_50}"] = df["close"].ewm(span=EMA_50, adjust=False).mean()
-
-        # Compute Heikin-Ashi candles
+        # ----------------------------
+        # 1) CREATE HEIKIN-ASHI FIRST
+        # ----------------------------
         ha_df = pd.DataFrame()
         ha_df["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
         ha_df["HA_Open"] = 0.0
@@ -98,7 +96,15 @@ def fetch_last_n_candles(pair, n=1000):
         ha_df["HA_High"] = df[["high", "open", "close"]].max(axis=1)
         ha_df["HA_Low"] = df[["low", "open", "close"]].min(axis=1)
 
+        # Attach HA columns
         df = pd.concat([df, ha_df], axis=1)
+
+        # ----------------------------
+        # 2) NOW CALCULATE EMA ON HA
+        # ----------------------------
+        df[f"EMA_{EMA_20}"] = df["HA_Close"].ewm(span=EMA_20, adjust=False).mean()
+        df[f"EMA_{EMA_50}"] = df["HA_Close"].ewm(span=EMA_50, adjust=False).mean()
+
         df = df.dropna().reset_index(drop=True)
         return df
 
@@ -127,8 +133,8 @@ def main():
         return
 
     # Step 2: Top gainers and losers
-    top_gainers = df.sort_values("change", ascending=False).head(5)["pair"].tolist()
-    top_losers = df.sort_values("change", ascending=True).head(5)["pair"].tolist()
+    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
+    top_losers = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
 
     filtered_gainers = []
     filtered_losers = []
@@ -144,11 +150,13 @@ def main():
         prev2 = df_c.iloc[-2]
         prev1 = df_c.iloc[-1]
 
+        # HA Reversal: Red → Green
         cond_red_to_green = (
             prev2["HA_Close"] < prev2["HA_Open"]
             and prev1["HA_Close"] > prev1["HA_Open"]
         )
 
+        # Only HA_Close matters (touch or wick allowed)
         cond_above_ema = (
             prev1["HA_Close"] >= prev1[f"EMA_{EMA_20}"]
             and prev1["HA_Close"] >= prev1[f"EMA_{EMA_50}"]
@@ -171,11 +179,13 @@ def main():
         prev2 = df_c.iloc[-2]
         prev1 = df_c.iloc[-1]
 
+        # HA Reversal: Green → Red
         cond_green_to_red = (
             prev2["HA_Close"] > prev2["HA_Open"]
             and prev1["HA_Close"] < prev1["HA_Open"]
         )
 
+        # Only HA_Close matters (wick/touch allowed)
         cond_below_ema = (
             prev1["HA_Close"] <= prev1[f"EMA_{EMA_20}"]
             and prev1["HA_Close"] <= prev1[f"EMA_{EMA_50}"]
@@ -219,7 +229,7 @@ def main():
                     time_str = ""
 
                 formatted.append(
-                    f"{pair} → HA_Close(-2)"
+                    f"{pair} → HA_Close(-2): {ha_close_prev}, HA_Close(-1): {ha_close_last}, Time: {time_str}"
                 )
         return formatted
 
