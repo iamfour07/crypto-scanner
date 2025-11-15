@@ -1,14 +1,14 @@
 [
-  "B-ZEC_USDT",
   "B-ALCH_USDT",
-  "B-LA_USDT",
-  "B-HUMA_USDT",
-  "B-SUPER_USDT",
+  "B-RESOLV_USDT",
   "B-MANTA_USDT",
-  "B-1000RATS_USDT",
-  "B-BABY_USDT",
-  "B-ARC_USDT",
-  "B-EDU_USDT",
   "B-STRK_USDT",
-  "B-RESOLV_USDT"
+  "B-HUMA_USDT",
+  "B-EDU_USDT",
+  "B-ZEC_USDT",
+  "B-SUPER_USDT",
+  "B-LA_USDT",
+  "B-1000RATS_USDT",
+  "B-ARC_USDT",
+  "B-BABY_USDT"
 ]
