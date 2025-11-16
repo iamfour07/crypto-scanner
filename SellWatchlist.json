@@ -1,17 +1,16 @@
 [
   "B-ALCH_USDT",
-  "B-MANTA_USDT",
-  "B-SUPER_USDT",
   "B-NIL_USDT",
-  "B-DASH_USDT",
-  "B-WCT_USDT",
-  "B-ASTER_USDT",
-  "B-XMR_USDT",
   "B-LA_USDT",
   "B-STRK_USDT",
   "B-ZEC_USDT",
-  "B-MUBARAK_USDT",
-  "B-TRB_USDT",
+  "B-RESOLV_USDT",
   "B-1000RATS_USDT",
-  "B-RESOLV_USDT"
+  "B-TRB_USDT",
+  "B-MUBARAK_USDT",
+  "B-XMR_USDT",
+  "B-SUPER_USDT",
+  "B-WCT_USDT",
+  "B-ASTER_USDT",
+  "B-DASH_USDT"
 ]
