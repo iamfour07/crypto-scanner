@@ -1,21 +1,23 @@
+
 """
 ===========================================================
-📊 COINDCX REVERSAL SCANNER (1-Hour Timeframe)
+📊 COINDCX REVERSAL SCANNER (1-Hour Timeframe) — 1D% VERSION
 ===========================================================
 
 🔹 PURPOSE:
-    Detect potential reversal setups among *all USDT futures coins*
-    using Bollinger Bands and confirm entry via EMA(9,100) crossover.
+    Detect reversal opportunities among top 10 gainers & losers
+    using EMA(9,100) crossover confirmation.
 
-🔹 LOGIC SUMMARY:
-    1. Fetch all active USDT futures pairs.
-    2. For each coin:
-         - If previous candle's *low* touches/goes below lower band → add to BUY watchlist.
-         - If previous candle's *high* touches/goes above upper band → add to SELL watchlist.
-    3. Use saved watchlists to monitor EMA(9,100) crossovers:
-         - BUY: EMA9 crosses above EMA100.
-         - SELL: EMA9 crosses below EMA100.
-    4. Send Telegram alerts and remove alerted coins from watchlists.
+🔹 NEW LOGIC SUMMARY:
+    1. Fetch all USDT futures coins
+    2. Pull 1D% change for each pair
+    3. Select:
+        - Top 10 gainers → SELL WATCHLIST
+        - Top 10 losers  → BUY WATCHLIST
+    4. For watchlisted coins:
+        - BUY: EMA9 crosses above EMA100
+        - SELL: EMA9 crosses below EMA100
+    5. Send telegram alerts
 ===========================================================
 """
 
@@ -33,40 +35,51 @@ resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 15
 
-# 🔥 EMA periods
 EMA_FAST = 9
 EMA_SLOW = 100
-ema_periods = [EMA_FAST, EMA_SLOW]
-
-# 📊 Bollinger Bands
-BB_PERIOD = 200
-BB_STD = 2
 
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
 
-# =====================
-# TOGGLE OPTIONS
-# =====================
-ENABLE_BUY = True
+ENABLE_BUY = False
 ENABLE_SELL = True
-# =====================
 
 
-# ---------------------
-# Fetch active USDT futures pairs
+# ===================================================
+# API: Fetch all USDT futures pairs
+# ===================================================
 def get_active_usdt_coins():
-    url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
+    url = (
+        "https://api.coindcx.com/exchange/v1/derivatives/futures/data/"
+        "active_instruments?margin_currency_short_name[]=USDT"
+    )
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
-# Fetch last n candles + compute Bollinger Bands + EMA
+# ===================================================
+# API: Fetch 1D % change
+# ===================================================
+def fetch_pair_stats(pair):
+    try:
+        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        pc = r.json().get("price_change_percent", {}).get("1D")
+        return {"pair": pair, "change": float(pc)} if pc else None
+    except:
+        return None
+
+
+# ===================================================
+# API: Fetch last N candles and EMA
+# ===================================================
 def fetch_last_n_candles(pair, n=1000):
     try:
         now = int(datetime.now(timezone.utc).timestamp())
         from_time = now - limit_hours * 3600
+
         url = "https://public.coindcx.com/market_data/candlesticks"
         params = {
             "pair": pair,
@@ -78,30 +91,19 @@ def fetch_last_n_candles(pair, n=1000):
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json().get("data", [])
-        if not data:
+        if not data or len(data) < 3:  # Only use valid data
             return None
 
         df = pd.DataFrame(data)
-        for col in ["open", "high", "low", "close", "volume"]:
+        for col in ["open", "high", "low", "close"]:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        if len(df) > n:
-            df = df.iloc[-n:]
-
-        # ✅ Compute Bollinger Bands
-        df["MA"] = df["close"].rolling(BB_PERIOD).mean()
-        df["STD"] = df["close"].rolling(BB_PERIOD).std()
-        df["Upper_Band"] = df["MA"] + (BB_STD * df["STD"])
-        df["Lower_Band"] = df["MA"] - (BB_STD * df["STD"])
-
         # ✅ Compute EMAs
-        for p in ema_periods:
-            df[f"EMA_{p}"] = df["close"].ewm(span=p, adjust=False).mean()
+        df["EMA9"] = df["close"].ewm(span=EMA_FAST, adjust=False).mean()
+        df["EMA100"] = df["close"].ewm(span=EMA_SLOW, adjust=False).mean()
 
         df = df.dropna().reset_index(drop=True)
-        if len(df) < 3:
-            return None
         return df
 
     except Exception as e:
@@ -109,8 +111,9 @@ def fetch_last_n_candles(pair, n=1000):
         return None
 
 
-# ---------------------
-# Save watchlists
+# ===================================================
+# Save Watchlist
+# ===================================================
 def save_watchlist(buy, sell):
     with open(BUY_FILE, "w") as f:
         json.dump(buy, f, indent=2)
@@ -118,7 +121,9 @@ def save_watchlist(buy, sell):
         json.dump(sell, f, indent=2)
 
 
-# ---------------------
+# ===================================================
+# Main Logic: 1D% Gainers and Losers with EMA crossover
+# ===================================================
 def main():
     pairs = get_active_usdt_coins()
     print(f"Fetched {len(pairs)} active USDT futures pairs.")
@@ -138,49 +143,38 @@ def main():
     except:
         sell_watch = []
 
-    # Step 1: Detect new Bollinger Band breakouts
-    def check_bollinger(pair):
-        df_c = fetch_last_n_candles(pair)
-        if df_c is None or len(df_c) < 3:
-            return None
+    # Step 1: Fetch 1D% Change and Identify Top 10 Gainers and Losers
+    def get_top_gainers_and_losers(pairs):
+        changes = []
+        with ThreadPoolExecutor(MAX_WORKERS) as executor:
+            futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
+            for fut in as_completed(futures):
+                result = fut.result()
+                if result:
+                    changes.append(result)
 
-        prev1 = df_c.iloc[-2]  # previous closed candle
-        result = {}
+        # Sort the coins by 1D % change and select the top gainers and losers
+        changes.sort(key=lambda x: x["change"], reverse=True)
 
-        # BUY candidate → Low touches/goes below lower band
-        if prev1["low"] <= prev1["Lower_Band"]:
-            result["buy"] = pair
+        # Top 10 gainers and losers
+        top_gainers = [x["pair"] for x in changes[:5]]
+        top_losers = [x["pair"] for x in changes[-5:]]
+        return top_gainers, top_losers
 
-        # SELL candidate → High touches/goes above upper band
-        if prev1["high"] >= prev1["Upper_Band"]:
-            result["sell"] = pair
+    # Get the top 10 gainers and losers
+    top_gainers, top_losers = get_top_gainers_and_losers(pairs)
 
-        return result if result else None
+    # Add top gainers to SELL watchlist and top losers to BUY watchlist
+    sell_watch.extend(top_gainers)
+    buy_watch.extend(top_losers)
 
-    results = []
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        futures = [executor.submit(check_bollinger, p) for p in pairs]
-        for fut in as_completed(futures):
-            res = fut.result()
-            if res:
-                results.append(res)
-
-    # Aggregate new candidates
-    for r in results:
-        if "buy" in r:
-            buy_watch.append(r["buy"])
-        if "sell" in r:
-            sell_watch.append(r["sell"])
-
-    # Deduplicate
-    buy_watch = list(set(buy_watch))
+    # Remove duplicates
     sell_watch = list(set(sell_watch))
+    buy_watch = list(set(buy_watch))
 
-
-
-    # -------------------------------
-    # Step 2: EMA crossover confirmation
-    # -------------------------------
+    # ----------------------------------------
+    # Step 2: EMA Crossover Confirmation
+    # ----------------------------------------
 
     def check_buy(pair):
         df_c = fetch_last_n_candles(pair)
@@ -190,8 +184,8 @@ def main():
         prev2 = df_c.iloc[-3]
         prev1 = df_c.iloc[-2]
 
-        # Bullish crossover
-        if prev2[f"EMA_{EMA_FAST}"] <= prev2[f"EMA_{EMA_SLOW}"] and prev1[f"EMA_{EMA_FAST}"] > prev1[f"EMA_{EMA_SLOW}"]:
+        # Bullish crossover (EMA9 crosses above EMA100)
+        if prev2["EMA9"] <= prev2["EMA100"] and prev1["EMA9"] > prev1["EMA100"]:
             return pair
         return None
 
@@ -203,17 +197,19 @@ def main():
         prev2 = df_c.iloc[-3]
         prev1 = df_c.iloc[-2]
 
-        # Bearish crossover
-        if prev2[f"EMA_{EMA_FAST}"] >= prev2[f"EMA_{EMA_SLOW}"] and prev1[f"EMA_{EMA_FAST}"] < prev1[f"EMA_{EMA_SLOW}"]:
+        # Bearish crossover (EMA9 crosses below EMA100)
+        if prev2["EMA9"] >= prev2["EMA100"] and prev1["EMA9"] < prev1["EMA100"]:
             return pair
         return None
 
     buy_signals, sell_signals = [], []
 
+    # Check buy signals for top gainers
     if ENABLE_BUY and buy_watch:
         with ThreadPoolExecutor(MAX_WORKERS) as executor:
             buy_signals = [f.result() for f in as_completed([executor.submit(check_buy, p) for p in buy_watch]) if f.result()]
 
+    # Check sell signals for top losers
     if ENABLE_SELL and sell_watch:
         with ThreadPoolExecutor(MAX_WORKERS) as executor:
             sell_signals = [f.result() for f in as_completed([executor.submit(check_sell, p) for p in sell_watch]) if f.result()]
@@ -222,11 +218,11 @@ def main():
     # Step 3: Alerts & update lists
     # ------------------------------
     if ENABLE_BUY and buy_signals:
-        send_telegram_message("🟢 BUY Signals (Bollinger + EMA 9/100):\n" + "\n".join(buy_signals))
+        send_telegram_message("🟢 BUY Signals (1D% + EMA 9/100):\n" + "\n".join(buy_signals))
         buy_watch = [p for p in buy_watch if p not in buy_signals]
 
     if ENABLE_SELL and sell_signals:
-        send_telegram_message("🔴 SELL Signals (Bollinger + EMA 9/100):\n" + "\n".join(sell_signals))
+        send_telegram_message("🔴 SELL Signals (1D% + EMA 9/100):\n" + "\n".join(sell_signals))
         sell_watch = [p for p in sell_watch if p not in sell_signals]
 
     # Save updated watchlists
