@@ -1,9 +1,11 @@
 [
-  "B-TNSR_USDT",
   "B-USTC_USDT",
-  "B-ZEC_USDT",
-  "B-RESOLV_USDT",
-  "B-WCT_USDT",
+  "B-STRK_USDT",
+  "B-MAGIC_USDT",
   "B-BANANAS31_USDT",
-  "B-MAGIC_USDT"
+  "B-RESOLV_USDT",
+  "B-ZEC_USDT",
+  "B-WCT_USDT",
+  "B-ZEREBRO_USDT",
+  "B-TNSR_USDT"
 ]
