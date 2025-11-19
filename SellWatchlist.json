@@ -1,16 +1,16 @@
 [
-  "B-NXPC_USDT",
+  "B-STRK_USDT",
   "B-LQTY_USDT",
-  "B-SOLV_USDT",
-  "B-GRASS_USDT",
-  "B-FORM_USDT",
-  "B-ASTER_USDT",
-  "B-NIL_USDT",
-  "B-GLM_USDT",
   "B-BICO_USDT",
   "B-SPX_USDT",
-  "B-STRK_USDT",
+  "B-FET_USDT",
+  "B-FORM_USDT",
+  "B-GRASS_USDT",
+  "B-GLM_USDT",
+  "B-RESOLV_USDT",
+  "B-NXPC_USDT",
+  "B-SOLV_USDT",
+  "B-ASTER_USDT",
   "B-FF_USDT",
-  "B-XPL_USDT",
-  "B-FET_USDT"
+  "B-XPL_USDT"
 ]
