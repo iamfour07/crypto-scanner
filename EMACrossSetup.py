@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import html
+from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
 
 # =========================
 # CONFIGURATION
@@ -17,7 +17,7 @@ RSI_PERIOD = 21
 RSI_THRESHOLD = 51
 ENABLE_RSI = False   # <<<<<<<<<< ENABLE / DISABLE RSI
 
-SymbolList = ["SOLUSDT"]
+SymbolList = ["ETHUSD", "SOLUSDT"]
 
 # =========================
 # INDICATOR: RSI
@@ -134,8 +134,8 @@ def main():
                 message_lines.append(
                     f"{res['symbol']}\nClose: {res['close']}\nRSI: {res['rsi']}\nVolume: {res['volume']}\n"
                 )
-
-        print("\n".join(message_lines))
+        Telegram_Alert_EMA_Crossover(message_lines)
+        # print("\n".join(message_lines))
 
 if __name__ == "__main__":
     main()
