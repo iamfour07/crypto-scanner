@@ -1,16 +1,14 @@
 [
-  "B-BCH_USDT",
-  "B-RESOLV_USDT",
   "B-BICO_USDT",
+  "B-RESOLV_USDT",
+  "B-BCH_USDT",
   "B-PARTI_USDT",
-  "B-ZBT_USDT",
-  "B-LAYER_USDT",
-  "B-ARC_USDT",
   "B-KITE_USDT",
-  "B-WLFI_USDT",
-  "B-GPS_USDT",
+  "B-ARC_USDT",
   "B-MMT_USDT",
+  "B-HOLO_USDT",
+  "B-LAYER_USDT",
   "B-MITO_USDT",
-  "B-ENSO_USDT",
-  "B-HOLO_USDT"
+  "B-GPS_USDT",
+  "B-WLFI_USDT"
 ]
