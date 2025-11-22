@@ -194,9 +194,9 @@ def main():
 
         changes.sort(key=lambda x: x["change"], reverse=True)
 
-        # selecting top 5 and bottom 5 (previous code used 5)
-        top_gainers = [x["pair"] for x in changes[:5]]
-        top_losers = [x["pair"] for x in changes[-5:]]
+        # selecting top 10 and bottom 10
+        top_gainers = [x["pair"] for x in changes[:10]]
+        top_losers = [x["pair"] for x in changes[-10:]]
         return top_gainers, top_losers
 
     top_gainers, top_losers = get_top_gainers_and_losers(pairs)
