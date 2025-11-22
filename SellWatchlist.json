@@ -1,13 +1,14 @@
 [
-  "B-RESOLV_USDT",
-  "B-MITO_USDT",
-  "B-BCH_USDT",
-  "B-PARTI_USDT",
-  "B-ARC_USDT",
-  "B-KITE_USDT",
+  "B-LAYER_USDT",
   "B-HOLO_USDT",
-  "B-BICO_USDT",
+  "B-ARC_USDT",
   "B-WLFI_USDT",
+  "B-BCH_USDT",
+  "B-MITO_USDT",
+  "B-BICO_USDT",
+  "B-PIPPIN_USDT",
+  "B-KITE_USDT",
   "B-MMT_USDT",
-  "B-LAYER_USDT"
+  "B-PARTI_USDT",
+  "B-RESOLV_USDT"
 ]
