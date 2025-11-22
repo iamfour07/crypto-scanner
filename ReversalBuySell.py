@@ -1,26 +1,20 @@
-
 """
 ===========================================================
 📊 COINDCX REVERSAL SCANNER (1-Hour Timeframe) — 1D% VERSION
 ===========================================================
 
-🔹 PURPOSE:
-    Detect reversal opportunities among top 10 gainers & losers
-    using EMA(9,100) crossover confirmation.
+PURPOSE:
+- Top gainers -> SELL watchlist
+- Top losers  -> BUY watchlist
 
-🔹 NEW LOGIC SUMMARY:
-    1. Fetch all USDT futures coins
-    2. Pull 1D% change for each pair
-    3. Select:
-        - Top 10 gainers → SELL WATCHLIST
-        - Top 10 losers  → BUY WATCHLIST
-    4. For watchlisted coins:
-        - BUY: EMA9 crosses above EMA100
-        - SELL: EMA9 crosses below EMA100
-    5. Send telegram alerts
-===========================================================
+SIGNALS:
+- Supertrend flips (on Heikin-Ashi) => send alerts (can repeat)
+- Bollinger Band touch => used ONLY to REMOVE coins from watchlist (no alert)
+  - SELL: remove when price <= LowerBB
+  - BUY : remove when price >= UpperBB
+
+Everything else same as your previous script.
 """
-
 import json
 import requests
 import pandas as pd
@@ -35,15 +29,11 @@ resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 15
 
-EMA_FAST = 9
-EMA_SLOW = 100
-
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
 
-ENABLE_BUY = False
-ENABLE_SELL = True
-
+ENABLE_BUY = False      # Supertrend buy alerts
+ENABLE_SELL = True      # Supertrend sell alerts
 
 # ===================================================
 # API: Fetch all USDT futures pairs
@@ -73,7 +63,7 @@ def fetch_pair_stats(pair):
 
 
 # ===================================================
-# API: Fetch last N candles and EMA
+# API: Fetch Candles
 # ===================================================
 def fetch_last_n_candles(pair, n=1000):
     try:
@@ -91,24 +81,77 @@ def fetch_last_n_candles(pair, n=1000):
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json().get("data", [])
-        if not data or len(data) < 3:  # Only use valid data
+
+        if not data or len(data) < 20:
             return None
 
         df = pd.DataFrame(data)
+
         for col in ["open", "high", "low", "close"]:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce")
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        # ✅ Compute EMAs
-        df["EMA9"] = df["close"].ewm(span=EMA_FAST, adjust=False).mean()
-        df["EMA100"] = df["close"].ewm(span=EMA_SLOW, adjust=False).mean()
-
-        df = df.dropna().reset_index(drop=True)
-        return df
+        return df.dropna().reset_index(drop=True)
 
     except Exception as e:
         print(f"[candles] {pair} error: {e}")
         return None
+
+
+# ===================================================
+# Heikin-Ashi Conversion
+# ===================================================
+def convert_to_heikin_ashi(df):
+    ha = df.copy()
+
+    ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
+
+    ha_open = [(df["open"].iloc[0] + df["close"].iloc[0]) / 2]
+    for i in range(1, len(df)):
+        ha_open.append((ha_open[i - 1] + ha["HA_Close"].iloc[i - 1]) / 2)
+
+    ha["HA_Open"] = ha_open
+    ha["HA_High"] = ha[["HA_Open", "HA_Close", "high"]].max(axis=1)
+    ha["HA_Low"] = ha[["HA_Open", "HA_Close", "low"]].min(axis=1)
+
+    return ha
+
+
+# ===================================================
+# Supertrend Calculation (on Heikin-Ashi)
+# ===================================================
+def compute_supertrend(df, period=90, multiplier=2):
+    hl2 = (df["HA_High"] + df["HA_Low"]) / 2
+    # ATR-like using rolling high-low range
+    df["atr"] = hl2.rolling(period).apply(lambda x: x.max() - x.min(), raw=True)
+
+    df["upperband"] = hl2 + multiplier * df["atr"]
+    df["lowerband"] = hl2 - multiplier * df["atr"]
+
+    trend = [True]  # True = Uptrend (GREEN)
+    for i in range(1, len(df)):
+        if df["HA_Close"].iloc[i] > df["upperband"].iloc[i - 1]:
+            trend.append(True)
+        elif df["HA_Close"].iloc[i] < df["lowerband"].iloc[i - 1]:
+            trend.append(False)
+        else:
+            trend.append(trend[-1])
+
+    df["supertrend"] = trend
+    return df
+
+
+# ===================================================
+# Bollinger Bands (for removal only)
+# ===================================================
+def get_bollinger_last(df, period=200, mult=2):
+    # Uses normal close prices (not HA). If you prefer HA_Close, change to ha["HA_Close"]
+    df["MA20"] = df["close"].rolling(period).mean()
+    df["STD"] = df["close"].rolling(period).std()
+    df["UpperBB"] = df["MA20"] + mult * df["STD"]
+    df["LowerBB"] = df["MA20"] - mult * df["STD"]
+
+    last = df.iloc[-1]
+    return float(last["close"]), float(last["UpperBB"]), float(last["LowerBB"])
 
 
 # ===================================================
@@ -122,110 +165,138 @@ def save_watchlist(buy, sell):
 
 
 # ===================================================
-# Main Logic: 1D% Gainers and Losers with EMA crossover
+# Main Logic
 # ===================================================
 def main():
     pairs = get_active_usdt_coins()
-    print(f"Fetched {len(pairs)} active USDT futures pairs.")
-
     buy_watch, sell_watch = [], []
 
-    # Try loading existing lists
+    # Load existing watchlists if present
     try:
-        with open(BUY_FILE, "r") as f:
-            buy_watch = json.load(f)
+        buy_watch = json.load(open(BUY_FILE))
     except:
         buy_watch = []
 
     try:
-        with open(SELL_FILE, "r") as f:
-            sell_watch = json.load(f)
+        sell_watch = json.load(open(SELL_FILE))
     except:
         sell_watch = []
 
-    # Step 1: Fetch 1D% Change and Identify Top 10 Gainers and Losers
+    # Step 1: Fetch 1D% Change and select top gainers/losers
     def get_top_gainers_and_losers(pairs):
         changes = []
         with ThreadPoolExecutor(MAX_WORKERS) as executor:
             futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
             for fut in as_completed(futures):
-                result = fut.result()
-                if result:
-                    changes.append(result)
+                res = fut.result()
+                if res:
+                    changes.append(res)
 
-        # Sort the coins by 1D % change and select the top gainers and losers
         changes.sort(key=lambda x: x["change"], reverse=True)
 
-        # Top 10 gainers and losers
+        # selecting top 5 and bottom 5 (previous code used 5)
         top_gainers = [x["pair"] for x in changes[:5]]
         top_losers = [x["pair"] for x in changes[-5:]]
         return top_gainers, top_losers
 
-    # Get the top 10 gainers and losers
     top_gainers, top_losers = get_top_gainers_and_losers(pairs)
 
-    # Add top gainers to SELL watchlist and top losers to BUY watchlist
+    # Add to watchlists (keep existing ones)
     sell_watch.extend(top_gainers)
     buy_watch.extend(top_losers)
 
-    # Remove duplicates
-    sell_watch = list(set(sell_watch))
-    buy_watch = list(set(buy_watch))
+    # dedupe
+    sell_watch = list(dict.fromkeys(sell_watch))
+    buy_watch = list(dict.fromkeys(buy_watch))
 
-    # ----------------------------------------
-    # Step 2: EMA Crossover Confirmation
-    # ----------------------------------------
-
-    def check_buy(pair):
-        df_c = fetch_last_n_candles(pair)
-        if df_c is None or len(df_c) < 3:
-            return None
-
-        prev2 = df_c.iloc[-3]
-        prev1 = df_c.iloc[-2]
-
-        # Bullish crossover (EMA9 crosses above EMA100)
-        if prev2["EMA9"] <= prev2["EMA100"] and prev1["EMA9"] > prev1["EMA100"]:
-            return pair
-        return None
-
-    def check_sell(pair):
-        df_c = fetch_last_n_candles(pair)
-        if df_c is None or len(df_c) < 3:
-            return None
-
-        prev2 = df_c.iloc[-3]
-        prev1 = df_c.iloc[-2]
-
-        # Bearish crossover (EMA9 crosses below EMA100)
-        if prev2["EMA9"] >= prev2["EMA100"] and prev1["EMA9"] < prev1["EMA100"]:
-            return pair
-        return None
-
+    # ===================================================
+    # SUPERTREND ALERTS (Heikin-Ashi) - these are sent and do NOT remove coins
+    # ===================================================
     buy_signals, sell_signals = [], []
 
-    # Check buy signals for top gainers
+    def check_buy_supertrend(pair):
+        df = fetch_last_n_candles(pair)
+        if df is None or len(df) < 25:  # need enough data
+            return None
+        ha = convert_to_heikin_ashi(df)
+        st = compute_supertrend(ha)
+        prev = st.iloc[-2]["supertrend"]
+        last = st.iloc[-1]["supertrend"]
+        # BUY if ST flips RED -> GREEN
+        if prev is False and last is True:
+            return pair
+        return None
+
+    def check_sell_supertrend(pair):
+        df = fetch_last_n_candles(pair)
+        if df is None or len(df) < 25:
+            return None
+        ha = convert_to_heikin_ashi(df)
+        st = compute_supertrend(ha)
+        prev = st.iloc[-2]["supertrend"]
+        last = st.iloc[-1]["supertrend"]
+        # SELL if ST flips GREEN -> RED
+        if prev is True and last is False:
+            return pair
+        return None
+
+    # Run supertrend checks concurrently, collect results (these will be alerted and NOT removed)
     if ENABLE_BUY and buy_watch:
         with ThreadPoolExecutor(MAX_WORKERS) as executor:
-            buy_signals = [f.result() for f in as_completed([executor.submit(check_buy, p) for p in buy_watch]) if f.result()]
+            futures = [executor.submit(check_buy_supertrend, p) for p in buy_watch]
+            for fut in as_completed(futures):
+                res = fut.result()
+                if res:
+                    buy_signals.append(res)
 
-    # Check sell signals for top losers
     if ENABLE_SELL and sell_watch:
         with ThreadPoolExecutor(MAX_WORKERS) as executor:
-            sell_signals = [f.result() for f in as_completed([executor.submit(check_sell, p) for p in sell_watch]) if f.result()]
+            futures = [executor.submit(check_sell_supertrend, p) for p in sell_watch]
+            for fut in as_completed(futures):
+                res = fut.result()
+                if res:
+                    sell_signals.append(res)
 
-    # ------------------------------
-    # Step 3: Alerts & update lists
-    # ------------------------------
+    # Send Supertrend alerts (these do NOT remove coins)
     if ENABLE_BUY and buy_signals:
-        send_telegram_message("🟢 BUY Signals (1D% + EMA 9/100):\n" + "\n".join(buy_signals))
-        buy_watch = [p for p in buy_watch if p not in buy_signals]
+        send_telegram_message("🟢 BUY Signals (1D% + SUPER-TREND):\n" + "\n".join(buy_signals))
 
     if ENABLE_SELL and sell_signals:
-        send_telegram_message("🔴 SELL Signals (1D% + EMA 9/100):\n" + "\n".join(sell_signals))
-        sell_watch = [p for p in sell_watch if p not in sell_signals]
+        send_telegram_message("🔴 SELL Signals (1D% + SUPER-TREND):\n" + "\n".join(sell_signals))
 
-    # Save updated watchlists
+    # ===================================================
+    # BOLLINGER-BASED REMOVAL (NO ALERTS WHEN REMOVING)
+    # - SELL watchlist: remove when close <= LowerBB
+    # - BUY watchlist:  remove when close >= UpperBB
+    # ===================================================
+    sell_remove = []
+    for coin in sell_watch:
+        df = fetch_last_n_candles(coin)
+        if df is None or len(df) < 25:
+            continue
+        close, upper, lower = get_bollinger_last(df)
+        # Remove silently when touching LOWER band
+        if close <= lower:
+            sell_remove.append(coin)
+
+    buy_remove = []
+    for coin in buy_watch:
+        df = fetch_last_n_candles(coin)
+        if df is None or len(df) < 25:
+            continue
+        close, upper, lower = get_bollinger_last(df)
+        # Remove silently when touching UPPER band
+        if close >= upper:
+            buy_remove.append(coin)
+
+    # Apply removals (silent: NO telegram)
+    if sell_remove:
+        sell_watch = [c for c in sell_watch if c not in sell_remove]
+
+    if buy_remove:
+        buy_watch = [c for c in buy_watch if c not in buy_remove]
+
+    # Save watchlists
     save_watchlist(buy_watch, sell_watch)
 
 
