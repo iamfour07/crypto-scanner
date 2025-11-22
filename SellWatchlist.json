@@ -1,18 +1,18 @@
 [
-  "B-2Z_USDT",
   "B-NXPC_USDT",
-  "B-ENSO_USDT",
-  "B-LAYER_USDT",
-  "B-PARTI_USDT",
   "B-DYM_USDT",
-  "B-TNSR_USDT",
   "B-RESOLV_USDT",
-  "B-HOLO_USDT",
   "B-MITO_USDT",
-  "B-HFT_USDT",
-  "B-MMT_USDT",
+  "B-ZBT_USDT",
   "B-CTSI_USDT",
+  "B-HOLO_USDT",
+  "B-MMT_USDT",
+  "B-2Z_USDT",
+  "B-ENSO_USDT",
+  "B-PARTI_USDT",
+  "B-HFT_USDT",
+  "B-BICO_USDT",
   "B-GPS_USDT",
-  "B-XAI_USDT",
-  "B-BICO_USDT"
+  "B-TNSR_USDT",
+  "B-LAYER_USDT"
 ]
