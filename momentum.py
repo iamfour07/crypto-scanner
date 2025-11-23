@@ -119,8 +119,12 @@ def main():
         return
 
     # top 40 for more signals
-    top_gainers = df.sort_values("change", ascending=False).head(15)["pair"].tolist()
-    top_losers  = df.sort_values("change", ascending=True ).head(15)["pair"].tolist()
+    # BULLISH RANGE:  +5% to +15%
+    bullish_candidates = df[(df["change"] >= 8) & (df["change"] <= 15)]["pair"].tolist()
+
+    # BEARISH RANGE: -5% to -15%
+    bearish_candidates = df[(df["change"] <= -8) & (df["change"] >= -15)]["pair"].tolist()
+
 
 
     # ===================================================
@@ -159,13 +163,9 @@ def main():
                     continue
 
                 # 2. HA(-3) and HA(-2) between EMA9 and EMA100
-                if not (prev2["HA_Close"] < EMA9 and prev2["HA_Close"] > EMA100):
+                if prev2["HA_Close"] <= EMA100:
                     continue
-                if not (prev1["HA_Close"] < EMA9 and prev1["HA_Close"] > EMA100):
-                    continue
-
-                # 3. Wick below 100 allowed, but close must NOT go below 100
-                if prev2["HA_Close"] <= EMA100 or prev1["HA_Close"] <= EMA100:
+                if prev1["HA_Close"] <= EMA100:
                     continue
 
                 entry = prev1["HA_High"]
@@ -182,14 +182,12 @@ def main():
                     continue
 
                 # 2. HA(-3) and HA(-2) between EMA9 and EMA100
-                if not (prev2["HA_Close"] > EMA9 and prev2["HA_Close"] < EMA100):
+                if prev2["HA_Close"] >= EMA100:
                     continue
-                if not (prev1["HA_Close"] > EMA9 and prev1["HA_Close"] < EMA100):
+                if prev1["HA_Close"] >= EMA100:
                     continue
 
-                # 3. Wick above 100 allowed, but close must NOT go above 100
-                if prev2["HA_Close"] >= EMA100 or prev1["HA_Close"] >= EMA100:
-                    continue
+                
 
                 entry = prev1["HA_Low"]
                 sl    = prev2["HA_High"]
@@ -251,8 +249,9 @@ def main():
     # RUN SCANNER
     # ==========================================================
 
-    bullish_msgs = build_alert(top_gainers, bullish=True)
-    bearish_msgs = build_alert(top_losers, bullish=False)
+    bullish_msgs = build_alert(bullish_candidates, bullish=True)
+    bearish_msgs = build_alert(bearish_candidates, bullish=False)
+
 
     if bullish_msgs:
         # print("🟢 *Bullish HA Reversals*\n\n" + "\n".join(bullish_msgs))
