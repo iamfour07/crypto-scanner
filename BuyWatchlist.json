@@ -10,5 +10,7 @@
   "B-STRK_USDT",
   "B-MMT_USDT",
   "B-RESOLV_USDT",
-  "B-LAYER_USDT"
+  "B-LAYER_USDT",
+  "B-HFT_USDT",
+  "B-GRASS_USDT"
 ]
