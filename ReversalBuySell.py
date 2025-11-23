@@ -8,13 +8,12 @@ PURPOSE:
 - Top losers  -> BUY watchlist
 
 SIGNALS:
-- Supertrend flips (on Heikin-Ashi) => send alerts (can repeat)
-- Bollinger Band touch => used ONLY to REMOVE coins from watchlist (no alert)
+- Supertrend flips (on Heikin-Ashi) → send alerts (can repeat)
+- Bollinger Band touch → used ONLY to REMOVE coins from watchlist (no alert)
   - SELL: remove when price <= LowerBB
   - BUY : remove when price >= UpperBB
-
-Everything else same as your previous script.
 """
+
 import json
 import requests
 import pandas as pd
@@ -32,11 +31,12 @@ MAX_WORKERS = 15
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
 
-ENABLE_BUY = False      # Supertrend buy alerts
-ENABLE_SELL = True      # Supertrend sell alerts
+ENABLE_BUY = False      # BUY alerts ON/OFF
+ENABLE_SELL = True      # SELL alerts ON/OFF
+
 
 # ===================================================
-# API: Fetch all USDT futures pairs
+# 1. FETCH ACTIVE FUTURES PAIRS
 # ===================================================
 def get_active_usdt_coins():
     url = (
@@ -49,7 +49,7 @@ def get_active_usdt_coins():
 
 
 # ===================================================
-# API: Fetch 1D % change
+# 2. FETCH 1D% CHANGE
 # ===================================================
 def fetch_pair_stats(pair):
     try:
@@ -63,9 +63,9 @@ def fetch_pair_stats(pair):
 
 
 # ===================================================
-# API: Fetch Candles
+# 3. FETCH CANDLE DATA
 # ===================================================
-def fetch_last_n_candles(pair, n=1000):
+def fetch_last_n_candles(pair):
     try:
         now = int(datetime.now(timezone.utc).timestamp())
         from_time = now - limit_hours * 3600
@@ -78,27 +78,27 @@ def fetch_last_n_candles(pair, n=1000):
             "resolution": resolution,
             "pcode": "f",
         }
-        resp = requests.get(url, params=params, timeout=10)
+
+        resp = requests.get(url, params=params, timeout=15)
         resp.raise_for_status()
         data = resp.json().get("data", [])
 
-        if not data or len(data) < 20:
+        if not data or len(data) < 30:
             return None
 
         df = pd.DataFrame(data)
-
         for col in ["open", "high", "low", "close"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
         return df.dropna().reset_index(drop=True)
 
     except Exception as e:
-        print(f"[candles] {pair} error: {e}")
+        print(f"[candles-error] {pair} → {e}")
         return None
 
 
 # ===================================================
-# Heikin-Ashi Conversion
+# 4. HEIKIN-ASHI CONVERSION
 # ===================================================
 def convert_to_heikin_ashi(df):
     ha = df.copy()
@@ -117,34 +117,90 @@ def convert_to_heikin_ashi(df):
 
 
 # ===================================================
-# Supertrend Calculation (on Heikin-Ashi)
+# 5. TRADINGVIEW ACCURATE SUPERTREND (HA VERSION)
 # ===================================================
-def compute_supertrend(df, period=90, multiplier=2):
+def supertrend_tv_ha(df, period=90, multiplier=1.8):
+    df = df.copy()
+
+    # True Range
+    hl = df["HA_High"] - df["HA_Low"]
+    hc = (df["HA_High"] - df["HA_Close"].shift()).abs()
+    lc = (df["HA_Low"] - df["HA_Close"].shift()).abs()
+    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
+
+    # ATR = RMA/Wilder
+    atr = tr.ewm(alpha=1/period, adjust=False).mean()
+
+    # Basic Bands
     hl2 = (df["HA_High"] + df["HA_Low"]) / 2
-    # ATR-like using rolling high-low range
-    df["atr"] = hl2.rolling(period).apply(lambda x: x.max() - x.min(), raw=True)
+    upper_basic = hl2 + multiplier * atr
+    lower_basic = hl2 - multiplier * atr
 
-    df["upperband"] = hl2 + multiplier * df["atr"]
-    df["lowerband"] = hl2 - multiplier * df["atr"]
+    # Final Bands
+    final_upper = upper_basic.copy()
+    final_lower = lower_basic.copy()
 
-    trend = [True]  # True = Uptrend (GREEN)
     for i in range(1, len(df)):
-        if df["HA_Close"].iloc[i] > df["upperband"].iloc[i - 1]:
-            trend.append(True)
-        elif df["HA_Close"].iloc[i] < df["lowerband"].iloc[i - 1]:
-            trend.append(False)
-        else:
-            trend.append(trend[-1])
+        prev_fu = final_upper.iloc[i-1]
+        prev_fl = final_lower.iloc[i-1]
+        prev_close = df["HA_Close"].iloc[i-1]
 
-    df["supertrend"] = trend
+        final_upper.iloc[i] = (
+            upper_basic.iloc[i]
+            if (upper_basic.iloc[i] < prev_fu) or (prev_close > prev_fu)
+            else prev_fu
+        )
+
+        final_lower.iloc[i] = (
+            lower_basic.iloc[i]
+            if (lower_basic.iloc[i] > prev_fl) or (prev_close < prev_fl)
+            else prev_fl
+        )
+
+    # Supertrend Line + Direction
+    st_val = pd.Series(index=df.index, dtype=float)
+    trend = pd.Series(index=df.index, dtype=bool)
+
+    start = period
+    if df["HA_Close"].iloc[start] >= final_lower.iloc[start]:
+        st_val.iloc[start] = final_lower.iloc[start]
+        trend.iloc[start] = True
+    else:
+        st_val.iloc[start] = final_upper.iloc[start]
+        trend.iloc[start] = False
+
+    for i in range(start+1, len(df)):
+        prev_st = st_val.iloc[i-1]
+        close = df["HA_Close"].iloc[i]
+
+        if prev_st == final_upper.iloc[i-1]:  # DOWN TREND
+            if close <= final_upper.iloc[i]:
+                st_val.iloc[i] = final_upper.iloc[i]
+                trend.iloc[i] = False
+            else:
+                st_val.iloc[i] = final_lower.iloc[i]
+                trend.iloc[i] = True
+
+        else:  # UP TREND
+            if close >= final_lower.iloc[i]:
+                st_val.iloc[i] = final_lower.iloc[i]
+                trend.iloc[i] = True
+            else:
+                st_val.iloc[i] = final_upper.iloc[i]
+                trend.iloc[i] = False
+
+    df["ST_Trend"] = trend           # True = GREEN, False = RED
+    df["Supertrend"] = st_val
+    df["FinalUpper"] = final_upper
+    df["FinalLower"] = final_lower
+
     return df
 
 
 # ===================================================
-# Bollinger Bands (for removal only)
+# 6. BOLLINGER BANDS
 # ===================================================
 def get_bollinger_last(df, period=200, mult=2):
-    # Uses normal close prices (not HA). If you prefer HA_Close, change to ha["HA_Close"]
     df["MA20"] = df["close"].rolling(period).mean()
     df["STD"] = df["close"].rolling(period).std()
     df["UpperBB"] = df["MA20"] + mult * df["STD"]
@@ -155,7 +211,7 @@ def get_bollinger_last(df, period=200, mult=2):
 
 
 # ===================================================
-# Save Watchlist
+# 7. SAVE WATCHLISTS
 # ===================================================
 def save_watchlist(buy, sell):
     with open(BUY_FILE, "w") as f:
@@ -165,140 +221,99 @@ def save_watchlist(buy, sell):
 
 
 # ===================================================
-# Main Logic
+# 8. MAIN LOGIC
 # ===================================================
 def main():
     pairs = get_active_usdt_coins()
-    buy_watch, sell_watch = [], []
 
-    # Load existing watchlists if present
-    try:
-        buy_watch = json.load(open(BUY_FILE))
-    except:
-        buy_watch = []
+    # Load existing lists
+    try: buy_watch = json.load(open(BUY_FILE))
+    except: buy_watch = []
 
-    try:
-        sell_watch = json.load(open(SELL_FILE))
-    except:
-        sell_watch = []
+    try: sell_watch = json.load(open(SELL_FILE))
+    except: sell_watch = []
 
-    # Step 1: Fetch 1D% Change and select top gainers/losers
-    def get_top_gainers_and_losers(pairs):
+    # ------- Top gainers/losers (1D%) ----------
+    def get_top(pairs):
         changes = []
-        with ThreadPoolExecutor(MAX_WORKERS) as executor:
-            futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
-            for fut in as_completed(futures):
-                res = fut.result()
-                if res:
-                    changes.append(res)
+        with ThreadPoolExecutor(MAX_WORKERS) as ex:
+            for fut in as_completed([ex.submit(fetch_pair_stats, p) for p in pairs]):
+                if fut.result():
+                    changes.append(fut.result())
 
         changes.sort(key=lambda x: x["change"], reverse=True)
+        return [x["pair"] for x in changes[:10]], [x["pair"] for x in changes[-10:]]
 
-        # selecting top 10 and bottom 10
-        top_gainers = [x["pair"] for x in changes[:10]]
-        top_losers = [x["pair"] for x in changes[-10:]]
-        return top_gainers, top_losers
+    top_gainers, top_losers = get_top(pairs)
 
-    top_gainers, top_losers = get_top_gainers_and_losers(pairs)
+    sell_watch = list(dict.fromkeys(sell_watch + top_gainers))
+    buy_watch = list(dict.fromkeys(buy_watch + top_losers))
 
-    # Add to watchlists (keep existing ones)
-    sell_watch.extend(top_gainers)
-    buy_watch.extend(top_losers)
-
-    # dedupe
-    sell_watch = list(dict.fromkeys(sell_watch))
-    buy_watch = list(dict.fromkeys(buy_watch))
-
-    # ===================================================
-    # SUPERTREND ALERTS (Heikin-Ashi) - these are sent and do NOT remove coins
-    # ===================================================
+    # ------- Supertrend Scan (HA) ----------
     buy_signals, sell_signals = [], []
 
-    def check_buy_supertrend(pair):
+    def check_buy(pair):
         df = fetch_last_n_candles(pair)
-        if df is None or len(df) < 25:  # need enough data
-            return None
+        if df is None: return None
+
         ha = convert_to_heikin_ashi(df)
-        st = compute_supertrend(ha)
-        prev = st.iloc[-2]["supertrend"]
-        last = st.iloc[-1]["supertrend"]
-        # BUY if ST flips RED -> GREEN
+        st = supertrend_tv_ha(ha)
+
+        prev, last = st.iloc[-2]["ST_Trend"], st.iloc[-1]["ST_Trend"]
         if prev is False and last is True:
-            return pair
-        return None
+            return f"{pair} | HA Close = {round(st.iloc[-1]['HA_Close'], 6)}"
 
-    def check_sell_supertrend(pair):
+    def check_sell(pair):
         df = fetch_last_n_candles(pair)
-        if df is None or len(df) < 25:
-            return None
+        if df is None: return None
+
         ha = convert_to_heikin_ashi(df)
-        st = compute_supertrend(ha)
-        prev = st.iloc[-2]["supertrend"]
-        last = st.iloc[-1]["supertrend"]
-        # SELL if ST flips GREEN -> RED
+        st = supertrend_tv_ha(ha)
+
+        prev, last = st.iloc[-2]["ST_Trend"], st.iloc[-1]["ST_Trend"]
         if prev is True and last is False:
-            return pair
-        return None
+            return f"{pair} | HA Close = {round(st.iloc[-1]['HA_Close'], 6)}"
 
-    # Run supertrend checks concurrently, collect results (these will be alerted and NOT removed)
-    if ENABLE_BUY and buy_watch:
-        with ThreadPoolExecutor(MAX_WORKERS) as executor:
-            futures = [executor.submit(check_buy_supertrend, p) for p in buy_watch]
-            for fut in as_completed(futures):
-                res = fut.result()
-                if res:
-                    buy_signals.append(res)
+    if ENABLE_BUY:
+        with ThreadPoolExecutor(MAX_WORKERS) as ex:
+            for res in as_completed([ex.submit(check_buy, p) for p in buy_watch]):
+                if res.result(): buy_signals.append(res.result())
 
-    if ENABLE_SELL and sell_watch:
-        with ThreadPoolExecutor(MAX_WORKERS) as executor:
-            futures = [executor.submit(check_sell_supertrend, p) for p in sell_watch]
-            for fut in as_completed(futures):
-                res = fut.result()
-                if res:
-                    sell_signals.append(res)
+    if ENABLE_SELL:
+        with ThreadPoolExecutor(MAX_WORKERS) as ex:
+            for res in as_completed([ex.submit(check_sell, p) for p in sell_watch]):
+                if res.result(): sell_signals.append(res.result())
 
-    # Send Supertrend alerts (these do NOT remove coins)
-    if ENABLE_BUY and buy_signals:
-        send_telegram_message("🟢 BUY Signals (1D% + SUPER-TREND):\n" + "\n".join(buy_signals))
+    # ------- Send Alerts -------
+    if buy_signals:
+        send_telegram_message("🟢 BUY (HA Supertrend Flip)\n" + "\n".join(buy_signals))
 
-    if ENABLE_SELL and sell_signals:
-        send_telegram_message("🔴 SELL Signals (1D% + SUPER-TREND):\n" + "\n".join(sell_signals))
+    if sell_signals:
+        send_telegram_message("🔴 SELL (HA Supertrend Flip)\n" + "\n".join(sell_signals))
 
-    # ===================================================
-    # BOLLINGER-BASED REMOVAL (NO ALERTS WHEN REMOVING)
-    # - SELL watchlist: remove when close <= LowerBB
-    # - BUY watchlist:  remove when close >= UpperBB
-    # ===================================================
-    sell_remove = []
+    # ------- Bollinger Remove -------
+    sell_remove, buy_remove = [], []
+
     for coin in sell_watch:
         df = fetch_last_n_candles(coin)
-        if df is None or len(df) < 25:
-            continue
+        if df is None: continue
         close, upper, lower = get_bollinger_last(df)
-        # Remove silently when touching LOWER band
         if close <= lower:
             sell_remove.append(coin)
 
-    buy_remove = []
     for coin in buy_watch:
         df = fetch_last_n_candles(coin)
-        if df is None or len(df) < 25:
-            continue
+        if df is None: continue
         close, upper, lower = get_bollinger_last(df)
-        # Remove silently when touching UPPER band
         if close >= upper:
             buy_remove.append(coin)
 
-    # Apply removals (silent: NO telegram)
-    if sell_remove:
-        sell_watch = [c for c in sell_watch if c not in sell_remove]
+    sell_watch = [c for c in sell_watch if c not in sell_remove]
+    buy_watch = [c for c in buy_watch if c not in buy_remove]
 
-    if buy_remove:
-        buy_watch = [c for c in buy_watch if c not in buy_remove]
-
-    # Save watchlists
     save_watchlist(buy_watch, sell_watch)
 
 
+# ===================================================
 if __name__ == "__main__":
     main()
