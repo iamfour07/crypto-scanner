@@ -25,7 +25,6 @@
   "B-SANTOS_USDT",
   "B-MAVIA_USDT",
   "B-MAV_USDT",
-  "B-FIO_USDT",
   "B-DUSK_USDT",
   "B-MOVE_USDT",
   "B-0G_USDT",
@@ -51,5 +50,6 @@
   "B-TLM_USDT",
   "B-QUICK_USDT",
   "B-NXPC_USDT",
-  "B-BICO_USDT"
+  "B-BICO_USDT",
+  "B-SYRUP_USDT"
 ]
