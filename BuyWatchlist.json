@@ -31,7 +31,6 @@
   "B-XPL_USDT",
   "B-DASH_USDT",
   "B-AVAAI_USDT",
-  "B-SWARMS_USDT",
   "B-AERO_USDT",
   "B-LUNA2_USDT",
   "B-ALICE_USDT",
@@ -66,9 +65,9 @@
   "B-GPS_USDT",
   "B-BANANAS31_USDT",
   "B-ILV_USDT",
-  "B-PHB_USDT",
   "B-NEAR_USDT",
   "B-APE_USDT",
   "B-HUMA_USDT",
-  "B-PARTI_USDT"
+  "B-PARTI_USDT",
+  "B-ACT_USDT"
 ]
