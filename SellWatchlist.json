@@ -32,7 +32,6 @@
   "B-HFT_USDT",
   "B-XVS_USDT",
   "B-HOME_USDT",
-  "B-RESOLV_USDT",
   "B-ILV_USDT",
   "B-ACT_USDT",
   "B-BAT_USDT",
@@ -60,5 +59,6 @@
   "B-2Z_USDT",
   "B-ZK_USDT",
   "B-OM_USDT",
-  "B-EPIC_USDT"
+  "B-EPIC_USDT",
+  "B-NEWT_USDT"
 ]
