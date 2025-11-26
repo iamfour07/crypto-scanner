@@ -46,7 +46,6 @@
   "B-TLM_USDT",
   "B-QUICK_USDT",
   "B-NXPC_USDT",
-  "B-BICO_USDT",
   "B-SYRUP_USDT",
   "B-REI_USDT",
   "B-ZEC_USDT",
@@ -82,5 +81,6 @@
   "B-HEMI_USDT",
   "B-IOST_USDT",
   "B-NIL_USDT",
-  "B-SCR_USDT"
+  "B-SCR_USDT",
+  "B-GLM_USDT"
 ]
