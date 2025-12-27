@@ -21,7 +21,7 @@ import requests
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
+from Telegram_Alert import send_telegram_message
 """
 ===========================================================
 📊 COINDCX SUPERTREND SCANNER (1-Hour Timeframe)
