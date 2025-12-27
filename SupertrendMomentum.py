@@ -22,232 +22,232 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
+"""
+===========================================================
+📊 COINDCX SUPERTREND SCANNER (1-Hour Timeframe)
+===========================================================
+
+🔹 BEHAVIOR:
+    ✅ Supertrend calculated using LIVE candle
+    ✅ Signal evaluated on LAST CLOSED candle (current-1)
+    ✅ Telegram alerts with Entry, SL, Qty, RR
+
+===========================================================
+"""
+
+import requests
+import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
+from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
 
 # =====================
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-RESOLUTION = "60"   # 1-hour candles
-LIMIT_HOURS = 1000  # lookback window
+RESOLUTION = "60"      # 1-hour candles
+LIMIT_HOURS = 1000
 
-# ✅ Supertrend parameters
+# Supertrend parameters
 ST_LENGTH = 14
 ST_FACTOR = 2.0
+
+# Risk config
+MAX_LOSS_RS = 200
+LEVERAGE = 10
+RR_LEVELS = [1, 2, 3]
 
 # =========================================================
 # HELPERS
 # =========================================================
-def rma(series: pd.Series, period: int) -> pd.Series:
-    """Wilder's RMA (used by TradingView)"""
-    return series.ewm(alpha=1/period, adjust=False).mean()
+def rma(series, period):
+    return series.ewm(alpha=1 / period, adjust=False).mean()
 
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
+    data = requests.get(url, timeout=30).json()
     pairs = []
     for x in data:
         if isinstance(x, str):
             pairs.append(x)
         elif isinstance(x, dict):
-            if 'pair' in x:
-                pairs.append(x['pair'])
-            elif 'symbol' in x:
-                pairs.append(x['symbol'])
-    return list(dict.fromkeys(pairs))
+            pairs.append(x.get("pair") or x.get("symbol"))
+    return list(dict.fromkeys(filter(None, pairs)))
 
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        pc = data.get("price_change_percent", {}).get("1D")
-        if pc is None:
-            return None
-        return {"pair": pair, "change": float(pc)}
-    except Exception as e:
-        print(f"[stats] {pair} error: {e}")
+        pc = requests.get(url, timeout=10).json().get("price_change_percent", {}).get("1D")
+        return {"pair": pair, "change": float(pc)} if pc is not None else None
+    except:
         return None
 
 # =========================================================
-# SUPERTREND CALCULATION
+# SUPERTREND (LIVE-INFLUENCED)
 # =========================================================
-def calculate_supertrend(df, period=ST_LENGTH, multiplier=ST_FACTOR):
-    """
-    TradingView-accurate Supertrend.
-    Adds columns: FinalUpper, FinalLower, Supertrend, ST_Trend (True=Bullish)
-    """
-    for col in ["high", "low", "close"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+def calculate_supertrend(df):
+    for c in ["high", "low", "close"]:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
 
-    # ATR (RMA)
-    hl = df["high"] - df["low"]
-    hc = (df["high"] - df["close"].shift()).abs()
-    lc = (df["low"] - df["close"].shift()).abs()
-    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
-    atr = rma(tr, period)
+    tr = pd.concat([
+        df["high"] - df["low"],
+        (df["high"] - df["close"].shift()).abs(),
+        (df["low"] - df["close"].shift()).abs()
+    ], axis=1).max(axis=1)
 
-    # Basic bands
-    hl2 = (df["high"] + df["low"]) / 2.0
-    upper_basic = hl2 + multiplier * atr
-    lower_basic = hl2 - multiplier * atr
+    atr = rma(tr, ST_LENGTH)
+    hl2 = (df["high"] + df["low"]) / 2
 
-    # Final bands
-    final_upper = upper_basic.copy()
-    final_lower = lower_basic.copy()
+    upper = hl2 + ST_FACTOR * atr
+    lower = hl2 - ST_FACTOR * atr
+
+    fu, fl = upper.copy(), lower.copy()
+
     for i in range(1, len(df)):
-        prev_fu = final_upper.iloc[i - 1]
-        prev_fl = final_lower.iloc[i - 1]
-        prev_close = df["close"].iloc[i - 1]
+        fu.iloc[i] = upper.iloc[i] if upper.iloc[i] < fu.iloc[i-1] or df["close"].iloc[i-1] > fu.iloc[i-1] else fu.iloc[i-1]
+        fl.iloc[i] = lower.iloc[i] if lower.iloc[i] > fl.iloc[i-1] or df["close"].iloc[i-1] < fl.iloc[i-1] else fl.iloc[i-1]
 
-        if (upper_basic.iloc[i] < prev_fu) or (prev_close > prev_fu):
-            final_upper.iloc[i] = upper_basic.iloc[i]
-        else:
-            final_upper.iloc[i] = prev_fu
+    st = pd.Series(index=df.index, dtype=float)
+    trend = pd.Series(index=df.index, dtype=bool)
 
-        if (lower_basic.iloc[i] > prev_fl) or (prev_close < prev_fl):
-            final_lower.iloc[i] = lower_basic.iloc[i]
-        else:
-            final_lower.iloc[i] = prev_fl
+    if df["close"].iloc[ST_LENGTH] >= fl.iloc[ST_LENGTH]:
+        st.iloc[ST_LENGTH] = fl.iloc[ST_LENGTH]
+        trend.iloc[ST_LENGTH] = True
+    else:
+        st.iloc[ST_LENGTH] = fu.iloc[ST_LENGTH]
+        trend.iloc[ST_LENGTH] = False
 
-    # Determine direction
-    st = pd.Series(0.0, index=df.index)
-    trend = pd.Series(True, index=df.index)
-
-    if len(df) > 0:
-        if df["close"].iloc[period] >= final_lower.iloc[period]:
-            st.iloc[period] = final_lower.iloc[period]
-            trend.iloc[period] = True
-        else:
-            st.iloc[period] = final_upper.iloc[period]
-            trend.iloc[period] = False
-
-    for i in range(period + 1, len(df)):
-        if st.iloc[i - 1] == final_upper.iloc[i - 1]:
-            if df["close"].iloc[i] <= final_upper.iloc[i]:
-                st.iloc[i] = final_upper.iloc[i]
+    for i in range(ST_LENGTH + 1, len(df)):
+        if st.iloc[i-1] == fu.iloc[i-1]:
+            if df["close"].iloc[i] <= fu.iloc[i]:
+                st.iloc[i] = fu.iloc[i]
                 trend.iloc[i] = False
             else:
-                st.iloc[i] = final_lower.iloc[i]
+                st.iloc[i] = fl.iloc[i]
                 trend.iloc[i] = True
         else:
-            if df["close"].iloc[i] >= final_lower.iloc[i]:
-                st.iloc[i] = final_lower.iloc[i]
+            if df["close"].iloc[i] >= fl.iloc[i]:
+                st.iloc[i] = fl.iloc[i]
                 trend.iloc[i] = True
             else:
-                st.iloc[i] = final_upper.iloc[i]
+                st.iloc[i] = fu.iloc[i]
                 trend.iloc[i] = False
 
-    out = df.copy()
-    out["FinalUpper"] = final_upper
-    out["FinalLower"] = final_lower
-    out["Supertrend"] = st
-    out["ST_Trend"] = trend
-    return out
+    df["Supertrend"] = st
+    df["ST_Trend"] = trend
+    return df
 
 # =========================================================
-# FETCH CANDLE DATA
+# FETCH CANDLES (INCLUDES LIVE)
 # =========================================================
-def fetch_last_n_candles(pair, n=200):
-    try:
-        now = int(datetime.now(timezone.utc).timestamp())
-        from_time = now - LIMIT_HOURS * 3600
-        url = "https://public.coindcx.com/market_data/candlesticks"
-        params = {"pair": pair, "from": from_time, "to": now, "resolution": RESOLUTION, "pcode": "f"}
-        resp = requests.get(url, params=params, timeout=10)
-        resp.raise_for_status()
-        data = resp.json().get("data", [])
-        if not data:
-            return None
+def fetch_candles(pair, n=300):
+    now = int(datetime.now(timezone.utc).timestamp())
+    url = "https://public.coindcx.com/market_data/candlesticks"
+    params = {
+        "pair": pair,
+        "from": now - LIMIT_HOURS * 3600,
+        "to": now,
+        "resolution": RESOLUTION,
+        "pcode": "f",
+    }
 
-        df = pd.DataFrame(data)
-        for col in ["open", "high", "low", "close"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        if "time" in df.columns:
-            df = df.sort_values("time").reset_index(drop=True)
-
-        if len(df) > n:
-            df = df.iloc[-n:].copy()
-
-        df = calculate_supertrend(df)
-        return df.dropna().reset_index(drop=True)
-    except Exception as e:
-        print(f"[candles] {pair} error: {e}")
+    data = requests.get(url, params=params, timeout=10).json().get("data", [])
+    if not data:
         return None
+
+    df = pd.DataFrame(data).sort_values("time").reset_index(drop=True)
+    df = calculate_supertrend(df.iloc[-n:].copy())
+    return df.dropna().reset_index(drop=True)
+
+# =========================================================
+# RISK & RR CALC
+# =========================================================
+def calculate_trade_levels(side, c):
+    entry, sl = (c["high"], c["low"]) if side == "bullish" else (c["low"], c["high"])
+    risk = abs(entry - sl)
+    if risk <= 0:
+        return None
+
+    qty = int(MAX_LOSS_RS // risk)
+    if qty <= 0:
+        return None
+
+    return {
+        "entry": round(entry, 4),
+        "sl": round(sl, 4),
+        "qty": qty,
+        "capital": round((entry * qty) / LEVERAGE, 2),
+        "targets": {
+            f"{r}R": round(entry + r * risk if side == "bullish" else entry - r * risk, 4)
+            for r in RR_LEVELS
+        }
+    }
 
 # =========================================================
 # MAIN
 # =========================================================
 def main():
-    print("Fetching active USDT pairs...")
     pairs = get_active_usdt_coins()
-
-    # Fetch % change
     changes = []
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
-        for fut in as_completed(futures):
-            res = fut.result()
-            if res:
-                changes.append(res)
 
-    df = pd.DataFrame(changes).dropna()
+    with ThreadPoolExecutor(MAX_WORKERS) as ex:
+        for f in as_completed([ex.submit(fetch_pair_stats, p) for p in pairs]):
+            if f.result():
+                changes.append(f.result())
+
+    df = pd.DataFrame(changes)
     if df.empty:
-        print("No data fetched!")
         return
 
-    # Select top 10 gainers & losers
-    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"].tolist()
-    top_losers  = df.sort_values("change", ascending=True).head(10)["pair"].tolist()
-
-    bullish_signals, bearish_signals = [], []
+    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"]
+    top_losers = df.sort_values("change").head(10)["pair"]
 
     def check_signal(pair, side):
-        df_c = fetch_last_n_candles(pair)
-        if df_c is None or len(df_c) < (ST_LENGTH + 5):
+        df_c = fetch_candles(pair)
+        if df_c is None or len(df_c) < ST_LENGTH + 3:
             return None
 
-        prev2, prev1 = df_c.iloc[-3], df_c.iloc[-2]
-        latest = df_c.iloc[-1]
+        c = df_c.iloc[-2]  # last CLOSED candle
 
-        # trend_text = "🟢 Bullish" if latest["ST_Trend"] else "🔴 Bearish"
-        # print(f"[DEBUG] {pair} | Close={latest['close']:.4f} | ST={latest['Supertrend']:.4f} | Trend={trend_text}")
+        if side == "bullish" and c["ST_Trend"] and c["low"] <= c["Supertrend"] and c["close"] > c["Supertrend"]:
+            trade = calculate_trade_levels("bullish", c)
+            if trade:
+                return ("BUY", pair, trade)
 
-        # Check only respective signal type
-        if side == "bullish" and (not prev2["ST_Trend"]) and (prev1["ST_Trend"]):
-            return ("bullish", pair)
-        elif side == "bearish" and (prev2["ST_Trend"]) and (not prev1["ST_Trend"]):
-            return ("bearish", pair)
+        if side == "bearish" and (not c["ST_Trend"]) and c["high"] >= c["Supertrend"] and c["close"] < c["Supertrend"]:
+            trade = calculate_trade_levels("bearish", c)
+            if trade:
+                return ("SELL", pair, trade)
+
         return None
 
-    # 🔹 Run in parallel (gainers for bullish, losers for bearish)
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        gain_futs = [executor.submit(check_signal, p, "bullish") for p in top_gainers]
-        lose_futs = [executor.submit(check_signal, p, "bearish") for p in top_losers]
+    with ThreadPoolExecutor(MAX_WORKERS) as ex:
+        tasks = []
+        tasks += [ex.submit(check_signal, p, "bullish") for p in top_gainers]
+        tasks += [ex.submit(check_signal, p, "bearish") for p in top_losers]
 
-        for fut in as_completed(gain_futs + lose_futs):
-            res = fut.result()
+        for f in as_completed(tasks):
+            res = f.result()
             if res:
-                side, pair = res
-                if side == "bullish":
-                    bullish_signals.append(pair)
-                elif side == "bearish":
-                    bearish_signals.append(pair)
+                side, pair, t = res
 
-    # Results
-    if bullish_signals:
-        msg = "🟢 Bullish Supertrend (1H) signals (Top Gainers):\n" + "\n".join(sorted(bullish_signals))
-        # print(msg)
-        Telegram_Alert_EMA_Crossover(msg)
+                emoji = "🟢" if side == "BUY" else "🔴"
+                msg = (
+                    f"{emoji} {side} – Supertrend Pullback (1H)\n\n"
+                    f"Symbol   : {pair}\n"
+                    f"Entry    : {t['entry']}\n"
+                    f"SL       : {t['sl']}\n"
+                    f"Qty      : {t['qty']}\n"
+                    f"Capital  : ₹{t['capital']} (10×)\n\n"
+                    f"Targets:\n"
+                )
 
-    if bearish_signals:
-        msg = "🔴 Bearish Supertrend (1H) signals (Top Losers):\n" + "\n".join(sorted(bearish_signals))
-        # print(msg)
-        Telegram_Alert_EMA_Crossover(msg)
+                for rr, price in t["targets"].items():
+                    msg += f"{rr} → {price}\n"
+
+                Telegram_Alert_EMA_Crossover(msg)
 
 # =========================================================
 if __name__ == "__main__":
     main()
+
