@@ -245,7 +245,7 @@ def main():
                 for rr, price in t["targets"].items():
                     msg += f"{rr} → {price}\n"
 
-                Telegram_Alert_EMA_Crossover(msg)
+                send_telegram_message(msg)
 
 # =========================================================
 if __name__ == "__main__":
