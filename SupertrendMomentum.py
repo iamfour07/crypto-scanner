@@ -1,19 +1,20 @@
-"""
-===========================================================
-📊 COINDCX SUPERTREND SCANNER (1-Hour Timeframe)
-===========================================================
+# """
+# ===========================================================
+# 📊 COINDCX SUPERTREND SCANNER (1-Hour Timeframe)
+# ===========================================================
 
-🔹 PURPOSE:
-    Detect bullish and bearish Supertrend signals among top
-    USDT futures coins on CoinDCX and send Telegram alerts.
+# 🔹 PURPOSE:
+#     Detect bullish and bearish Supertrend signals among top
+#     USDT futures coins on CoinDCX and send Telegram alerts.
 
-🔹 LOGIC UPDATE:
-    ✅ Skip Top 5
-    ✅ Scan Rank 6 → 15 (10 coins)
-    ✅ Futures candles (Binance)
-    ✅ Capital capped to ₹600 with dynamic leverage
-===========================================================
-"""
+# 🔹 LOGIC UPDATE:
+#     ✅ Skip Top 5
+#     ✅ Scan Rank 6 → 15 (10 coins)
+#     ✅ Futures candles (Binance)
+#     ✅ Capital capped to ₹600 with dynamic leverage
+# ===========================================================
+# """
+
 
 import requests
 import pandas as pd
@@ -38,6 +39,12 @@ MAX_CAPITAL_RS = 600
 ALLOWED_LEVERAGES = [5, 10, 15, 20]
 RR_LEVELS = [1, 2, 3]
 
+# =====================
+# SESSION (NEW)
+# =====================
+SESSION = requests.Session()
+SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
+
 # =========================================================
 # HELPERS
 # =========================================================
@@ -46,7 +53,7 @@ def rma(series, period):
 
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
-    data = requests.get(url, timeout=30).json()
+    data = SESSION.get(url, timeout=30).json()
     pairs = []
     for x in data:
         if isinstance(x, str):
@@ -58,7 +65,7 @@ def get_active_usdt_coins():
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
-        pc = requests.get(url, timeout=10).json().get("price_change_percent", {}).get("1D")
+        pc = SESSION.get(url, timeout=10).json().get("price_change_percent", {}).get("1D")
         return {"pair": pair, "change": float(pc)} if pc is not None else None
     except:
         return None
@@ -119,11 +126,28 @@ def calculate_supertrend(df):
     return df
 
 # =========================================================
-# BINANCE FUTURES CANDLES
+# BINANCE SYMBOL CACHE (NEW)
+# =========================================================
+def get_binance_futures_symbols():
+    url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
+    data = SESSION.get(url, timeout=15).json()
+    return {
+        s["symbol"]
+        for s in data["symbols"]
+        if s.get("contractType") == "PERPETUAL"
+    }
+
+# =========================================================
+# BINANCE FUTURES CANDLES (UPDATED)
 # =========================================================
 def fetch_candles(pair, n=300):
     try:
         symbol = pair.replace("B-", "").replace("_", "")
+
+        # 🚫 Skip if symbol not available on Binance
+        if symbol not in BINANCE_FUTURES_SYMBOLS:
+            return None
+
         url = "https://fapi.binance.com/fapi/v1/klines"
         params = {
             "symbol": symbol,
@@ -131,7 +155,7 @@ def fetch_candles(pair, n=300):
             "limit": n + 2
         }
 
-        klines = requests.get(url, params=params, timeout=10).json()
+        klines = SESSION.get(url, params=params, timeout=5).json()
         if not klines or len(klines) < ST_LENGTH + 3:
             return None
 
@@ -215,11 +239,15 @@ def main():
     if df.empty:
         return
 
+    # 🔹 Load Binance symbols ONCE (NEW)
+    global BINANCE_FUTURES_SYMBOLS
+    BINANCE_FUTURES_SYMBOLS = get_binance_futures_symbols()
+
     df_g = df.sort_values("change", ascending=False)
     df_l = df.sort_values("change")
 
-    top_gainers = df_g.iloc[5:20]["pair"]
-    top_losers = df_l.iloc[5:20]["pair"]
+    top_gainers = df_g.iloc[5:15]["pair"]
+    top_losers = df_l.iloc[5:15]["pair"]
 
     def check_signal(pair, side):
         df_c = fetch_candles(pair)
