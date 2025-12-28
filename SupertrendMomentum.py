@@ -1,20 +1,19 @@
-# """
-# ===========================================================
-# 📊 COINDCX SUPERTREND SCANNER (1-Hour Timeframe)
-# ===========================================================
+"""
+===========================================================
+📊 COINDCX SUPERTREND SCANNER (1-Hour Timeframe)
+===========================================================
 
-# 🔹 PURPOSE:
-#     Detect bullish and bearish Supertrend signals among top
-#     USDT futures coins on CoinDCX and send Telegram alerts.
+🔹 PURPOSE:
+    Detect bullish and bearish Supertrend signals among top
+    USDT futures coins on CoinDCX and send Telegram alerts.
 
-# 🔹 LOGIC UPDATE:
-#     ✅ Skip Top 5
-#     ✅ Scan Rank 6 → 15 (10 coins)
-#     ✅ Futures candles (Binance)
-#     ✅ Capital capped to ₹600 with dynamic leverage
-# ===========================================================
-# """
-
+🔹 LOGIC:
+    ✅ Supertrend calculated using LIVE candle
+    ✅ Signal evaluated on LAST CLOSED candle (current-1)
+    ✅ Bullish only in Top 10 Gainers
+    ✅ Bearish only in Top 10 Losers
+===========================================================
+"""
 
 import requests
 import pandas as pd
@@ -26,20 +25,17 @@ from Telegram_Alert import send_telegram_message
 # CONFIG
 # =====================
 MAX_WORKERS = 15
-RESOLUTION = "60"
+RESOLUTION = "60"      # 1-hour candles
 LIMIT_HOURS = 1000
 
 # Supertrend parameters
 ST_LENGTH = 10
-ST_FACTOR = 2.0
+ST_FACTOR = 3.0
 
-# Risk & Capital config
-MAX_LOSS_RS = 100
-MAX_CAPITAL_RS = 600
-ALLOWED_LEVERAGES = [5, 10, 15, 20]
-RR_LEVELS = [1, 2, 3]
-
-
+# Risk config
+MAX_LOSS_RS = 200
+LEVERAGE = 10
+RR_LEVELS = [2, 3, 4]
 
 # =========================================================
 # HELPERS
@@ -122,98 +118,50 @@ def calculate_supertrend(df):
     return df
 
 # =========================================================
-# BINANCE SYMBOL CACHE (NEW)
-# =========================================================
-def get_binance_futures_symbols():
-    url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
-    data = requests.get(url, timeout=15).json()
-    return {
-        s["symbol"]
-        for s in data["symbols"]
-        if s.get("contractType") == "PERPETUAL"
-    }
-
-# =========================================================
-# BINANCE FUTURES CANDLES (UPDATED)
+# FETCH CANDLES (COINDCX ONLY – FROM OLD CODE)
 # =========================================================
 def fetch_candles(pair, n=300):
-    try:
-        symbol = pair.replace("B-", "").replace("_", "")
+    now = int(datetime.now(timezone.utc).timestamp())
 
-        # 🚫 Skip if symbol not available on Binance
-        if symbol not in BINANCE_FUTURES_SYMBOLS:
-            return None
+    url = "https://public.coindcx.com/market_data/candlesticks"
+    params = {
+        "pair": pair,
+        "from": now - LIMIT_HOURS * 3600,
+        "to": now,
+        "resolution": RESOLUTION,
+        "pcode": "f",
+    }
 
-        url = "https://fapi.binance.com/fapi/v1/klines"
-        params = {
-            "symbol": symbol,
-            "interval": "15m",
-            "limit": n + 2
-        }
-
-        klines = requests.get(url, params=params, timeout=5).json()
-        if not klines or len(klines) < ST_LENGTH + 3:
-            return None
-
-        rows = [{
-            "time": int(k[0] / 1000),
-            "open": float(k[1]),
-            "high": float(k[2]),
-            "low": float(k[3]),
-            "close": float(k[4]),
-            "volume": float(k[5]),
-        } for k in klines]
-
-        df = pd.DataFrame(rows).sort_values("time").reset_index(drop=True)
-        df = calculate_supertrend(df)
-
-        return df.dropna().reset_index(drop=True)
-
-    except Exception as e:
-        print(f"[CANDLE ERROR] {pair} → {e}")
+    data = requests.get(url, params=params, timeout=10).json().get("data", [])
+    if not data:
         return None
 
-# =========================================================
-# LEVERAGE SELECTION
-# =========================================================
-def choose_leverage(entry, qty):
-    required = (entry * qty) / MAX_CAPITAL_RS
-    for lev in ALLOWED_LEVERAGES:
-        if lev >= required:
-            return lev
-    return None
+    df = pd.DataFrame(data).sort_values("time").reset_index(drop=True)
+    df = calculate_supertrend(df.iloc[-n:].copy())
+    return df.dropna().reset_index(drop=True)
 
 # =========================================================
-# RISK & RR CALC
+# RISK & RR
 # =========================================================
 def calculate_trade_levels(side, c):
     entry, sl = (c["high"], c["low"]) if side == "bullish" else (c["low"], c["high"])
-    risk_per_unit = abs(entry - sl)
-
-    if risk_per_unit <= 0:
+    risk = abs(entry - sl)
+    if risk <= 0:
         return None
 
-    qty = int(MAX_LOSS_RS // risk_per_unit)
+    qty = int(MAX_LOSS_RS // risk)
     if qty <= 0:
         return None
-
-    leverage = choose_leverage(entry, qty)
-    if leverage is None:
-        return None
-
-    capital_used = round((entry * qty) / leverage, 2)
 
     return {
         "entry": round(entry, 4),
         "sl": round(sl, 4),
         "qty": qty,
-        "leverage": leverage,
-        "capital": capital_used,
+        "capital": round((entry * qty) / LEVERAGE, 2),
         "targets": {
             f"{r}R": round(
-                entry + r * risk_per_unit if side == "bullish"
-                else entry - r * risk_per_unit,
-                4
+                entry + r * risk if side == "bullish"
+                else entry - r * risk, 4
             )
             for r in RR_LEVELS
         }
@@ -235,32 +183,25 @@ def main():
     if df.empty:
         return
 
-    # 🔹 Load Binance symbols ONCE (NEW)
-    global BINANCE_FUTURES_SYMBOLS
-    BINANCE_FUTURES_SYMBOLS = get_binance_futures_symbols()
-
-    df_g = df.sort_values("change", ascending=False)
-    df_l = df.sort_values("change")
-
-    top_gainers = df_g.iloc[5:15]["pair"]
-    top_losers = df_l.iloc[5:15]["pair"]
+    top_gainers = df.sort_values("change", ascending=False).head(10)["pair"]
+    top_losers = df.sort_values("change").head(10)["pair"]
 
     def check_signal(pair, side):
         df_c = fetch_candles(pair)
         if df_c is None or len(df_c) < ST_LENGTH + 3:
             return None
 
-        c = df_c.iloc[-2]
+        c = df_c.iloc[-2]  # LAST CLOSED candle
 
         if side == "bullish" and c["ST_Trend"] and c["low"] <= c["Supertrend"] and c["close"] > c["Supertrend"]:
-            t = calculate_trade_levels("bullish", c)
-            if t:
-                return ("BUY", pair, t)
+            trade = calculate_trade_levels("bullish", c)
+            if trade:
+                return ("BUY", pair, trade)
 
         if side == "bearish" and not c["ST_Trend"] and c["high"] >= c["Supertrend"] and c["close"] < c["Supertrend"]:
-            t = calculate_trade_levels("bearish", c)
-            if t:
-                return ("SELL", pair, t)
+            trade = calculate_trade_levels("bearish", c)
+            if trade:
+                return ("SELL", pair, trade)
 
         return None
 
@@ -274,18 +215,19 @@ def main():
             if res:
                 side, pair, t = res
                 emoji = "🟢" if side == "BUY" else "🔴"
+
                 msg = (
-                    f"{emoji} {side} – Supertrend Pullback (15m)\n\n"
+                    f"{emoji} {side} – Supertrend Pullback (1H)\n\n"
                     f"Symbol   : {pair}\n"
                     f"Entry    : {t['entry']}\n"
                     f"SL       : {t['sl']}\n"
                     f"Qty      : {t['qty']}\n"
-                    f"Capital  : ₹{t['capital']} ({t['leverage']}×)\n\n"
+                    f"Capital  : ₹{t['capital']} (10×)\n\n"
                     f"Targets:\n"
                 )
+
                 for rr, price in t["targets"].items():
                     msg += f"{rr} → {price}\n"
-
                 # print(msg)
                 send_telegram_message(msg)
 
