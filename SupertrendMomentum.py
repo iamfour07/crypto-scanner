@@ -286,7 +286,7 @@ def main():
                 for rr, price in t["targets"].items():
                     msg += f"{rr} → {price}\n"
 
-                print(msg)
+                # print(msg)
                 send_telegram_message(msg)
 
 # =========================================================
