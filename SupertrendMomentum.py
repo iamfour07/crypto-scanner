@@ -39,11 +39,7 @@ MAX_CAPITAL_RS = 600
 ALLOWED_LEVERAGES = [5, 10, 15, 20]
 RR_LEVELS = [1, 2, 3]
 
-# =====================
-# SESSION (NEW)
-# =====================
-SESSION = requests.Session()
-SESSION.headers.update({"User-Agent": "Mozilla/5.0"})
+
 
 # =========================================================
 # HELPERS
@@ -53,7 +49,7 @@ def rma(series, period):
 
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
-    data = SESSION.get(url, timeout=30).json()
+    data = requests.get(url, timeout=30).json()
     pairs = []
     for x in data:
         if isinstance(x, str):
@@ -65,7 +61,7 @@ def get_active_usdt_coins():
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
-        pc = SESSION.get(url, timeout=10).json().get("price_change_percent", {}).get("1D")
+        pc = requests.get(url, timeout=10).json().get("price_change_percent", {}).get("1D")
         return {"pair": pair, "change": float(pc)} if pc is not None else None
     except:
         return None
@@ -130,7 +126,7 @@ def calculate_supertrend(df):
 # =========================================================
 def get_binance_futures_symbols():
     url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
-    data = SESSION.get(url, timeout=15).json()
+    data = requests.get(url, timeout=15).json()
     return {
         s["symbol"]
         for s in data["symbols"]
@@ -155,7 +151,7 @@ def fetch_candles(pair, n=300):
             "limit": n + 2
         }
 
-        klines = SESSION.get(url, params=params, timeout=5).json()
+        klines = requests.get(url, params=params, timeout=5).json()
         if not klines or len(klines) < ST_LENGTH + 3:
             return None
 
