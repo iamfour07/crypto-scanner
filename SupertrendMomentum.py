@@ -66,6 +66,9 @@ def fetch_pair_stats(pair):
 # SUPERTREND
 # =========================================================
 def calculate_supertrend(df):
+    # SAFETY CHECK FOR SHORT DATA
+    if len(df) <= ST_LENGTH:
+        return df
     for c in ["high", "low", "close"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
