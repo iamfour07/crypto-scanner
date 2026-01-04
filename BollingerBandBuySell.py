@@ -50,7 +50,7 @@ SELL_FILE = "SellWatchlist.json"
 # ---- Risk & Capital ----
 CAPITAL_RS = 600
 MAX_LOSS_RS = 50
-MAX_ALLOWED_LEVERAGE = 10
+MAX_ALLOWED_LEVERAGE = 20
 RR_LEVELS = [2, 3, 4]
 
 # ===================================================
