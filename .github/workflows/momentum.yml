@@ -6,8 +6,8 @@ on:
     
   workflow_dispatch:
 
-# permissions:
-#   contents: write   # required for pushing changes
+permissions:
+  contents: write   # required for pushing changes
 
 jobs:
   run-scanner:
@@ -28,7 +28,15 @@ jobs:
         pip install pandas requests
 
     - name: Run Scanner
-      run: python SupertrendMomentum.py
+      run: python BollingerBandBuySell.py
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        
+    - name: Commit Watchlist Updates
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add BuyWatchlist.json SellWatchlist.json || true
+        git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"
+        git push
