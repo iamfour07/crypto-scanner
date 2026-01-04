@@ -244,10 +244,6 @@ def main():
                     buy_watch.pop(pair)
                     return
 
-                if last_bb["high"] >= last_bb["UpperBB"]:
-                    buy_watch.pop(pair)
-                    return
-
         # ================= SELL =================
         if side == "SELL":
             if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
@@ -269,10 +265,6 @@ def main():
                             "Targets:\n" +
                             "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                         )
-                    sell_watch.pop(pair)
-                    return
-
-                if last_bb["low"] <= last_bb["LowerBB"]:
                     sell_watch.pop(pair)
                     return
 
