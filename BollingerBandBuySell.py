@@ -2,31 +2,6 @@
 ===========================================================
 📊 COINDCX PULLBACK CONTINUATION SCANNER (1-Hour)
 ===========================================================
-
-LOGIC SUMMARY:
-- Top 30 Gainers (>= +2%):
-    RED Heikin-Ashi touches Lower BB → BUY Watchlist
-- Top 30 Losers (<= -2%):
-    GREEN Heikin-Ashi touches Upper BB → SELL Watchlist
-
-ENTRY:
-- BUY  → First GREEN HA after BB-touch (Entry = High)
-- SELL → First RED HA after BB-touch (Entry = Low)
-
-STOP LOSS:
-- BUY  → Low of latest RED BB-touch candle
-- SELL → High of latest GREEN BB-touch candle
-
-REMOVE RULES (ONLY):
-1️⃣ Entry hit → remove
-2️⃣ Opposite BB touched before entry → remove
-
-RISK MANAGEMENT:
-✔ Capital fixed
-✔ Max loss per trade
-✔ Auto leverage (capped)
-✔ RR targets
-===========================================================
 """
 
 import json
@@ -47,14 +22,11 @@ MAX_WORKERS = 15
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
 
-# ---- Risk & Capital ----
 CAPITAL_RS = 600
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 20
 RR_LEVELS = [2, 3, 4]
 
-# ===================================================
-# 1. ACTIVE FUTURES
 # ===================================================
 def get_active_usdt_coins():
     url = (
@@ -63,9 +35,6 @@ def get_active_usdt_coins():
     )
     return requests.get(url, timeout=30).json()
 
-# ===================================================
-# 2. 1D % CHANGE
-# ===================================================
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
@@ -75,13 +44,9 @@ def fetch_pair_stats(pair):
     except:
         return None
 
-# ===================================================
-# 3. CANDLES
-# ===================================================
 def fetch_candles(pair):
     now = int(datetime.now(timezone.utc).timestamp())
     frm = now - LIMIT_HOURS * 3600
-
     url = "https://public.coindcx.com/market_data/candlesticks"
     params = {
         "pair": pair,
@@ -90,7 +55,6 @@ def fetch_candles(pair):
         "resolution": RESOLUTION,
         "pcode": "f",
     }
-
     data = requests.get(url, params=params, timeout=15).json().get("data", [])
     if len(data) < 50:
         return None
@@ -101,12 +65,8 @@ def fetch_candles(pair):
 
     return df.dropna().reset_index(drop=True)
 
-# ===================================================
-# 4. HEIKIN ASHI
-# ===================================================
 def heikin_ashi(df):
     ha = df.copy()
-
     ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
 
     ha_open = [(df["open"].iloc[0] + df["close"].iloc[0]) / 2]
@@ -115,18 +75,13 @@ def heikin_ashi(df):
 
     ha["HA_Open"] = ha_open
     ha["HA_High"] = ha[["HA_Open", "HA_Close", "high"]].max(axis=1)
-    ha["HA_Low"]  = ha[["HA_Open", "HA_Close", "low"]].min(axis=1)
-
+    ha["HA_Low"] = ha[["HA_Open", "HA_Close", "low"]].min(axis=1)
     ha["HA_Color"] = ha.apply(
         lambda x: "GREEN" if x["HA_Close"] >= x["HA_Open"] else "RED",
         axis=1
     )
-
     return ha
 
-# ===================================================
-# 5. BOLLINGER BANDS
-# ===================================================
 def bollinger(df, period=20, mult=2):
     df["MA"] = df["close"].rolling(period).mean()
     df["STD"] = df["close"].rolling(period).std()
@@ -134,9 +89,6 @@ def bollinger(df, period=20, mult=2):
     df["LowerBB"] = df["MA"] - mult * df["STD"]
     return df
 
-# ===================================================
-# 6. POSITION SIZING + RR
-# ===================================================
 def calculate_trade_levels(entry, sl, side):
     risk = abs(entry - sl)
     if risk <= 0:
@@ -148,24 +100,19 @@ def calculate_trade_levels(entry, sl, side):
 
     max_position_value = CAPITAL_RS * MAX_ALLOWED_LEVERAGE
     qty_capital = int(max_position_value // entry)
-
     qty = min(qty_risk, qty_capital)
     if qty <= 0:
         return None
 
     position_value = entry * qty
     leverage = math.ceil(position_value / CAPITAL_RS)
-
     if leverage < 1 or leverage > MAX_ALLOWED_LEVERAGE:
         return None
 
     used_capital = round(position_value / leverage, 2)
-
     targets = {
         f"{r}R": round(
-            entry + r * risk if side == "BUY"
-            else entry - r * risk,
-            4
+            entry + r * risk if side == "BUY" else entry - r * risk, 4
         )
         for r in RR_LEVELS
     }
@@ -180,8 +127,6 @@ def calculate_trade_levels(entry, sl, side):
     }
 
 # ===================================================
-# 7. MAIN
-# ===================================================
 def main():
     pairs = get_active_usdt_coins()
 
@@ -195,7 +140,6 @@ def main():
     except FileNotFoundError:
         sell_watch = {}
 
-    # ---------- TOP 30 WITH % FILTER ----------
     stats = []
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
         for r in as_completed([ex.submit(fetch_pair_stats, p) for p in pairs]):
@@ -203,7 +147,6 @@ def main():
                 stats.append(r.result())
 
     stats.sort(key=lambda x: x["change"], reverse=True)
-
     top_gainers = [x["pair"] for x in stats if x["change"] >= 2.0][:30]
     top_losers  = [x["pair"] for x in reversed(stats) if x["change"] <= -2.0][:30]
 
@@ -217,15 +160,13 @@ def main():
         ha = heikin_ashi(df)
         df = bollinger(df)
 
-        last = ha.iloc[-2]      # last CLOSED candle
+        last = ha.iloc[-2]
         last_bb = df.iloc[-2]
 
         # ================= BUY =================
         if side == "BUY":
-            if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
-                buy_watch[pair] = {"bb_low": last["HA_Low"]}
-                return
 
+            # -------- PROCESS 1 : CONFIRMATION --------
             if pair in buy_watch:
                 if last["HA_Color"] == "GREEN":
                     entry = last["HA_High"]
@@ -242,14 +183,17 @@ def main():
                             "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                         )
                     buy_watch.pop(pair)
-                    return
+                return  # 🚨 skip BB logic
+
+            # -------- PROCESS 2 : BB TOUCH --------
+            if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
+                buy_watch[pair] = {"bb_low": last["HA_Low"]}
+                return
 
         # ================= SELL =================
         if side == "SELL":
-            if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
-                sell_watch[pair] = {"bb_high": last["HA_High"]}
-                return
 
+            # -------- PROCESS 1 : CONFIRMATION --------
             if pair in sell_watch:
                 if last["HA_Color"] == "RED":
                     entry = last["HA_Low"]
@@ -266,7 +210,12 @@ def main():
                             "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                         )
                     sell_watch.pop(pair)
-                    return
+                return  # 🚨 skip BB logic
+
+            # -------- PROCESS 2 : BB TOUCH --------
+            if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
+                sell_watch[pair] = {"bb_high": last["HA_High"]}
+                return
 
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
         for p in top_gainers:
