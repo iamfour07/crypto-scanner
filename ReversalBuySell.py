@@ -3,7 +3,7 @@ import pandas as pd
 import math
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_Alert import send_telegram_message
+from Telegram_Alert_Swing import send_telegram_message
 
 # =====================
 # CONFIG
@@ -149,14 +149,6 @@ def main():
             entry = confirm["high"]
             sl = confirm["low"]
             lev, capital_used, targets = calc_trade(entry, sl)
-            print(
-                f"🟢 BUY SETUP\n{pair}\n"
-                f"Entry: {entry:.4f}\nSL: {sl:.4f}\n"
-                f"Capital Used: ₹{capital_used:.2f}\n"
-                f"Leverage: {lev}x\n"
-                + "\n".join([f"{k}: {v:.4f}" for k, v in targets.items()])
-            )
-
             send_telegram_message(
                 f"🟢 BUY SETUP\n{pair}\n"
                 f"Entry: {entry:.4f}\nSL: {sl:.4f}\n"
@@ -184,14 +176,6 @@ def main():
             entry = confirm["low"]
             sl = confirm["high"]
             lev, capital_used, targets = calc_trade(entry, sl)
-            print(
-                f"🔴 SELL SETUP\n{pair}\n"
-                f"Entry: {entry:.4f}\nSL: {sl:.4f}\n"
-                f"Capital Used: ₹{capital_used:.2f}\n"
-                f"Leverage: {lev}x\n"
-                + "\n".join([f"{k}: {v:.4f}" for k, v in targets.items()])
-            )
-
             send_telegram_message(
                 f"🔴 SELL SETUP\n{pair}\n"
                 f"Entry: {entry:.4f}\nSL: {sl:.4f}\n"
