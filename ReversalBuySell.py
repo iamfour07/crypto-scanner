@@ -3,7 +3,7 @@ import pandas as pd
 import math
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_Alert_Swing import send_telegram_message
+from Telegram_Alert import send_telegram_message
 
 # =====================
 # CONFIG
@@ -17,8 +17,8 @@ EMA_20 = 20
 EMA_100 = 100
 
 CAPITAL_RS = 600
-MAX_LOSS_RS = 200
-MAX_LEVERAGE = 10
+MAX_LOSS_RS = 50
+MAX_LEVERAGE = 30
 RR_LEVELS = [2, 3, 4]
 
 # =====================
@@ -101,6 +101,26 @@ def calc_trade(entry, sl):
 
     return leverage, capital_used, targets
 
+# =====================
+# TELEGRAM FORMATTER (OUTPUT ONLY)
+# =====================
+
+def format_telegram_message(pair, entry, sl, capital_used, leverage, targets):
+    msg = (
+        f"Name: {pair}\n\n"
+        f"Entry: {entry:.4f}\n"
+        f"Stop Loss: {sl:.4f}\n"
+        f"Capital Used: ₹{int(round(capital_used))}\n"
+        f"Leverage: {leverage}x\n\n"
+        f"🎯 Targets:\n"
+    )
+
+    for k, v in targets.items():
+        msg += f"• {k} → {v:.4f}\n"
+
+    msg += "-----------------------"
+
+    return msg
 
 # =====================
 # MAIN
@@ -149,13 +169,9 @@ def main():
             entry = confirm["high"]
             sl = confirm["low"]
             lev, capital_used, targets = calc_trade(entry, sl)
-            send_telegram_message(
-                f"🟢 BUY SETUP\n{pair}\n"
-                f"Entry: {entry:.4f}\nSL: {sl:.4f}\n"
-                f"Capital Used: ₹{capital_used:.2f}\n"
-                f"Leverage: {lev}x\n"
-                + "\n".join([f"{k}: {v:.4f}" for k, v in targets.items()])
-            )
+
+            msg = format_telegram_message(pair, entry, sl, capital_used, lev, targets)
+            send_telegram_message(msg)
 
     # SELL
     for pair in losers:
@@ -176,14 +192,9 @@ def main():
             entry = confirm["low"]
             sl = confirm["high"]
             lev, capital_used, targets = calc_trade(entry, sl)
-            send_telegram_message(
-                f"🔴 SELL SETUP\n{pair}\n"
-                f"Entry: {entry:.4f}\nSL: {sl:.4f}\n"
-                f"Capital Used: ₹{capital_used:.2f}\n"
-                f"Leverage: {lev}x\n"
-                + "\n".join([f"{k}: {v:.4f}" for k, v in targets.items()])
-            )
 
+            msg = format_telegram_message(pair, entry, sl, capital_used, lev, targets)
+            send_telegram_message(msg)
 
 # =====================
 if __name__ == "__main__":
