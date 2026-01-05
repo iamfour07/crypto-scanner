@@ -1,17 +1,5 @@
 {
-  "B-1000PEPE_USDT": {
-    "bb_low": 0.0068538
-  },
-  "B-WIF_USDT": {
-    "bb_low": 0.3829
-  },
-  "B-LSK_USDT": {
-    "bb_low": 0.2059
-  },
-  "B-POPCAT_USDT": {
-    "bb_low": 0.1047
-  },
   "B-BROCCOLI714_USDT": {
-    "bb_low": 0.0255
+    "bb_low": 0.02597
   }
 }
