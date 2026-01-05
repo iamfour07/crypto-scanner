@@ -1,1 +1,14 @@
-{}
+{
+  "B-BANANA_USDT": {
+    "bb_high": 7.803
+  },
+  "B-HMSTR_USDT": {
+    "bb_high": 0.000251
+  },
+  "B-PNUT_USDT": {
+    "bb_high": 0.09668
+  },
+  "B-DEGEN_USDT": {
+    "bb_high": 0.001477
+  }
+}
