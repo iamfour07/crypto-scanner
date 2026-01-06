@@ -5,13 +5,16 @@
   "B-HMSTR_USDT": {
     "bb_high": 0.000251
   },
-  "B-PNUT_USDT": {
-    "bb_high": 0.09668
-  },
   "B-DEGEN_USDT": {
     "bb_high": 0.001477
   },
   "B-BOME_USDT": {
     "bb_high": 0.0008048
+  },
+  "B-POPCAT_USDT": {
+    "bb_high": 0.1095
+  },
+  "B-DOGS_USDT": {
+    "bb_high": 4.97e-05
   }
 }
