@@ -10,7 +10,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_Alert_Swing import send_telegram_message
+from Telegram_Alert import send_telegram_message
 
 # =====================
 # CONFIG
