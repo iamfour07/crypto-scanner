@@ -4,5 +4,11 @@
   },
   "B-SUI_USDT": {
     "bb_low": 1.8442
+  },
+  "B-FARTCOIN_USDT": {
+    "bb_low": 0.4073
+  },
+  "B-CETUS_USDT": {
+    "bb_low": 0.02773
   }
 }
