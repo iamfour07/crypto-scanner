@@ -16,5 +16,11 @@
   },
   "B-DOGS_USDT": {
     "bb_high": 4.97e-05
+  },
+  "B-IP_USDT": {
+    "bb_high": 2.163
+  },
+  "B-GIGGLE_USDT": {
+    "bb_high": 74.7
   }
 }
