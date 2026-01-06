@@ -4,5 +4,11 @@
   },
   "B-FIL_USDT": {
     "bb_high": 1.604
+  },
+  "B-CC_USDT": {
+    "bb_high": 0.14695
+  },
+  "B-STABLE_USDT": {
+    "bb_high": 0.01634
   }
 }
