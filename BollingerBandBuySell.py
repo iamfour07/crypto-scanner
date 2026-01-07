@@ -1,6 +1,6 @@
 """
 ===========================================================
-📊 COINDCX PULLBACK CONTINUATION SCANNER (1-Hour)
+📊 COINDCX PULLBACK CONTINUATION SCANNER (1-Hour) – FSM
 ===========================================================
 """
 
@@ -71,7 +71,7 @@ def heikin_ashi(df):
 
     ha_open = [(df["open"].iloc[0] + df["close"].iloc[0]) / 2]
     for i in range(1, len(df)):
-        ha_open.append((ha_open[i-1] + ha["HA_Close"].iloc[i-1]) / 2)
+        ha_open.append((ha_open[i - 1] + ha["HA_Close"].iloc[i - 1]) / 2)
 
     ha["HA_Open"] = ha_open
     ha["HA_High"] = ha[["HA_Open", "HA_Close", "high"]].max(axis=1)
@@ -130,15 +130,8 @@ def calculate_trade_levels(entry, sl, side):
 def main():
     pairs = get_active_usdt_coins()
 
-    try:
-        buy_watch = json.load(open(BUY_FILE))
-    except FileNotFoundError:
-        buy_watch = {}
-
-    try:
-        sell_watch = json.load(open(SELL_FILE))
-    except FileNotFoundError:
-        sell_watch = {}
+    buy_watch = json.load(open(BUY_FILE)) if os.path.exists(BUY_FILE) else {}
+    sell_watch = json.load(open(SELL_FILE)) if os.path.exists(SELL_FILE) else {}
 
     stats = []
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
@@ -163,58 +156,60 @@ def main():
         last = ha.iloc[-2]
         last_bb = df.iloc[-2]
 
-        # ================= BUY =================
+        # ================= BUY FSM =================
         if side == "BUY":
-
-            # -------- PROCESS 1 : CONFIRMATION --------
-            if pair in buy_watch:
-                if last["HA_Color"] == "GREEN":
-                    entry = last["HA_High"]
-                    sl = buy_watch[pair]["bb_low"]
-                    trade = calculate_trade_levels(entry, sl, "BUY")
-                    if trade:
-                        alerts.append(
-                            f"🟢 BUY {pair}\n"
-                            f"Entry   : {trade['entry']}\n"
-                            f"SL      : {trade['sl']}\n"
-                            f"Qty     : {trade['qty']}\n"
-                            f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
-                            "Targets:\n" +
-                            "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
-                        )
-                    buy_watch.pop(pair)
-                return  # 🚨 skip BB logic
-
-            # -------- PROCESS 2 : BB TOUCH --------
-            if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
-                buy_watch[pair] = {"bb_low": last["HA_Low"]}
+            if pair not in buy_watch:
+                if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
+                    buy_watch[pair] = {"sl": last["HA_Low"]}
                 return
 
-        # ================= SELL =================
+            # TRACKING
+            if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
+                buy_watch[pair]["sl"] = last["HA_Low"]
+
+            elif last["HA_Color"] == "GREEN":
+                entry = last["HA_High"]
+                sl = buy_watch[pair]["sl"]
+                trade = calculate_trade_levels(entry, sl, "BUY")
+                if trade:
+                    alerts.append(
+                        f"🟢 BUY {pair}\n"
+                        f"Entry   : {trade['entry']}\n"
+                        f"SL      : {trade['sl']}\n"
+                        f"Qty     : {trade['qty']}\n"
+                        f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
+                        "Targets:\n" +
+                        "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
+                    )
+                buy_watch.pop(pair)
+                return
+
+        # ================= SELL FSM =================
         if side == "SELL":
+            if pair not in sell_watch:
+                if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
+                    sell_watch[pair] = {"sl": last["HA_High"]}
+                return
 
-            # -------- PROCESS 1 : CONFIRMATION --------
-            if pair in sell_watch:
-                if last["HA_Color"] == "RED":
-                    entry = last["HA_Low"]
-                    sl = sell_watch[pair]["bb_high"]
-                    trade = calculate_trade_levels(entry, sl, "SELL")
-                    if trade:
-                        alerts.append(
-                            f"🔴 SELL {pair}\n"
-                            f"Entry   : {trade['entry']}\n"
-                            f"SL      : {trade['sl']}\n"
-                            f"Qty     : {trade['qty']}\n"
-                            f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
-                            "Targets:\n" +
-                            "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
-                        )
-                    sell_watch.pop(pair)
-                return  # 🚨 skip BB logic
-
-            # -------- PROCESS 2 : BB TOUCH --------
+            # TRACKING
             if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
-                sell_watch[pair] = {"bb_high": last["HA_High"]}
+                sell_watch[pair]["sl"] = last["HA_High"]
+
+            elif last["HA_Color"] == "RED":
+                entry = last["HA_Low"]
+                sl = sell_watch[pair]["sl"]
+                trade = calculate_trade_levels(entry, sl, "SELL")
+                if trade:
+                    alerts.append(
+                        f"🔴 SELL {pair}\n"
+                        f"Entry   : {trade['entry']}\n"
+                        f"SL      : {trade['sl']}\n"
+                        f"Qty     : {trade['qty']}\n"
+                        f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
+                        "Targets:\n" +
+                        "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
+                    )
+                sell_watch.pop(pair)
                 return
 
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
