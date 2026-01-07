@@ -4,5 +4,8 @@
   },
   "B-STABLE_USDT": {
     "bb_high": 0.01634
+  },
+  "B-QTUM_USDT": {
+    "bb_high": 1.565
   }
 }
