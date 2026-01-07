@@ -25,7 +25,7 @@ SELL_FILE = "SellWatchlist.json"
 
 CAPITAL_RS = 500
 MAX_LOSS_RS = 50
-MAX_ALLOWED_LEVERAGE = 20
+MAX_ALLOWED_LEVERAGE = 30
 
 # ===================================================
 def get_active_usdt_coins():
@@ -92,56 +92,45 @@ def bollinger(df, period=20, mult=2):
 # =======================
 # MONEY-BASED TARGET LOGIC
 # =======================
-def calculate_trade_levels(entry, sl, side):
-    risk_per_unit = abs(entry - sl)
-    if risk_per_unit <= 0:
-        return None
+def calculate_trade_levels(entry, sl_hint, side):
 
-    qty = int(MAX_LOSS_RS // risk_per_unit)
-    if qty <= 0:
-        return None
+    # Always start from MAX leverage and use it
+    leverage = MAX_ALLOWED_LEVERAGE  # set this to 30 in config
 
-    max_position_value = CAPITAL_RS * MAX_ALLOWED_LEVERAGE
-    qty_capital = int(max_position_value // entry)
-    qty = min(qty, qty_capital)
-    if qty <= 0:
-        return None
+    position_value = CAPITAL_RS * leverage
 
-    position_value = entry * qty
-    leverage = math.ceil(position_value / CAPITAL_RS)
-    if leverage < 1 or leverage > MAX_ALLOWED_LEVERAGE:
-        return None
+    loss_pct = MAX_LOSS_RS / position_value
+    t2_pct   = (MAX_LOSS_RS * 2) / position_value
+    t3_pct   = (MAX_LOSS_RS * 3) / position_value
+    t4_pct   = (MAX_LOSS_RS * 4) / position_value
 
-    used_capital = round(position_value / leverage, 2)
+    if side == "BUY":
+        sl = entry * (1 - loss_pct)
+        t2 = entry * (1 + t2_pct)
+        t3 = entry * (1 + t3_pct)
+        t4 = entry * (1 + t4_pct)
+    else:
+        sl = entry * (1 + loss_pct)
+        t2 = entry * (1 - t2_pct)
+        t3 = entry * (1 - t3_pct)
+        t4 = entry * (1 - t4_pct)
 
-    targets = {
-        "1:2": round(
-            entry + (MAX_LOSS_RS * 2) / qty
-            if side == "BUY"
-            else entry - (MAX_LOSS_RS * 2) / qty,
-            4
-        ),
-        "1:3": round(
-            entry + (MAX_LOSS_RS * 3) / qty
-            if side == "BUY"
-            else entry - (MAX_LOSS_RS * 3) / qty,
-            4
-        ),
-        "1:4": round(
-            entry + (MAX_LOSS_RS * 4) / qty
-            if side == "BUY"
-            else entry - (MAX_LOSS_RS * 4) / qty,
-            4
-        ),
-    }
+    # Structural SL safety (do NOT break BB logic)
+    if side == "BUY" and sl < sl_hint:
+        sl = sl_hint
+    if side == "SELL" and sl > sl_hint:
+        sl = sl_hint
 
     return {
         "entry": round(entry, 4),
         "sl": round(sl, 4),
-        "qty": qty,
+        "capital": CAPITAL_RS,
         "leverage": leverage,
-        "capital": used_capital,
-        "targets": targets
+        "targets": {
+            "1:2": round(t2, 4),
+            "1:3": round(t3, 4),
+            "1:4": round(t4, 4),
+        }
     }
 
 # ===================================================
