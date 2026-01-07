@@ -6,6 +6,7 @@
 
 import json
 import math
+import os
 import requests
 import pandas as pd
 from datetime import datetime, timezone
@@ -22,10 +23,9 @@ MAX_WORKERS = 15
 BUY_FILE = "BuyWatchlist.json"
 SELL_FILE = "SellWatchlist.json"
 
-CAPITAL_RS = 600
+CAPITAL_RS = 500
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 20
-RR_LEVELS = [2, 3, 4]
 
 # ===================================================
 def get_active_usdt_coins():
@@ -89,18 +89,21 @@ def bollinger(df, period=20, mult=2):
     df["LowerBB"] = df["MA"] - mult * df["STD"]
     return df
 
+# =======================
+# MONEY-BASED TARGET LOGIC
+# =======================
 def calculate_trade_levels(entry, sl, side):
-    risk = abs(entry - sl)
-    if risk <= 0:
+    risk_per_unit = abs(entry - sl)
+    if risk_per_unit <= 0:
         return None
 
-    qty_risk = int(MAX_LOSS_RS // risk)
-    if qty_risk <= 0:
+    qty = int(MAX_LOSS_RS // risk_per_unit)
+    if qty <= 0:
         return None
 
     max_position_value = CAPITAL_RS * MAX_ALLOWED_LEVERAGE
     qty_capital = int(max_position_value // entry)
-    qty = min(qty_risk, qty_capital)
+    qty = min(qty, qty_capital)
     if qty <= 0:
         return None
 
@@ -110,11 +113,26 @@ def calculate_trade_levels(entry, sl, side):
         return None
 
     used_capital = round(position_value / leverage, 2)
+
     targets = {
-        f"{r}R": round(
-            entry + r * risk if side == "BUY" else entry - r * risk, 4
-        )
-        for r in RR_LEVELS
+        "1:2": round(
+            entry + (MAX_LOSS_RS * 2) / qty
+            if side == "BUY"
+            else entry - (MAX_LOSS_RS * 2) / qty,
+            4
+        ),
+        "1:3": round(
+            entry + (MAX_LOSS_RS * 3) / qty
+            if side == "BUY"
+            else entry - (MAX_LOSS_RS * 3) / qty,
+            4
+        ),
+        "1:4": round(
+            entry + (MAX_LOSS_RS * 4) / qty
+            if side == "BUY"
+            else entry - (MAX_LOSS_RS * 4) / qty,
+            4
+        ),
     }
 
     return {
@@ -163,14 +181,15 @@ def main():
                     buy_watch[pair] = {"sl": last["HA_Low"]}
                 return
 
-            # TRACKING
             if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
                 buy_watch[pair]["sl"] = last["HA_Low"]
 
             elif last["HA_Color"] == "GREEN":
-                entry = last["HA_High"]
-                sl = buy_watch[pair]["sl"]
-                trade = calculate_trade_levels(entry, sl, "BUY")
+                trade = calculate_trade_levels(
+                    entry=last["HA_High"],
+                    sl=buy_watch[pair]["sl"],
+                    side="BUY"
+                )
                 if trade:
                     alerts.append(
                         f"🟢 BUY {pair}\n"
@@ -191,14 +210,15 @@ def main():
                     sell_watch[pair] = {"sl": last["HA_High"]}
                 return
 
-            # TRACKING
             if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
                 sell_watch[pair]["sl"] = last["HA_High"]
 
             elif last["HA_Color"] == "RED":
-                entry = last["HA_Low"]
-                sl = sell_watch[pair]["sl"]
-                trade = calculate_trade_levels(entry, sl, "SELL")
+                trade = calculate_trade_levels(
+                    entry=last["HA_Low"],
+                    sl=sell_watch[pair]["sl"],
+                    side="SELL"
+                )
                 if trade:
                     alerts.append(
                         f"🔴 SELL {pair}\n"
