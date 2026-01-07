@@ -5,7 +5,6 @@
 """
 
 import json
-import math
 import os
 import requests
 import pandas as pd
@@ -26,6 +25,7 @@ SELL_FILE = "SellWatchlist.json"
 CAPITAL_RS = 500
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 30
+MIN_LEVERAGE = 1
 
 # ===================================================
 def get_active_usdt_coins():
@@ -47,6 +47,7 @@ def fetch_pair_stats(pair):
 def fetch_candles(pair):
     now = int(datetime.now(timezone.utc).timestamp())
     frm = now - LIMIT_HOURS * 3600
+
     url = "https://public.coindcx.com/market_data/candlesticks"
     params = {
         "pair": pair,
@@ -55,6 +56,7 @@ def fetch_candles(pair):
         "resolution": RESOLUTION,
         "pcode": "f",
     }
+
     data = requests.get(url, params=params, timeout=15).json().get("data", [])
     if len(data) < 50:
         return None
@@ -65,6 +67,7 @@ def fetch_candles(pair):
 
     return df.dropna().reset_index(drop=True)
 
+# ===================================================
 def heikin_ashi(df):
     ha = df.copy()
     ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
@@ -89,37 +92,40 @@ def bollinger(df, period=20, mult=2):
     df["LowerBB"] = df["MA"] - mult * df["STD"]
     return df
 
-# =======================
-# MONEY-BASED TARGET LOGIC
-# =======================
+# ===================================================
+# CAPITAL + AUTO-LEVERAGE LOGIC
+# ===================================================
 def calculate_trade_levels(entry, sl_hint, side):
 
-    # Always start from MAX leverage and use it
-    leverage = MAX_ALLOWED_LEVERAGE  # set this to 30 in config
+    for leverage in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
 
-    position_value = CAPITAL_RS * leverage
+        position_value = CAPITAL_RS * leverage
+        loss_pct = MAX_LOSS_RS / position_value
 
-    loss_pct = MAX_LOSS_RS / position_value
-    t2_pct   = (MAX_LOSS_RS * 2) / position_value
-    t3_pct   = (MAX_LOSS_RS * 3) / position_value
-    t4_pct   = (MAX_LOSS_RS * 4) / position_value
+        if side == "BUY":
+            sl = entry * (1 - loss_pct)
+            risk = entry - sl_hint
+        else:
+            sl = entry * (1 + loss_pct)
+            risk = sl_hint - entry
+
+        # Check if this leverage keeps max loss under ₹50
+        actual_loss = (risk / entry) * position_value
+        if actual_loss <= MAX_LOSS_RS:
+            break
+    else:
+        leverage = MIN_LEVERAGE
 
     if side == "BUY":
-        sl = entry * (1 - loss_pct)
-        t2 = entry * (1 + t2_pct)
-        t3 = entry * (1 + t3_pct)
-        t4 = entry * (1 + t4_pct)
+        sl = sl_hint
+        t2 = entry + risk * 2
+        t3 = entry + risk * 3
+        t4 = entry + risk * 4
     else:
-        sl = entry * (1 + loss_pct)
-        t2 = entry * (1 - t2_pct)
-        t3 = entry * (1 - t3_pct)
-        t4 = entry * (1 - t4_pct)
-
-    # Structural SL safety (do NOT break BB logic)
-    if side == "BUY" and sl < sl_hint:
         sl = sl_hint
-    if side == "SELL" and sl > sl_hint:
-        sl = sl_hint
+        t2 = entry - risk * 2
+        t3 = entry - risk * 3
+        t4 = entry - risk * 4
 
     return {
         "entry": round(entry, 4),
@@ -147,79 +153,80 @@ def main():
                 stats.append(r.result())
 
     stats.sort(key=lambda x: x["change"], reverse=True)
-    top_gainers = [x["pair"] for x in stats if x["change"] >= 2.0][:30]
-    top_losers  = [x["pair"] for x in reversed(stats) if x["change"] <= -2.0][:30]
+
+    top_gainers = [x["pair"] for x in stats if x["change"] >= 0.8][:30]
+    top_losers  = [x["pair"] for x in reversed(stats) if x["change"] <= -0.8][:30]
 
     alerts = []
 
     def process(pair, side):
-        df = fetch_candles(pair)
-        if df is None:
-            return
-
-        ha = heikin_ashi(df)
-        df = bollinger(df)
-
-        last = ha.iloc[-2]
-        last_bb = df.iloc[-2]
-
-        # ================= BUY FSM =================
-        if side == "BUY":
-            if pair not in buy_watch:
-                if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
-                    buy_watch[pair] = {"sl": last["HA_Low"]}
+        try:
+            df = fetch_candles(pair)
+            if df is None:
                 return
 
-            if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
-                buy_watch[pair]["sl"] = last["HA_Low"]
+            ha = heikin_ashi(df)
+            df = bollinger(df)
 
-            elif last["HA_Color"] == "GREEN":
-                trade = calculate_trade_levels(
-                    entry=last["HA_High"],
-                    sl=buy_watch[pair]["sl"],
-                    side="BUY"
-                )
-                if trade:
+            last = ha.iloc[-1]
+            last_bb = df.iloc[-1]
+
+            # ================= BUY FSM =================
+            if side == "BUY":
+                if pair not in buy_watch:
+                    if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
+                        buy_watch[pair] = {"sl": last["HA_Low"]}
+                    return
+
+                if last["HA_Color"] == "RED":
+                    buy_watch[pair]["sl"] = last["HA_Low"]
+
+                elif last["HA_Color"] == "GREEN":
+                    trade = calculate_trade_levels(
+                        entry=last["HA_High"],
+                        sl_hint=buy_watch[pair]["sl"],
+                        side="BUY"
+                    )
+
                     alerts.append(
                         f"🟢 BUY {pair}\n"
                         f"Entry   : {trade['entry']}\n"
                         f"SL      : {trade['sl']}\n"
-                        f"Qty     : {trade['qty']}\n"
                         f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
                         "Targets:\n" +
                         "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                     )
-                buy_watch.pop(pair)
-                return
+                    buy_watch.pop(pair)
 
-        # ================= SELL FSM =================
-        if side == "SELL":
-            if pair not in sell_watch:
-                if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
-                    sell_watch[pair] = {"sl": last["HA_High"]}
-                return
+            # ================= SELL FSM =================
+            if side == "SELL":
+                if pair not in sell_watch:
+                    if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
+                        sell_watch[pair] = {"sl": last["HA_High"]}
+                    return
 
-            if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
-                sell_watch[pair]["sl"] = last["HA_High"]
+                if last["HA_Color"] == "GREEN":
+                    sell_watch[pair]["sl"] = last["HA_High"]
 
-            elif last["HA_Color"] == "RED":
-                trade = calculate_trade_levels(
-                    entry=last["HA_Low"],
-                    sl=sell_watch[pair]["sl"],
-                    side="SELL"
-                )
-                if trade:
+                elif last["HA_Color"] == "RED":
+                    trade = calculate_trade_levels(
+                        entry=last["HA_Low"],
+                        sl_hint=sell_watch[pair]["sl"],
+                        side="SELL"
+                    )
+
                     alerts.append(
                         f"🔴 SELL {pair}\n"
                         f"Entry   : {trade['entry']}\n"
                         f"SL      : {trade['sl']}\n"
-                        f"Qty     : {trade['qty']}\n"
                         f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
                         "Targets:\n" +
                         "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                     )
-                sell_watch.pop(pair)
-                return
+                    sell_watch.pop(pair)
+
+        except Exception as e:
+            print(f"[ERROR] {pair} {side} → {e}")
 
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
         for p in top_gainers:
