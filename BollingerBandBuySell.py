@@ -1,11 +1,10 @@
 """
 ===========================================================
-📊 COINDCX PULLBACK CONTINUATION SCANNER (1-Hour) – FSM
+📊 COINDCX PULLBACK CONTINUATION SCANNER (1-Hour)
 ===========================================================
 """
 
 import json
-import os
 import requests
 import pandas as pd
 from datetime import datetime, timezone
@@ -18,9 +17,6 @@ from Telegram_Alert import send_telegram_message
 RESOLUTION = "60"
 LIMIT_HOURS = 1000
 MAX_WORKERS = 15
-
-BUY_FILE = "BuyWatchlist.json"
-SELL_FILE = "SellWatchlist.json"
 
 CAPITAL_RS = 500
 MAX_LOSS_RS = 50
@@ -93,23 +89,19 @@ def bollinger(df, period=20, mult=2):
     return df
 
 # ===================================================
-# CAPITAL + AUTO-LEVERAGE LOGIC
+# CAPITAL + AUTO-LEVERAGE LOGIC (UNCHANGED)
 # ===================================================
 def calculate_trade_levels(entry, sl_hint, side):
 
     for leverage in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
-
         position_value = CAPITAL_RS * leverage
         loss_pct = MAX_LOSS_RS / position_value
 
         if side == "BUY":
-            sl = entry * (1 - loss_pct)
             risk = entry - sl_hint
         else:
-            sl = entry * (1 + loss_pct)
             risk = sl_hint - entry
 
-        # Check if this leverage keeps max loss under ₹50
         actual_loss = (risk / entry) * position_value
         if actual_loss <= MAX_LOSS_RS:
             break
@@ -117,19 +109,17 @@ def calculate_trade_levels(entry, sl_hint, side):
         leverage = MIN_LEVERAGE
 
     if side == "BUY":
-        sl = sl_hint
         t2 = entry + risk * 2
         t3 = entry + risk * 3
         t4 = entry + risk * 4
     else:
-        sl = sl_hint
         t2 = entry - risk * 2
         t3 = entry - risk * 3
         t4 = entry - risk * 4
 
     return {
         "entry": round(entry, 4),
-        "sl": round(sl, 4),
+        "sl": round(sl_hint, 4),
         "capital": CAPITAL_RS,
         "leverage": leverage,
         "targets": {
@@ -142,9 +132,6 @@ def calculate_trade_levels(entry, sl_hint, side):
 # ===================================================
 def main():
     pairs = get_active_usdt_coins()
-
-    buy_watch = json.load(open(BUY_FILE)) if os.path.exists(BUY_FILE) else {}
-    sell_watch = json.load(open(SELL_FILE)) if os.path.exists(SELL_FILE) else {}
 
     stats = []
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
@@ -166,28 +153,24 @@ def main():
                 return
 
             ha = heikin_ashi(df)
-            df = bollinger(df)
+            bb = bollinger(df)
 
-            last = ha.iloc[-1]
-            last_bb = df.iloc[-1]
+            c3 = ha.iloc[-3]
+            c2 = ha.iloc[-2]
+            bb3 = bb.iloc[-3]
 
-            # ================= BUY FSM =================
+            # ================= BUY =================
             if side == "BUY":
-                if pair not in buy_watch:
-                    if last["HA_Color"] == "RED" and last_bb["low"] <= last_bb["LowerBB"]:
-                        buy_watch[pair] = {"sl": last["HA_Low"]}
-                    return
-
-                if last["HA_Color"] == "RED":
-                    buy_watch[pair]["sl"] = last["HA_Low"]
-
-                elif last["HA_Color"] == "GREEN":
+                if (
+                    c3["HA_Color"] == "RED"
+                    and c2["HA_Color"] == "GREEN"
+                    and bb3["low"] <= bb3["LowerBB"]
+                ):
                     trade = calculate_trade_levels(
-                        entry=last["HA_High"],
-                        sl_hint=buy_watch[pair]["sl"],
+                        entry=c2["HA_High"],
+                        sl_hint=c3["HA_Low"],
                         side="BUY"
                     )
-
                     alerts.append(
                         f"🟢 BUY {pair}\n"
                         f"Entry   : {trade['entry']}\n"
@@ -196,25 +179,19 @@ def main():
                         "Targets:\n" +
                         "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                     )
-                    buy_watch.pop(pair)
 
-            # ================= SELL FSM =================
+            # ================= SELL =================
             if side == "SELL":
-                if pair not in sell_watch:
-                    if last["HA_Color"] == "GREEN" and last_bb["high"] >= last_bb["UpperBB"]:
-                        sell_watch[pair] = {"sl": last["HA_High"]}
-                    return
-
-                if last["HA_Color"] == "GREEN":
-                    sell_watch[pair]["sl"] = last["HA_High"]
-
-                elif last["HA_Color"] == "RED":
+                if (
+                    c3["HA_Color"] == "GREEN"
+                    and c2["HA_Color"] == "RED"
+                    and bb3["high"] >= bb3["UpperBB"]
+                ):
                     trade = calculate_trade_levels(
-                        entry=last["HA_Low"],
-                        sl_hint=sell_watch[pair]["sl"],
+                        entry=c2["HA_Low"],
+                        sl_hint=c3["HA_High"],
                         side="SELL"
                     )
-
                     alerts.append(
                         f"🔴 SELL {pair}\n"
                         f"Entry   : {trade['entry']}\n"
@@ -223,10 +200,9 @@ def main():
                         "Targets:\n" +
                         "\n".join([f"{k} → {v}" for k, v in trade["targets"].items()])
                     )
-                    sell_watch.pop(pair)
 
         except Exception as e:
-            print(f"[ERROR] {pair} {side} → {e}")
+            print(f"[ERROR] {pair} → {e}")
 
     with ThreadPoolExecutor(MAX_WORKERS) as ex:
         for p in top_gainers:
@@ -236,9 +212,6 @@ def main():
 
     if alerts:
         send_telegram_message("\n\n".join(alerts))
-
-    json.dump(buy_watch, open(BUY_FILE, "w"), indent=2)
-    json.dump(sell_watch, open(SELL_FILE, "w"), indent=2)
 
 # ===================================================
 if __name__ == "__main__":
