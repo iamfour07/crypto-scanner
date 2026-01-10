@@ -16,8 +16,6 @@ PAIRS = [
     "B-BTC_USDT",
     "B-ETH_USDT",
     "B-SOL_USDT",
-    "B-XRP_USDT",
-    "B-ZEC_USDT",
 ]
 
 RESOLUTION = "60"   # 1-HOUR candles
