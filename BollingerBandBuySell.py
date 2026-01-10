@@ -198,7 +198,7 @@ def main():
             )
 
     if alerts:
-        print("\n\n".join(alerts))
+        # print("\n\n".join(alerts))
         send_telegram_message("\n\n".join(alerts))
 
 # ===================================================
