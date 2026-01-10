@@ -15,7 +15,7 @@ from Telegram_Alert import send_telegram_message
 PAIRS = [
     "B-BTC_USDT",
     "B-ETH_USDT",
-    "B-SOL_USDT",
+    "B-SOL_USDT"
 ]
 
 RESOLUTION = "60"   # 1-HOUR candles
