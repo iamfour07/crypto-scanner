@@ -12,21 +12,42 @@ from Telegram_Alert import send_telegram_message
 # =====================
 # CONFIG
 # =====================
-PAIRS = [
-    "B-ETH_USDT",
-    "B-SOL_USDT",
-    "B-XRP_USDT",
-    "B-ZEC_USDT",
-]
-
-RESOLUTION = "60"   # 1-HOUR candles
+RESOLUTION = "60"          # 1-HOUR
 LIMIT_HOURS = 2000
+
+GAINER_THRESHOLD = 5.0
+LOSER_THRESHOLD = -5.0
 
 CAPITAL_RS = 500
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 30
 MIN_LEVERAGE = 5
 
+# ===================================================
+# 1. ACTIVE USDT FUTURES
+# ===================================================
+def get_active_usdt_coins():
+    url = (
+        "https://api.coindcx.com/exchange/v1/derivatives/futures/data/"
+        "active_instruments?margin_currency_short_name[]=USDT"
+    )
+    data = requests.get(url, timeout=30).json()
+    return [x["pair"] if isinstance(x, dict) else x for x in data]
+
+# ===================================================
+# 2. 1D % CHANGE
+# ===================================================
+def fetch_pair_stats(pair):
+    try:
+        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
+        r = requests.get(url, timeout=10).json()
+        pc = r.get("price_change_percent", {}).get("1D")
+        return float(pc) if pc is not None else None
+    except:
+        return None
+
+# ===================================================
+# 3. CANDLES
 # ===================================================
 def fetch_candles(pair):
     now = int(datetime.now(timezone.utc).timestamp())
@@ -52,6 +73,8 @@ def fetch_candles(pair):
     return df.dropna().reset_index(drop=True)
 
 # ===================================================
+# 4. HEIKIN ASHI
+# ===================================================
 def heikin_ashi(df):
     ha = df.copy()
     ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
@@ -66,7 +89,10 @@ def heikin_ashi(df):
 
     return ha
 
-def bollinger(df, period=20, mult=1.3):
+# ===================================================
+# 5. BOLLINGER (20, 2.0)
+# ===================================================
+def bollinger(df, period=20, mult=2.0):
     df = df.copy()
     df["MA"] = df["close"].rolling(period).mean()
     df["STD"] = df["close"].rolling(period).std(ddof=0)
@@ -75,7 +101,7 @@ def bollinger(df, period=20, mult=1.3):
     return df
 
 # ===================================================
-# CAPITAL + AUTO-LEVERAGE LOGIC
+# 6. CAPITAL + AUTO LEVERAGE
 # ===================================================
 def calculate_trade_levels(entry, sl_hint, side):
 
@@ -115,89 +141,93 @@ def calculate_trade_levels(entry, sl_hint, side):
     }
 
 # ===================================================
+# 7. MAIN
+# ===================================================
 def main():
+
+    active_pairs = get_active_usdt_coins()
+
+    stats = []
+    for pair in active_pairs:
+        chg = fetch_pair_stats(pair)
+        if chg is not None:
+            stats.append({"pair": pair, "change": chg})
+
+    gainers = [x for x in stats if x["change"] >= GAINER_THRESHOLD]
+    losers  = [x for x in stats if x["change"] <= LOSER_THRESHOLD]
+
     alerts = []
 
-    for pair in PAIRS:
+    for item in gainers + losers:
+        pair = item["pair"]
+
         df = fetch_candles(pair)
         if df is None:
             continue
 
         ha = heikin_ashi(df)
 
-        # Bollinger on Heikin-Ashi CLOSE
-        bb_source = ha[["HA_Close"]].copy()
-        bb_source.rename(columns={"HA_Close": "close"}, inplace=True)
-        bb = bollinger(bb_source)
+        bb_src = ha[["HA_Close"]].rename(columns={"HA_Close": "close"})
+        bb = bollinger(bb_src)
 
-        # ensure BB is ready
-        if bb["UpperBB"].isna().iloc[-1]:
+        if bb["UpperBB"].isna().iloc[-3]:
             continue
 
-        # last CLOSED candle
-        ha_run = ha.iloc[-2]
-        bb_run = bb.iloc[-2]
-        # print("\n==============================")
-        # print(f"PAIR : {pair}")
-        # print(f"HA High  : {ha_run['HA_High']}")
-        # print(f"HA Low   : {ha_run['HA_Low']}")
-        # print(f"HA Close : {ha_run['HA_Close']}")
-        # print(f"BB Upper : {bb_run['UpperBB']}")
-        # print(f"BB Lower : {bb_run['LowerBB']}")
-
-        # print("BUY COND:",
-        #     ha_run["HA_High"] > bb_run["UpperBB"],
-        #     ha_run["HA_Low"] > bb_run["UpperBB"],
-        #     ha_run["HA_Close"] > bb_run["UpperBB"])
-
-        # print("SELL COND:",
-        #     ha_run["HA_Low"] < bb_run["LowerBB"],
-        #     ha_run["HA_High"] < bb_run["LowerBB"],
-        #     ha_run["HA_Close"] < bb_run["LowerBB"])
-        # print("==============================")
+        c2 = ha.iloc[-3]   # pullback candle
+        c1 = ha.iloc[-2]   # entry candle
+        bb2 = bb.iloc[-3]
+        # ================= DEBUG =================
+        print("\n==============================")
+        print(f"PAIR        : {pair}")
+        print(f"-2 HA Close : {c2['HA_Close']:.5f}")
+        print(f"-1 HA Close : {c1['HA_Close']:.5f}")
+        print(f"BB Upper    : {bb2['UpperBB']:.5f}")
+        print(f"BB Lower    : {bb2['LowerBB']:.5f}")
+        print("==============================")
 
         # ================= BUY =================
-        if (
-            ha_run["HA_High"] > bb_run["UpperBB"]
-            and ha_run["HA_Low"] > bb_run["UpperBB"]
-            and ha_run["HA_Close"] > bb_run["UpperBB"]
-        ):
-            trade = calculate_trade_levels(
-                entry=ha_run["HA_Low"],
-                sl_hint=ha_run["HA_High"],
-                side="BUY"
-            )
-            alerts.append(
-                f"🟢 BUY {pair}\n"
-                f"Entry   : {trade['entry']}\n"
-                f"SL      : {trade['sl']}\n"
-                f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
-                "Targets:\n" +
-                "\n".join(f"{k} → {v}" for k, v in trade["targets"].items())
-            )
+        if item["change"] >= GAINER_THRESHOLD:
+            if (
+                c2["HA_Close"] < c2["HA_Open"] and
+                c2["HA_Low"] <= bb2["LowerBB"] and
+                c1["HA_Close"] > c1["HA_Open"]
+            ):
+                trade = calculate_trade_levels(
+                    entry=c1["HA_High"],
+                    sl_hint=c1["HA_Low"],
+                    side="BUY"
+                )
+                alerts.append(
+                    f"🟢 BUY {pair}\n"
+                    f"Entry   : {trade['entry']}\n"
+                    f"SL      : {trade['sl']}\n"
+                    f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
+                    "Targets:\n" +
+                    "\n".join(f"{k} → {v}" for k, v in trade["targets"].items())
+                )
 
         # ================= SELL =================
-        if (
-            ha_run["HA_Low"] < bb_run["LowerBB"]
-            and ha_run["HA_High"] < bb_run["LowerBB"]
-            and ha_run["HA_Close"] < bb_run["LowerBB"]
-        ):
-            trade = calculate_trade_levels(
-                entry=ha_run["HA_High"],
-                sl_hint=ha_run["HA_Low"],
-                side="SELL"
-            )
-            alerts.append(
-                f"🔴 SELL {pair}\n"
-                f"Entry   : {trade['entry']}\n"
-                f"SL      : {trade['sl']}\n"
-                f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
-                "Targets:\n" +
-                "\n".join(f"{k} → {v}" for k, v in trade["targets"].items())
-            )
+        if item["change"] <= LOSER_THRESHOLD:
+            if (
+                c2["HA_Close"] > c2["HA_Open"] and
+                c2["HA_High"] >= bb2["UpperBB"] and
+                c1["HA_Close"] < c1["HA_Open"]
+            ):
+                trade = calculate_trade_levels(
+                    entry=c1["HA_Low"],
+                    sl_hint=c1["HA_High"],
+                    side="SELL"
+                )
+                alerts.append(
+                    f"🔴 SELL {pair}\n"
+                    f"Entry   : {trade['entry']}\n"
+                    f"SL      : {trade['sl']}\n"
+                    f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
+                    "Targets:\n" +
+                    "\n".join(f"{k} → {v}" for k, v in trade["targets"].items())
+                )
 
     if alerts:
-        # print("\n\n".join(alerts))
         send_telegram_message("\n\n".join(alerts))
 
 # ===================================================
