@@ -1,59 +1,87 @@
-"""
-===========================================================
-📊 COINDCX BREAKOUT CONTINUATION SCANNER (1-Hour)
-===========================================================
-"""
-
 import requests
 import pandas as pd
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from CCI_Calculater import calculate_cci
 from Telegram_Alert import send_telegram_message
 
-# =====================
+
+# ===================================================
 # CONFIG
-# =====================
-RESOLUTION = "60"          # 1-HOUR
-LIMIT_HOURS = 2000
+# ===================================================
 
-GAINER_THRESHOLD = 5.0
-LOSER_THRESHOLD = -5.0
+RESOLUTION = "60"
+LIMIT_HOURS = 1000
 
+EMA_PERIODS = [20, 50, 100, 300]
+CCI_PERIOD = 200
+
+EXCLUDE_TOP = 4
+SELECT_COUNT = 25
+
+MAX_WORKERS = 12
+
+
+# ---- Risk & Capital ----
 CAPITAL_RS = 500
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 30
 MIN_LEVERAGE = 5
 
+
+
+def fetch_stats_parallel(pairs):
+
+    stats = []
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+
+        futures = {executor.submit(fetch_pair_stats, p): p for p in pairs}
+
+        for f in as_completed(futures):
+            s = f.result()
+            if s:
+                stats.append(s)
+
+    return stats
+
+
 # ===================================================
-# 1. ACTIVE USDT FUTURES
+# ACTIVE FUTURES
 # ===================================================
+
 def get_active_usdt_coins():
     url = (
         "https://api.coindcx.com/exchange/v1/derivatives/futures/data/"
         "active_instruments?margin_currency_short_name[]=USDT"
     )
-    data = requests.get(url, timeout=30).json()
-    return [x["pair"] if isinstance(x, dict) else x for x in data]
+    return requests.get(url, timeout=30).json()
+
 
 # ===================================================
-# 2. 1D % CHANGE
+# 1D % CHANGE
 # ===================================================
+
 def fetch_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
         r = requests.get(url, timeout=10).json()
         pc = r.get("price_change_percent", {}).get("1D")
-        return float(pc) if pc is not None else None
+        return {"pair": pair, "change": float(pc)} if pc is not None else None
     except:
         return None
 
+
 # ===================================================
-# 3. CANDLES
+# CANDLES
 # ===================================================
+
 def fetch_candles(pair):
     now = int(datetime.now(timezone.utc).timestamp())
     frm = now - LIMIT_HOURS * 3600
 
     url = "https://public.coindcx.com/market_data/candlesticks"
+
     params = {
         "pair": pair,
         "from": frm,
@@ -63,58 +91,55 @@ def fetch_candles(pair):
     }
 
     data = requests.get(url, params=params, timeout=15).json().get("data", [])
-    if len(data) < 50:
+
+    if len(data) < max(EMA_PERIODS) + CCI_PERIOD + 5:
         return None
 
     df = pd.DataFrame(data)
+
     for c in ["open", "high", "low", "close"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
     return df.dropna().reset_index(drop=True)
 
-# ===================================================
-# 4. HEIKIN ASHI
-# ===================================================
-def heikin_ashi(df):
-    ha = df.copy()
-    ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-
-    ha_open = [(df["open"].iloc[0] + df["close"].iloc[0]) / 2]
-    for i in range(1, len(df)):
-        ha_open.append((ha_open[i - 1] + ha["HA_Close"].iloc[i - 1]) / 2)
-
-    ha["HA_Open"] = ha_open
-    ha["HA_High"] = ha[["HA_Open", "HA_Close", "high"]].max(axis=1)
-    ha["HA_Low"] = ha[["HA_Open", "HA_Close", "low"]].min(axis=1)
-
-    return ha
 
 # ===================================================
-# 5. BOLLINGER (20, 2.0)
+# EMA + STRUCTURE
 # ===================================================
-def bollinger(df, period=20, mult=2.0):
-    df = df.copy()
-    df["MA"] = df["close"].rolling(period).mean()
-    df["STD"] = df["close"].rolling(period).std(ddof=0)
-    df["UpperBB"] = df["MA"] + mult * df["STD"]
-    df["LowerBB"] = df["MA"] - mult * df["STD"]
+
+def calculate_emas(df):
+    for p in EMA_PERIODS:
+        df[f"EMA_{p}"] = df["close"].ewm(span=p, adjust=False).mean()
     return df
 
-# ===================================================
-# 6. CAPITAL + AUTO LEVERAGE
-# ===================================================
-def calculate_trade_levels(entry, sl_hint, side):
 
-    for leverage in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
-        position_value = CAPITAL_RS * leverage
+def is_bullish_stack(row):
+    return row["EMA_20"] > row["EMA_50"] > row["EMA_100"] > row["EMA_300"]
+
+
+def is_bearish_stack(row):
+    return row["EMA_20"] < row["EMA_50"] < row["EMA_100"] < row["EMA_300"]
+
+
+# ===================================================
+# RISK / POSITION SIZING
+# ===================================================
+
+def calculate_trade_levels(entry, sl, side):
+
+    for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
+
+        position_value = CAPITAL_RS * lev
 
         if side == "BUY":
-            risk = entry - sl_hint
+            risk = entry - sl
         else:
-            risk = sl_hint - entry
+            risk = sl - entry
 
-        actual_loss = (risk / entry) * position_value
-        if actual_loss <= MAX_LOSS_RS:
+        loss = (risk / entry) * position_value
+
+        if loss <= MAX_LOSS_RS:
+            leverage = lev
             break
     else:
         leverage = MIN_LEVERAGE
@@ -130,106 +155,115 @@ def calculate_trade_levels(entry, sl_hint, side):
 
     return {
         "entry": round(entry, 4),
-        "sl": round(sl_hint, 4),
-        "capital": CAPITAL_RS,
-        "leverage": leverage,
-        "targets": {
-            "1:2": round(t2, 4),
-            "1:3": round(t3, 4),
-            "1:4": round(t4, 4),
-        }
+        "sl": round(sl, 4),
+        "lev": leverage,
+        "t2": round(t2, 4),
+        "t3": round(t3, 4),
+        "t4": round(t4, 4),
     }
 
+
 # ===================================================
-# 7. MAIN
+# MID MOVERS
 # ===================================================
+
+def select_mid_movers(stats):
+
+    sorted_gainers = sorted(stats, key=lambda x: x["change"], reverse=True)
+    sorted_losers = sorted(stats, key=lambda x: x["change"])
+
+    return (
+        sorted_gainers[EXCLUDE_TOP: EXCLUDE_TOP + SELECT_COUNT],
+        sorted_losers[EXCLUDE_TOP: EXCLUDE_TOP + SELECT_COUNT]
+    )
+
+
+# ===================================================
+# 🔥 THREAD WORKER
+# ===================================================
+
+def process_pair(pair, side):
+
+    df = fetch_candles(pair)
+    if df is None:
+        return None
+
+    df = calculate_emas(df)
+    df["CCI"] = calculate_cci(df["high"], df["low"], df["close"], CCI_PERIOD)
+
+    last = df.iloc[-1]
+    prev = df.iloc[-2]
+
+    # -------- BUY --------
+    if side == "bull" and is_bullish_stack(last) and prev["CCI"] < 100 and last["CCI"] > 100:
+
+        entry = last["close"]
+        sl = last["low"]
+
+        trade = calculate_trade_levels(entry, sl, "BUY")
+
+        return (
+            f"🟢 BUY {pair}\n"
+            f"Entry : {trade['entry']}\n"
+            f"SL    : {trade['sl']}\n"
+            f"Lev   : {trade['lev']}x\n"
+            f"T2:{trade['t2']}  T3:{trade['t3']}  T4:{trade['t4']}"
+        )
+
+    # -------- SELL --------
+    if side == "bear" and is_bearish_stack(last) and prev["CCI"] > -100 and last["CCI"] < -100:
+
+        entry = last["close"]
+        sl = last["high"]
+
+        trade = calculate_trade_levels(entry, sl, "SELL")
+
+        return (
+            f"🔴 SELL {pair}\n"
+            f"Entry : {trade['entry']}\n"
+            f"SL    : {trade['sl']}\n"
+            f"Lev   : {trade['lev']}x\n"
+            f"T2:{trade['t2']}  T3:{trade['t3']}  T4:{trade['t4']}"
+        )
+
+    return None
+
+
+# ===================================================
+# MAIN
+# ===================================================
+
 def main():
+    active = get_active_usdt_coins()
 
-    active_pairs = get_active_usdt_coins()
+    stats = fetch_stats_parallel(active)
 
-    stats = []
-    for pair in active_pairs:
-        chg = fetch_pair_stats(pair)
-        if chg is not None:
-            stats.append({"pair": pair, "change": chg})
-
-    gainers = [x for x in stats if x["change"] >= GAINER_THRESHOLD]
-    losers  = [x for x in stats if x["change"] <= LOSER_THRESHOLD]
+    gainers, losers = select_mid_movers(stats)
 
     alerts = []
 
-    for item in gainers + losers:
-        pair = item["pair"]
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
 
-        df = fetch_candles(pair)
-        if df is None:
-            continue
+        futures = []
 
-        ha = heikin_ashi(df)
+        for g in gainers:
+            futures.append(executor.submit(process_pair, g["pair"], "bull"))
 
-        bb_src = ha[["HA_Close"]].rename(columns={"HA_Close": "close"})
-        bb = bollinger(bb_src)
+        for l in losers:
+            futures.append(executor.submit(process_pair, l["pair"], "bear"))
 
-        if bb["UpperBB"].isna().iloc[-3]:
-            continue
+        for f in as_completed(futures):
+            r = f.result()
+            if r:
+                alerts.append(r)
+                print(r)
 
-        c2 = ha.iloc[-3]   # pullback candle
-        c1 = ha.iloc[-2]   # entry candle
-        bb2 = bb.iloc[-3]
-        # ================= DEBUG =================
-        print("\n==============================")
-        print(f"PAIR        : {pair}")
-        print(f"-2 HA Close : {c2['HA_Close']:.5f}")
-        print(f"-1 HA Close : {c1['HA_Close']:.5f}")
-        print(f"BB Upper    : {bb2['UpperBB']:.5f}")
-        print(f"BB Lower    : {bb2['LowerBB']:.5f}")
-        print("==============================")
-
-        # ================= BUY =================
-        if item["change"] >= GAINER_THRESHOLD:
-            if (
-                c2["HA_Close"] < c2["HA_Open"] and
-                c2["HA_Low"] <= bb2["LowerBB"] and
-                c1["HA_Close"] > c1["HA_Open"]
-            ):
-                trade = calculate_trade_levels(
-                    entry=c1["HA_High"],
-                    sl_hint=c1["HA_Low"],
-                    side="BUY"
-                )
-                alerts.append(
-                    f"🟢 BUY {pair}\n"
-                    f"Entry   : {trade['entry']}\n"
-                    f"SL      : {trade['sl']}\n"
-                    f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
-                    "Targets:\n" +
-                    "\n".join(f"{k} → {v}" for k, v in trade["targets"].items())
-                )
-
-        # ================= SELL =================
-        if item["change"] <= LOSER_THRESHOLD:
-            if (
-                c2["HA_Close"] > c2["HA_Open"] and
-                c2["HA_High"] >= bb2["UpperBB"] and
-                c1["HA_Close"] < c1["HA_Open"]
-            ):
-                trade = calculate_trade_levels(
-                    entry=c1["HA_Low"],
-                    sl_hint=c1["HA_High"],
-                    side="SELL"
-                )
-                alerts.append(
-                    f"🔴 SELL {pair}\n"
-                    f"Entry   : {trade['entry']}\n"
-                    f"SL      : {trade['sl']}\n"
-                    f"Capital : ₹{trade['capital']} ({trade['leverage']}×)\n\n"
-                    "Targets:\n" +
-                    "\n".join(f"{k} → {v}" for k, v in trade["targets"].items())
-                )
-
+    # 🔥 TELEGRAM ALERT
     if alerts:
         send_telegram_message("\n\n".join(alerts))
 
+
 # ===================================================
+
 if __name__ == "__main__":
     main()
