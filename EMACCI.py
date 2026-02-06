@@ -1,53 +1,50 @@
 import requests
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from CCI_Calculater import calculate_cci
 from Telegram_Alert import send_telegram_message
+
+
+# ===================================================
+# HEADER (Telegram Format)
+# ===================================================
+
+HEADER = """
+================================================
+📊 EMA CROSSOVER FUTURES SCANNER (15m)
+================================================
+Logic:
+• EMA10/20 cross EMA89
+• Trend confirmation EMA200
+• Futures candles (15m)
+• Auto leverage + RR targets
+================================================
+"""
 
 
 # ===================================================
 # CONFIG
 # ===================================================
 
-RESOLUTION = "60"
-LIMIT_HOURS = 1000
-
-EMA_PERIODS = [20, 50, 100, 300]
-CCI_PERIOD = 200
-
-EXCLUDE_TOP = 4
-SELECT_COUNT = 30
-
+INTERVAL = "60m"
+EMA_PERIODS = [10, 20, 89, 200]
 MAX_WORKERS = 12
 
-
-# ---- Risk & Capital ----
-CAPITAL_RS = 500
-MAX_LOSS_RS = 50
-MAX_ALLOWED_LEVERAGE = 30
+CAPITAL_RS = 1000
+MAX_LOSS_RS = 100
+MAX_ALLOWED_LEVERAGE = 10
 MIN_LEVERAGE = 5
 
+# ===================================================
+# SESSIONS
+# ===================================================
 
-
-def fetch_stats_parallel(pairs):
-
-    stats = []
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-
-        futures = {executor.submit(fetch_pair_stats, p): p for p in pairs}
-
-        for f in as_completed(futures):
-            s = f.result()
-            if s:
-                stats.append(s)
-
-    return stats
+session = requests.Session()
+BINANCE_URL = "https://fapi.binance.com/fapi/v1/klines"
 
 
 # ===================================================
-# ACTIVE FUTURES
+# ACTIVE FUTURES (CoinDCX)
 # ===================================================
 
 def get_active_usdt_coins():
@@ -59,52 +56,51 @@ def get_active_usdt_coins():
 
 
 # ===================================================
-# 1D % CHANGE
+# SYMBOL CONVERSION
 # ===================================================
 
-def fetch_pair_stats(pair):
+def convert_symbol(pair):
+    return pair.replace("B-", "").replace("_", "")
+
+
+# ===================================================
+# FETCH 15m CANDLES (Binance Futures)
+# ===================================================
+
+def fetch_candles(pair):
+
+    symbol = convert_symbol(pair)
+
+    params = {
+        "symbol": symbol,
+        "interval": INTERVAL,
+        "limit": 400
+    }
+
     try:
-        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
-        r = requests.get(url, timeout=10).json()
-        pc = r.get("price_change_percent", {}).get("1D")
-        return {"pair": pair, "change": float(pc)} if pc is not None else None
+        data = session.get(BINANCE_URL, params=params, timeout=10).json()
+
+        if len(data) < 300:
+            return None
+
+        df = pd.DataFrame(data, columns=[
+            "time","open","high","low","close","volume",
+            "c1","c2","c3","c4","c5","c6"
+        ])
+
+        df = df[["open","high","low","close","volume"]]
+
+        for c in df.columns:
+            df[c] = pd.to_numeric(df[c])
+
+        return df.reset_index(drop=True)
+
     except:
         return None
 
 
 # ===================================================
-# CANDLES
-# ===================================================
-
-def fetch_candles(pair):
-    now = int(datetime.now(timezone.utc).timestamp())
-    frm = now - LIMIT_HOURS * 3600
-
-    url = "https://public.coindcx.com/market_data/candlesticks"
-
-    params = {
-        "pair": pair,
-        "from": frm,
-        "to": now,
-        "resolution": RESOLUTION,
-        "pcode": "f",
-    }
-
-    data = requests.get(url, params=params, timeout=15).json().get("data", [])
-
-    if len(data) < max(EMA_PERIODS) + CCI_PERIOD + 5:
-        return None
-
-    df = pd.DataFrame(data)
-
-    for c in ["open", "high", "low", "close"]:
-        df[c] = pd.to_numeric(df[c], errors="coerce")
-
-    return df.dropna().reset_index(drop=True)
-
-
-# ===================================================
-# EMA + STRUCTURE
+# EMA LOGIC
 # ===================================================
 
 def calculate_emas(df):
@@ -113,29 +109,36 @@ def calculate_emas(df):
     return df
 
 
-def is_bullish_stack(row):
-    return row["EMA_20"] > row["EMA_50"] > row["EMA_100"] > row["EMA_300"]
+def bullish_signal(last, prev):
+    return (
+        last["EMA_10"] > last["EMA_89"] and
+        prev["EMA_10"] <= prev["EMA_89"] and
+        last["EMA_20"] > last["EMA_89"] and
+        prev["EMA_20"] <= prev["EMA_89"] and
+        last["EMA_89"] > last["EMA_200"]
+    )
 
 
-def is_bearish_stack(row):
-    return row["EMA_20"] < row["EMA_50"] < row["EMA_100"] < row["EMA_300"]
+def bearish_signal(last, prev):
+    return (
+        last["EMA_10"] < last["EMA_89"] and
+        prev["EMA_10"] >= prev["EMA_89"] and
+        last["EMA_20"] < last["EMA_89"] and
+        prev["EMA_20"] >= prev["EMA_89"] and
+        last["EMA_89"] < last["EMA_200"]
+    )
 
 
 # ===================================================
-# RISK / POSITION SIZING
+# RISK MANAGEMENT
 # ===================================================
 
 def calculate_trade_levels(entry, sl, side):
 
+    risk = abs(entry - sl)
+
     for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
-
         position_value = CAPITAL_RS * lev
-
-        if side == "BUY":
-            risk = entry - sl
-        else:
-            risk = sl - entry
-
         loss = (risk / entry) * position_value
 
         if loss <= MAX_LOSS_RS:
@@ -143,6 +146,8 @@ def calculate_trade_levels(entry, sl, side):
             break
     else:
         leverage = MIN_LEVERAGE
+
+    used_capital = CAPITAL_RS
 
     if side == "BUY":
         t2 = entry + risk * 2
@@ -153,116 +158,95 @@ def calculate_trade_levels(entry, sl, side):
         t3 = entry - risk * 3
         t4 = entry - risk * 4
 
-    return {
-        "entry": round(entry, 4),
-        "sl": round(sl, 4),
-        "lev": leverage,
-        "t2": round(t2, 4),
-        "t3": round(t3, 4),
-        "t4": round(t4, 4),
-    }
+    return entry, sl, leverage, used_capital, t2, t3, t4
 
 
 # ===================================================
-# MID MOVERS
+# WORKER
 # ===================================================
 
-def select_mid_movers(stats):
-
-    sorted_gainers = sorted(stats, key=lambda x: x["change"], reverse=True)
-    sorted_losers = sorted(stats, key=lambda x: x["change"])
-
-    return (
-        sorted_gainers[EXCLUDE_TOP: EXCLUDE_TOP + SELECT_COUNT],
-        sorted_losers[EXCLUDE_TOP: EXCLUDE_TOP + SELECT_COUNT]
-    )
-
-
-# ===================================================
-# 🔥 THREAD WORKER
-# ===================================================
-
-def process_pair(pair, side):
+def process_pair(pair):
 
     df = fetch_candles(pair)
     if df is None:
         return None
 
     df = calculate_emas(df)
-    df["CCI"] = calculate_cci(df["high"], df["low"], df["close"], CCI_PERIOD)
 
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
-    # -------- BUY --------
-    if side == "bull" and is_bullish_stack(last) and prev["CCI"] < 100 and last["CCI"] > 100:
+    symbol = convert_symbol(pair)
+
+    # BUY
+    if bullish_signal(last, prev):
 
         entry = last["close"]
         sl = last["low"]
 
-        trade = calculate_trade_levels(entry, sl, "BUY")
+        e, s, lev, cap, t2, t3, t4 = calculate_trade_levels(entry, sl, "BUY")
 
         return (
-            f"🟢 BUY {pair}\n"
-            f"Entry : {trade['entry']}\n"
-            f"SL    : {trade['sl']}\n"
-            f"Lev   : {trade['lev']}x\n"
-            f"T2:{trade['t2']}  T3:{trade['t3']}  T4:{trade['t4']}"
+            f"🟢 BUY {symbol}\n"
+            f"Entry   : {round(e,4)}\n"
+            f"SL      : {round(s,4)}\n"
+            f"Capital : ₹{cap} ({lev}×)\n\n"
+            f"Targets\n"
+            f"2R → {round(t2,4)}\n"
+            f"3R → {round(t3,4)}\n"
+            f"4R → {round(t4,4)}\n"
+            f"------------------------------------------------"
         )
 
-    # -------- SELL --------
-    if side == "bear" and is_bearish_stack(last) and prev["CCI"] > -100 and last["CCI"] < -100:
+    # SELL
+    if bearish_signal(last, prev):
 
         entry = last["close"]
         sl = last["high"]
 
-        trade = calculate_trade_levels(entry, sl, "SELL")
+        e, s, lev, cap, t2, t3, t4 = calculate_trade_levels(entry, sl, "SELL")
 
         return (
-            f"🔴 SELL {pair}\n"
-            f"Entry : {trade['entry']}\n"
-            f"SL    : {trade['sl']}\n"
-            f"Lev   : {trade['lev']}x\n"
-            f"T2:{trade['t2']}  T3:{trade['t3']}  T4:{trade['t4']}"
+            f"🔴 SELL {symbol}\n"
+            f"Entry   : {round(e,4)}\n"
+            f"SL      : {round(s,4)}\n"
+            f"Capital : ₹{cap} ({lev}×)\n\n"
+            f"Targets\n"
+            f"2R → {round(t2,4)}\n"
+            f"3R → {round(t3,4)}\n"
+            f"4R → {round(t4,4)}\n"
+            f"------------------------------------------------"
         )
 
     return None
 
 
 # ===================================================
-# MAIN
+# MAIN (manual run only)
 # ===================================================
 
 def main():
-    active = get_active_usdt_coins()
 
-    stats = fetch_stats_parallel(active)
-
-    gainers, losers = select_mid_movers(stats)
+    active_pairs = get_active_usdt_coins()
 
     alerts = []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-
-        futures = []
-
-        for g in gainers:
-            futures.append(executor.submit(process_pair, g["pair"], "bull"))
-
-        for l in losers:
-            futures.append(executor.submit(process_pair, l["pair"], "bear"))
+        futures = [executor.submit(process_pair, pair) for pair in active_pairs]
 
         for f in as_completed(futures):
-            r = f.result()
-            if r:
-                alerts.append(r)
-                print(r)
+            result = f.result()
+            if result:
+                alerts.append(result)
 
-    # 🔥 TELEGRAM ALERT
     if alerts:
-        send_telegram_message("\n\n".join(alerts))
+        summary = f"Scanned: {len(active_pairs)} coins | Signals: {len(alerts)}\n\n"
+        message = HEADER + "\n" + summary + "\n\n".join(alerts)
+        send_telegram_message(message)
 
 
+# ===================================================
+# RUN ONCE ONLY (manual)
 # ===================================================
 
 if __name__ == "__main__":
