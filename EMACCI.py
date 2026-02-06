@@ -26,7 +26,7 @@ Logic:
 # CONFIG
 # ===================================================
 
-INTERVAL = "1h"
+INTERVAL = "15m"
 EMA_PERIODS = [10, 20, 89, 200]
 MAX_WORKERS = 12
 
