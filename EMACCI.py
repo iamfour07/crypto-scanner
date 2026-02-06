@@ -26,7 +26,7 @@ Logic:
 # CONFIG
 # ===================================================
 
-INTERVAL = "60m"
+INTERVAL = "1h"
 EMA_PERIODS = [10, 20, 89, 200]
 MAX_WORKERS = 12
 
@@ -177,7 +177,7 @@ def process_pair(pair):
     prev = df.iloc[-2]
 
     symbol = convert_symbol(pair)
-
+    print(prev,symbol)
     # BUY
     if bullish_signal(last, prev):
 
