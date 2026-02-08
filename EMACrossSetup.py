@@ -14,7 +14,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 WMA_PERIOD = 5
 
-CoinList = ['SOLUSD','ETHUSD']
+CoinList = ['SOLUSD','DOGEUSD']
 
 # =========================
 # WMA CALCULATION
