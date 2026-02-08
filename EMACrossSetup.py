@@ -74,17 +74,17 @@ def fetch_coin_data(symbol):
     # =========================
     # DEBUG OUTPUT
     # =========================
-    candle_time = datetime.fromtimestamp(signal_candle['time'], tz=timezone.utc).astimezone(IST)
+    # candle_time = datetime.fromtimestamp(signal_candle['time'], tz=timezone.utc).astimezone(IST)
 
-    print(f"\n----- DEBUG {symbol} -----")
-    print(f"Candle Time (IST): {candle_time}")
-    print(f"Close: {signal_candle['close']}")
-    print(f"High:  {signal_candle['high']}")
-    print(f"Low:   {signal_candle['low']}")
-    print(f"WMA5:  {round(wma_value, 4) if pd.notnull(wma_value) else None}")
-    print(f"Gap Above High (Buy Condition): {wma_value > signal_candle['high'] if pd.notnull(wma_value) else None}")
-    print(f"Gap Below Low (Sell Condition): {wma_value < signal_candle['low'] if pd.notnull(wma_value) else None}")
-    print("----------------------------")
+    # print(f"\n----- DEBUG {symbol} -----")
+    # print(f"Candle Time (IST): {candle_time}")
+    # print(f"Close: {signal_candle['close']}")
+    # print(f"High:  {signal_candle['high']}")
+    # print(f"Low:   {signal_candle['low']}")
+    # print(f"WMA5:  {round(wma_value, 4) if pd.notnull(wma_value) else None}")
+    # print(f"Gap Above High (Buy Condition): {wma_value > signal_candle['high'] if pd.notnull(wma_value) else None}")
+    # print(f"Gap Below Low (Sell Condition): {wma_value < signal_candle['low'] if pd.notnull(wma_value) else None}")
+    # print("----------------------------")
 
     bullish = False
     bearish = False
