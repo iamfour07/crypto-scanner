@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from Telegram_Alert import send_telegram_message
 
@@ -8,15 +8,14 @@ from Telegram_Alert import send_telegram_message
 # ===================================================
 # HEADER (Telegram Format)
 # ===================================================
-
 HEADER = """
 ================================================
-📊 EMA CROSSOVER FUTURES SCANNER (15m)
+📊 EMA CROSSOVER FUTURES SCANNER (1H)
 ================================================
 Logic:
 • EMA10/20 cross EMA89
 • Trend confirmation EMA200
-• Futures candles (15m)
+• CoinDCX Futures candles
 • Auto leverage + RR targets
 ================================================
 """
@@ -26,7 +25,6 @@ Logic:
 # CONFIG
 # ===================================================
 
-INTERVAL = "15m"
 EMA_PERIODS = [10, 20, 89, 200]
 MAX_WORKERS = 12
 
@@ -35,12 +33,8 @@ MAX_LOSS_RS = 100
 MAX_ALLOWED_LEVERAGE = 10
 MIN_LEVERAGE = 5
 
-# ===================================================
-# SESSIONS
-# ===================================================
-
-session = requests.Session()
-BINANCE_URL = "https://fapi.binance.com/fapi/v1/klines"
+RESOLUTION = "60"
+LIMIT_HOURS = 2000
 
 
 # ===================================================
@@ -48,54 +42,53 @@ BINANCE_URL = "https://fapi.binance.com/fapi/v1/klines"
 # ===================================================
 
 def get_active_usdt_coins():
-    url = (
-        "https://api.coindcx.com/exchange/v1/derivatives/futures/data/"
-        "active_instruments?margin_currency_short_name[]=USDT"
-    )
-    return requests.get(url, timeout=30).json()
+    url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
+    try:
+        data = requests.get(url, timeout=30).json()
+        return data
+    except Exception as e:
+        print("Error fetching pairs:", e)
+        return []
 
 
 # ===================================================
-# SYMBOL CONVERSION
-# ===================================================
-
-def convert_symbol(pair):
-    return pair.replace("B-", "").replace("_", "")
-
-
-# ===================================================
-# FETCH 15m CANDLES (Binance Futures)
+# FETCH CANDLES (CoinDCX)
 # ===================================================
 
 def fetch_candles(pair):
 
-    symbol = convert_symbol(pair)
-
-    params = {
-        "symbol": symbol,
-        "interval": INTERVAL,
-        "limit": 400
-    }
-
     try:
-        data = session.get(BINANCE_URL, params=params, timeout=10).json()
+        now = int(datetime.now(timezone.utc).timestamp())
+        from_time = now - LIMIT_HOURS * 3600
 
-        if len(data) < 300:
+        url = "https://public.coindcx.com/market_data/candlesticks"
+        params = {
+            "pair": pair,
+            "from": from_time,
+            "to": now,
+            "resolution": RESOLUTION,
+            "pcode": "f"
+        }
+
+        r = requests.get(url, params=params, timeout=15)
+        r.raise_for_status()
+        data = r.json().get("data", [])
+
+        if not data or len(data) < 200:
             return None
 
-        df = pd.DataFrame(data, columns=[
-            "time","open","high","low","close","volume",
-            "c1","c2","c3","c4","c5","c6"
-        ])
+        df = pd.DataFrame(data)
 
-        df = df[["open","high","low","close","volume"]]
-
-        for c in df.columns:
-            df[c] = pd.to_numeric(df[c])
+        df["open"] = df["open"].astype(float)
+        df["high"] = df["high"].astype(float)
+        df["low"] = df["low"].astype(float)
+        df["close"] = df["close"].astype(float)
+        df["volume"] = df["volume"].astype(float)
 
         return df.reset_index(drop=True)
 
-    except:
+    except Exception as e:
+        print("Candle error:", pair, e)
         return None
 
 
@@ -112,9 +105,9 @@ def calculate_emas(df):
 def bullish_signal(last, prev):
     return (
         last["EMA_10"] > last["EMA_89"] and
-        prev["EMA_10"] <= prev["EMA_89"] and
+        prev["EMA_10"] < prev["EMA_89"] and
         last["EMA_20"] > last["EMA_89"] and
-        prev["EMA_20"] <= prev["EMA_89"] and
+        prev["EMA_20"] < prev["EMA_89"] and
         last["EMA_89"] > last["EMA_200"]
     )
 
@@ -122,9 +115,9 @@ def bullish_signal(last, prev):
 def bearish_signal(last, prev):
     return (
         last["EMA_10"] < last["EMA_89"] and
-        prev["EMA_10"] >= prev["EMA_89"] and
+        prev["EMA_10"] > prev["EMA_89"] and
         last["EMA_20"] < last["EMA_89"] and
-        prev["EMA_20"] >= prev["EMA_89"] and
+        prev["EMA_20"] > prev["EMA_89"] and
         last["EMA_89"] < last["EMA_200"]
     )
 
@@ -173,11 +166,9 @@ def process_pair(pair):
 
     df = calculate_emas(df)
 
-    last = df.iloc[-1]
-    prev = df.iloc[-2]
+    last = df.iloc[-2]
+    prev = df.iloc[-3]
 
-    symbol = convert_symbol(pair)
-    print(prev,symbol)
     # BUY
     if bullish_signal(last, prev):
 
@@ -187,7 +178,7 @@ def process_pair(pair):
         e, s, lev, cap, t2, t3, t4 = calculate_trade_levels(entry, sl, "BUY")
 
         return (
-            f"🟢 BUY {symbol}\n"
+            f"🟢 BUY {pair}\n"
             f"Entry   : {round(e,4)}\n"
             f"SL      : {round(s,4)}\n"
             f"Capital : ₹{cap} ({lev}×)\n\n"
@@ -207,7 +198,7 @@ def process_pair(pair):
         e, s, lev, cap, t2, t3, t4 = calculate_trade_levels(entry, sl, "SELL")
 
         return (
-            f"🔴 SELL {symbol}\n"
+            f"🔴 SELL {pair}\n"
             f"Entry   : {round(e,4)}\n"
             f"SL      : {round(s,4)}\n"
             f"Capital : ₹{cap} ({lev}×)\n\n"
@@ -222,12 +213,13 @@ def process_pair(pair):
 
 
 # ===================================================
-# MAIN (manual run only)
+# MAIN
 # ===================================================
 
 def main():
 
     active_pairs = get_active_usdt_coins()
+    print("Scanning pairs:", len(active_pairs))
 
     alerts = []
 
@@ -239,15 +231,13 @@ def main():
             if result:
                 alerts.append(result)
 
+    print("Signals found:", len(alerts))
+
     if alerts:
         summary = f"Scanned: {len(active_pairs)} coins | Signals: {len(alerts)}\n\n"
         message = HEADER + "\n" + summary + "\n\n".join(alerts)
         send_telegram_message(message)
 
-
-# ===================================================
-# RUN ONCE ONLY (manual)
-# ===================================================
 
 if __name__ == "__main__":
     main()
