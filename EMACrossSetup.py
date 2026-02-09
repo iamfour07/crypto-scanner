@@ -145,10 +145,10 @@ def main():
     bearish = sorted(bearish, key=lambda x: x['volume'], reverse=True)
 
     if bullish or bearish:
-        message_lines = [f"📊 WMA(5) Gap Setup\n"]
+        message_lines = [f"📊 WMA Setup\n"]
 
         if bullish:
-            message_lines.append("🟢 Buy Setup (WMA above candle, no touch):\n")
+            message_lines.append("🟢 Buy Setup:\n")
             for res in bullish:
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
@@ -157,7 +157,7 @@ def main():
                 )
 
         if bearish:
-            message_lines.append("\n🔴 Sell Setup (WMA below candle, no touch):\n")
+            message_lines.append("\n🔴 Sell Setup:\n")
             for res in bearish:
                 pair_safe = html.escape(res['pair'])
                 link = f"https://coindcx.com/futures/{res['pair']}"
