@@ -12,8 +12,8 @@ resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 15
 
-BUY_FILE = "BuyWatchlist.json"
-SELL_FILE = "SellWatchlist.json"
+BUY_FILE = "ReversalBuyWatchlist.json"
+SELL_FILE = "ReversalSellWatchlist.json"
 
 BB_LENGTH = 200
 BB_MULT = 2.5
