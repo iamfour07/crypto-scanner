@@ -208,10 +208,10 @@ def main():
                 side, pair = result
                 if side == "buy":
                     buy_watch.append(pair)
-                    # print("BUY watch:", pair)
+                    print("BUY watch:", pair)  # Debug line to check watchlist creation
                 else:
                     sell_watch.append(pair)
-                    # print("SELL watch:", pair)
+                    print("SELL watch:", pair)  # Debug line to check watchlist creation
 
     # STEP 2: Supertrend flip
     buy_signals = []
@@ -222,16 +222,28 @@ def main():
         if df is None:
             return None
         prev2, prev1 = df.iloc[-3], df.iloc[-2]
+        current = df.iloc[-1]
+
+        # Debug: print current and previous supertrend states
+        # print(f"[DEBUG] {pair} | prev2: {prev2['supertrend']} | prev1: {prev1['supertrend']} | current: {current['supertrend']}")
+
         if not prev2["supertrend"] and prev1["supertrend"]:
             return pair
+        return None
 
     def check_sell_flip(pair):
         df = fetch_last_n_candles(pair)
         if df is None:
             return None
         prev2, prev1 = df.iloc[-3], df.iloc[-2]
+        current = df.iloc[-1]
+
+        # Debug: print current and previous supertrend states
+        # print(f"[DEBUG] {pair} | prev2: {prev2['supertrend']} | prev1: {prev1['supertrend']} | current: {current['supertrend']}")
+
         if prev2["supertrend"] and not prev1["supertrend"]:
             return pair
+        return None
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         buy_signals = [f.result() for f in as_completed([executor.submit(check_buy_flip, p) for p in buy_watch]) if f.result()]
@@ -242,15 +254,19 @@ def main():
     # STEP 3: Alerts
     if buy_signals:
         send_telegram_message("🟢 BUY Signals:\n" + "\n".join(buy_signals))
+        # Remove coins from the buy_watchlist
         buy_watch = [p for p in buy_watch if p not in buy_signals]
 
     if sell_signals:
         send_telegram_message("🔴 SELL Signals:\n" + "\n".join(sell_signals))
+        # Remove coins from the sell_watchlist
         sell_watch = [p for p in sell_watch if p not in sell_signals]
 
+    # Save updated watchlists
     save_watchlist(BUY_FILE, buy_watch)
     save_watchlist(SELL_FILE, sell_watch)
 
+    print("Watchlists updated.")
 
 if __name__ == "__main__":
     main()
