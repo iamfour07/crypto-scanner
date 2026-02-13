@@ -21,6 +21,11 @@ BB_MULT = 2.5
 ST_LENGTH = 9
 ST_FACTOR = 1.5
 
+CAPITAL_RS = 1000
+MAX_LOSS_RS = 100
+MAX_ALLOWED_LEVERAGE = 10
+MIN_LEVERAGE = 5
+
 
 # ===================================================
 # API
@@ -44,16 +49,12 @@ def get_active_usdt_coins():
 # INDICATORS
 # ===================================================
 def calculate_heikin_ashi(df):
-    ha = df.copy()
-
-    ha["HA_close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-    ha["HA_open"] = (df["open"].shift(1) + df["close"].shift(1)) / 2
-    ha.iloc[0, ha.columns.get_loc("HA_open")] = (df.iloc[0]["open"] + df.iloc[0]["close"]) / 2
-
-    ha["HA_high"] = ha[["HA_open", "HA_close", "high"]].max(axis=1)
-    ha["HA_low"] = ha[["HA_open", "HA_close", "low"]].min(axis=1)
-
-    return ha
+    df["HA_close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
+    df["HA_open"] = (df["open"].shift(1) + df["close"].shift(1)) / 2
+    df.iloc[0, df.columns.get_loc("HA_open")] = (df.iloc[0]["open"] + df.iloc[0]["close"]) / 2
+    df["HA_high"] = df[["HA_open", "HA_close", "high"]].max(axis=1)
+    df["HA_low"] = df[["HA_open", "HA_close", "low"]].min(axis=1)
+    return df
 
 
 def calculate_bollinger(df):
@@ -68,62 +69,46 @@ def rma(series, period):
     return series.ewm(alpha=1/period, adjust=False).mean()
 
 
-def calculate_atr(df, period=9):
-    df["H-L"] = df["HA_high"] - df["HA_low"]
-    df["H-PC"] = abs(df["HA_high"] - df["HA_close"].shift(1))
-    df["L-PC"] = abs(df["HA_low"] - df["HA_close"].shift(1))
-    df["TR"] = df[["H-L", "H-PC", "L-PC"]].max(axis=1)
-    df["ATR"] = rma(df["TR"], period)
-    return df
-
-
 def calculate_supertrend(df):
-    df = calculate_atr(df, ST_LENGTH)
+    hl = df["HA_high"] - df["HA_low"]
+    hc = (df["HA_high"] - df["HA_close"].shift()).abs()
+    lc = (df["HA_low"] - df["HA_close"].shift()).abs()
+    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
+
+    atr = rma(tr, ST_LENGTH)
 
     hl2 = (df["HA_high"] + df["HA_low"]) / 2
-    df["basic_upperband"] = hl2 + ST_FACTOR * df["ATR"]
-    df["basic_lowerband"] = hl2 - ST_FACTOR * df["ATR"]
+    upperband = hl2 + ST_FACTOR * atr
+    lowerband = hl2 - ST_FACTOR * atr
 
-    final_upperband = [0] * len(df)
-    final_lowerband = [0] * len(df)
     supertrend = [True] * len(df)
+    st_value = [0] * len(df)
 
-    for i in range(len(df)):
-        if i == 0:
-            final_upperband[i] = df["basic_upperband"].iloc[i]
-            final_lowerband[i] = df["basic_lowerband"].iloc[i]
-            supertrend[i] = True
-            continue
-
-        if (
-            df["basic_upperband"].iloc[i] < final_upperband[i - 1]
-            or df["HA_close"].iloc[i - 1] > final_upperband[i - 1]
-        ):
-            final_upperband[i] = df["basic_upperband"].iloc[i]
-        else:
-            final_upperband[i] = final_upperband[i - 1]
-
-        if (
-            df["basic_lowerband"].iloc[i] > final_lowerband[i - 1]
-            or df["HA_close"].iloc[i - 1] < final_lowerband[i - 1]
-        ):
-            final_lowerband[i] = df["basic_lowerband"].iloc[i]
-        else:
-            final_lowerband[i] = final_lowerband[i - 1]
-
+    for i in range(1, len(df)):
         if supertrend[i - 1]:
-            supertrend[i] = df["HA_close"].iloc[i] >= final_lowerband[i]
+            if df["HA_close"].iloc[i] < lowerband.iloc[i]:
+                supertrend[i] = False
+                st_value[i] = upperband.iloc[i]
+            else:
+                supertrend[i] = True
+                st_value[i] = lowerband.iloc[i]
         else:
-            supertrend[i] = df["HA_close"].iloc[i] > final_upperband[i]
+            if df["HA_close"].iloc[i] > upperband.iloc[i]:
+                supertrend[i] = True
+                st_value[i] = lowerband.iloc[i]
+            else:
+                supertrend[i] = False
+                st_value[i] = upperband.iloc[i]
 
     df["supertrend"] = supertrend
+    df["ST_value"] = st_value
     return df
 
 
 # ===================================================
-# FETCH CANDLES
+# FETCH + CALCULATE ONCE
 # ===================================================
-def fetch_last_n_candles(pair):
+def fetch_and_prepare(pair):
     try:
         now = int(datetime.now(timezone.utc).timestamp())
         from_time = now - limit_hours * 3600
@@ -131,14 +116,18 @@ def fetch_last_n_candles(pair):
         url = "https://public.coindcx.com/market_data/candlesticks"
         params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
 
-        resp = requests.get(url, params=params, timeout=10)
-        resp.raise_for_status()
+        r = requests.get(url, params=params, timeout=10)
+        r.raise_for_status()
 
-        data = resp.json().get("data", [])
+        data = r.json().get("data", [])
         if not data or len(data) < 250:
             return None
 
         df = pd.DataFrame(data)
+        df = df.sort_values("time").reset_index(drop=True)
+
+        # remove running candle
+        df = df.iloc[:-1].copy()
 
         for col in ["open", "high", "low", "close"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -147,20 +136,115 @@ def fetch_last_n_candles(pair):
         df = calculate_bollinger(df)
         df = calculate_supertrend(df)
 
-        df = df.dropna().reset_index(drop=True)
-        return df
+        return df.dropna().reset_index(drop=True)
 
-    except Exception as e:
-        print(f"[candles] {pair} error: {e}")
+    except:
         return None
 
 
 # ===================================================
-# WATCHLIST HELPERS
+# RISK
 # ===================================================
+def calculate_trade_levels(entry, sl, side):
+    risk = abs(entry - sl)
+    if risk == 0:
+        return None
+
+    for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
+        position_value = CAPITAL_RS * lev
+        loss = (risk / entry) * position_value
+        if loss <= MAX_LOSS_RS:
+            leverage = lev
+            break
+    else:
+        leverage = MIN_LEVERAGE
+
+    if side == "BUY":
+        t2 = entry + risk * 2
+        t3 = entry + risk * 3
+        t4 = entry + risk * 4
+    else:
+        t2 = entry - risk * 2
+        t3 = entry - risk * 3
+        t4 = entry - risk * 4
+
+    return leverage, t2, t3, t4
+
+
+# ===================================================
+# MAIN
+# ===================================================
+def main():
+    pairs = get_active_usdt_coins()
+
+    buy_watch = load_watchlist(BUY_FILE)
+    sell_watch = load_watchlist(SELL_FILE)
+
+    def process_pair(pair):
+        df = fetch_and_prepare(pair)
+        if df is None:
+            return None
+
+        last = df.iloc[-1]
+        prev = df.iloc[-2]
+
+        results = []
+
+        # Bollinger add
+        if pair not in buy_watch and pair not in sell_watch:
+            if last["HA_low"] <= last["BB_lower"]:
+                results.append(("add_buy", pair))
+            elif last["HA_high"] >= last["BB_upper"]:
+                results.append(("add_sell", pair))
+
+        # Supertrend flip
+        if pair in buy_watch and (not prev["supertrend"] and last["supertrend"]):
+            entry = last["HA_close"]
+            sl = last["ST_value"]
+            rr = calculate_trade_levels(entry, sl, "BUY")
+            if rr:
+                lev, t2, t3, t4 = rr
+                results.append(("buy_signal", f"🟢 BUY {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"))
+
+        if pair in sell_watch and (prev["supertrend"] and not last["supertrend"]):
+            entry = last["HA_close"]
+            sl = last["ST_value"]
+            rr = calculate_trade_levels(entry, sl, "SELL")
+            if rr:
+                lev, t2, t3, t4 = rr
+                results.append(("sell_signal", f"🔴 SELL {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"))
+
+        return results
+
+
+    alerts = []
+
+    with ThreadPoolExecutor(MAX_WORKERS) as executor:
+        futures = [executor.submit(process_pair, p) for p in pairs]
+
+        for f in as_completed(futures):
+            res = f.result()
+            if not res:
+                continue
+            for r in res:
+                action, data = r
+                if action == "add_buy":
+                    buy_watch.append(data)
+                elif action == "add_sell":
+                    sell_watch.append(data)
+                elif action in ("buy_signal", "sell_signal"):
+                    alerts.append(data)
+
+    if alerts:
+        send_telegram_message("\n\n".join(alerts))
+
+    save_watchlist(BUY_FILE, buy_watch)
+    save_watchlist(SELL_FILE, sell_watch)
+
+
 def load_watchlist(file):
     try:
-        with open(file, "r") as f:
+        with open(file) as f:
             return json.load(f)
     except:
         return []
@@ -170,103 +254,6 @@ def save_watchlist(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=2)
 
-
-# ===================================================
-# MAIN
-# ===================================================
-def main():
-    pairs = get_active_usdt_coins()
-    print(f"Fetched {len(pairs)} active USDT futures pairs.")
-
-    buy_watch = load_watchlist(BUY_FILE)
-    sell_watch = load_watchlist(SELL_FILE)
-
-    # STEP 1: Bollinger touch
-    def check_bollinger(pair):
-        if pair in buy_watch or pair in sell_watch:
-            return None
-
-        df = fetch_last_n_candles(pair)
-        if df is None:
-            return None
-
-        last = df.iloc[-2]
-
-        if last["HA_low"] <= last["BB_lower"]:
-            return ("buy", pair)
-
-        if last["HA_high"] >= last["BB_upper"]:
-            return ("sell", pair)
-
-        return None
-
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        futures = [executor.submit(check_bollinger, p) for p in pairs]
-        for f in as_completed(futures):
-            result = f.result()
-            if result:
-                side, pair = result
-                if side == "buy":
-                    buy_watch.append(pair)
-                    print("BUY watch:", pair)  # Debug line to check watchlist creation
-                else:
-                    sell_watch.append(pair)
-                    print("SELL watch:", pair)  # Debug line to check watchlist creation
-
-    # STEP 2: Supertrend flip
-    buy_signals = []
-    sell_signals = []
-
-    def check_buy_flip(pair):
-        df = fetch_last_n_candles(pair)
-        if df is None:
-            return None
-        prev2, prev1 = df.iloc[-3], df.iloc[-2]
-        current = df.iloc[-1]
-
-        # Debug: print current and previous supertrend states
-        # print(f"[DEBUG] {pair} | prev2: {prev2['supertrend']} | prev1: {prev1['supertrend']} | current: {current['supertrend']}")
-
-        if not prev2["supertrend"] and prev1["supertrend"]:
-            return pair
-        return None
-
-    def check_sell_flip(pair):
-        df = fetch_last_n_candles(pair)
-        if df is None:
-            return None
-        prev2, prev1 = df.iloc[-3], df.iloc[-2]
-        current = df.iloc[-1]
-
-        # Debug: print current and previous supertrend states
-        # print(f"[DEBUG] {pair} | prev2: {prev2['supertrend']} | prev1: {prev1['supertrend']} | current: {current['supertrend']}")
-
-        if prev2["supertrend"] and not prev1["supertrend"]:
-            return pair
-        return None
-
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        buy_signals = [f.result() for f in as_completed([executor.submit(check_buy_flip, p) for p in buy_watch]) if f.result()]
-
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        sell_signals = [f.result() for f in as_completed([executor.submit(check_sell_flip, p) for p in sell_watch]) if f.result()]
-
-    # STEP 3: Alerts
-    if buy_signals:
-        send_telegram_message("🟢 BUY Signals:\n" + "\n".join(buy_signals))
-        # Remove coins from the buy_watchlist
-        buy_watch = [p for p in buy_watch if p not in buy_signals]
-
-    if sell_signals:
-        send_telegram_message("🔴 SELL Signals:\n" + "\n".join(sell_signals))
-        # Remove coins from the sell_watchlist
-        sell_watch = [p for p in sell_watch if p not in sell_signals]
-
-    # Save updated watchlists
-    save_watchlist(BUY_FILE, buy_watch)
-    save_watchlist(SELL_FILE, sell_watch)
-
-    print("Watchlists updated.")
 
 if __name__ == "__main__":
     main()
