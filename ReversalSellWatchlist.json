@@ -20,10 +20,6 @@
     "entry_state": true
   },
   {
-    "pair": "B-VVV_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-POPCAT_USDT",
     "entry_state": true
   },
@@ -69,6 +65,10 @@
   },
   {
     "pair": "B-PNUT_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-VINE_USDT",
     "entry_state": true
   }
 ]
