@@ -3,7 +3,7 @@ import requests
 bot_token = os.environ.get("TELEGRAM_BOT_TOKEN_21_EMA")
 chat_id = os.environ.get("TELEGRAM_CHAT_ID_21_EMA") #
 
-def Telegram_Alert_EMA_Crossover(message):
+def Send_EMA_Telegram_Message(message):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         "chat_id": chat_id,

@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import html
-from Telegram_Alert_Swing import send_telegram_message
+from Telegram_Swing import send_telegram_message
 
 # =========================
 # CONFIGURATION

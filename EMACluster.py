@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_Alert import send_telegram_message
+from Telegram_Momentum import Send_Momentum_Telegram_Message
 
 
 # ===================================================
@@ -236,7 +236,7 @@ def main():
     if alerts:
         summary = f"Scanned: {len(active_pairs)} coins | Signals: {len(alerts)}\n\n"
         message = HEADER + "\n" + summary + "\n\n".join(alerts)
-        send_telegram_message(message)
+        Send_Momentum_Telegram_Message(message)
 
 
 if __name__ == "__main__":

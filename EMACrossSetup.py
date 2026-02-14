@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import html
-from Telegram_Alert_EMA_Crossover import Telegram_Alert_EMA_Crossover
+from Telegram_EMA import Send_EMA_Telegram_Message
 
 # =========================
 # CONFIGURATION
@@ -225,7 +225,7 @@ def main():
         message_lines.append("\n===============================")
         final_message = "\n".join(message_lines)
 
-        Telegram_Alert_EMA_Crossover(final_message)
+        Send_EMA_Telegram_Message(final_message)
 
 if __name__ == "__main__":
     main()

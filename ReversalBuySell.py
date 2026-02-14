@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_Alert_Swing import send_telegram_message
+from Telegram_Swing import Send_Swing_Telegram_Message
 
 # =====================
 # CONFIG
@@ -236,7 +236,7 @@ def main():
                     alerts.append(data)
 
     if alerts:
-        send_telegram_message("\n\n".join(alerts))
+        Send_Swing_Telegram_Message("\n\n".join(alerts))
 
     save_watchlist(BUY_FILE, buy_watch)
     save_watchlist(SELL_FILE, sell_watch)
