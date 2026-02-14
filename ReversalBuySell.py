@@ -24,6 +24,46 @@ MAX_LOSS_RS = 100
 MAX_ALLOWED_LEVERAGE = 20
 MIN_LEVERAGE = 5
 
+# Risk Filters
+MIN_RISK_PERCENT = 0.3
+IDEAL_MIN_RISK = 0.4
+IDEAL_MAX_RISK = 1.2
+MAX_RISK_PERCENT = 2.5
+
+
+# ================= RISK CALC =================
+def calculate_trade_levels(entry, sl, side):
+
+    risk = abs(entry - sl)
+    risk_percent = (risk / entry) * 100
+
+    # Filters
+    if risk_percent < MIN_RISK_PERCENT:
+        return None
+    if risk_percent > MAX_RISK_PERCENT:
+        return None
+
+    for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
+        position_value = CAPITAL_RS * lev
+        loss = (risk / entry) * position_value
+
+        if loss <= MAX_LOSS_RS:
+            leverage = lev
+            break
+    else:
+        leverage = MIN_LEVERAGE
+
+    if side == "BUY":
+        t2 = entry + risk * 2
+        t3 = entry + risk * 3
+        t4 = entry + risk * 4
+    else:
+        t2 = entry - risk * 2
+        t3 = entry - risk * 3
+        t4 = entry - risk * 4
+
+    return entry, sl, leverage, CAPITAL_RS, t2, t3, t4, risk_percent
+
 
 # ================= API =================
 def get_active_usdt_coins():
@@ -136,7 +176,10 @@ def fetch_and_prepare(pair):
 def load_watchlist(file):
     try:
         with open(file) as f:
-            return json.load(f)
+            data = json.load(f)
+            for x in data:
+                x["entry_state"] = bool(x["entry_state"])
+            return data
     except:
         return []
 
@@ -160,32 +203,31 @@ def process_pair(pair, buy_watch, sell_watch):
         return None
 
     last = df.iloc[-1]
-    current_state = last["supertrend"]
+    current_state = bool(last["supertrend"])
 
     results = []
 
-    # STEP 1: Add to watchlist
+    # ADD TO WATCHLIST
     if not find_entry(pair, buy_watch) and not find_entry(pair, sell_watch):
 
-        # SELL setup
-        if last["HA_high"] >= last["BB_upper"] and current_state == True:
+        if last["HA_high"] >= last["BB_upper"] and current_state:
             results.append(("add_sell", pair, current_state))
 
-        # BUY setup
-        elif last["HA_low"] <= last["BB_lower"] and current_state == False:
+        elif last["HA_low"] <= last["BB_lower"] and not current_state:
             results.append(("add_buy", pair, current_state))
 
-    # STEP 2: Check state change
-
+    # FLIP CHECK
     sell_entry = find_entry(pair, sell_watch)
-    if sell_entry:
-        if sell_entry["entry_state"] == True and current_state == False:
-            results.append(("sell_signal", pair))
+    if sell_entry and sell_entry["entry_state"] and not current_state:
+        entry = float(last["HA_low"])
+        sl = float(last["ST_value"])
+        results.append(("sell_signal", pair, entry, sl))
 
     buy_entry = find_entry(pair, buy_watch)
-    if buy_entry:
-        if buy_entry["entry_state"] == False and current_state == True:
-            results.append(("buy_signal", pair))
+    if buy_entry and not buy_entry["entry_state"] and current_state:
+        entry = float(last["HA_high"])
+        sl = float(last["ST_value"])
+        results.append(("buy_signal", pair, entry, sl))
 
     return results
 
@@ -211,17 +253,41 @@ def main():
                 action = r[0]
 
                 if action == "add_buy":
-                    buy_watch.append({"pair": r[1], "entry_state": r[2]})
+                    buy_watch.append({"pair": r[1], "entry_state": bool(r[2])})
 
                 elif action == "add_sell":
-                    sell_watch.append({"pair": r[1], "entry_state": r[2]})
+                    sell_watch.append({"pair": r[1], "entry_state": bool(r[2])})
 
                 elif action == "buy_signal":
-                    alerts.append(f"🟢 BUY {r[1]}")
+                    levels = calculate_trade_levels(r[2], r[3], "BUY")
+                    if levels:
+                        e, s, lev, cap, t2, t3, t4, risk_pct = levels
+                        ideal_tag = " (Ideal)" if IDEAL_MIN_RISK <= risk_pct <= IDEAL_MAX_RISK else ""
+
+                        alerts.append(
+                            f"🟢 BUY {r[1]}\n"
+                            f"Entry : {round(e,4)}\n"
+                            f"SL    : {round(s,4)}\n"
+                            f"Risk  : {round(risk_pct,2)}%{ideal_tag}\n"
+                            f"Capital : ₹{cap} ({lev}x)\n"
+                            f"2R → {round(t2,4)} | 3R → {round(t3,4)} | 4R → {round(t4,4)}"
+                        )
                     buy_watch = [x for x in buy_watch if x["pair"] != r[1]]
 
                 elif action == "sell_signal":
-                    alerts.append(f"🔴 SELL {r[1]}")
+                    levels = calculate_trade_levels(r[2], r[3], "SELL")
+                    if levels:
+                        e, s, lev, cap, t2, t3, t4, risk_pct = levels
+                        ideal_tag = " (Ideal)" if IDEAL_MIN_RISK <= risk_pct <= IDEAL_MAX_RISK else ""
+
+                        alerts.append(
+                            f"🔴 SELL {r[1]}\n"
+                            f"Entry : {round(e,4)}\n"
+                            f"SL    : {round(s,4)}\n"
+                            f"Risk  : {round(risk_pct,2)}%{ideal_tag}\n"
+                            f"Capital : ₹{cap} ({lev}x)\n"
+                            f"2R → {round(t2,4)} | 3R → {round(t3,4)} | 4R → {round(t4,4)}"
+                        )
                     sell_watch = [x for x in sell_watch if x["pair"] != r[1]]
 
     if alerts:
