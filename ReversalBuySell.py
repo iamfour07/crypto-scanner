@@ -8,7 +8,8 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 # CONFIG
 resolution = "60"
 limit_hours = 1000
-MAX_WORKERS = 15
+MAX_WORKERS = 8
+TOP_COINS_TO_SCAN = 20
 
 BUY_FILE = "ReversalBuyWatchlist.json"
 SELL_FILE = "ReversalSellWatchlist.json"
@@ -25,20 +26,18 @@ MAX_ALLOWED_LEVERAGE = 20
 MIN_LEVERAGE = 5
 
 # Risk Filters
-MIN_RISK_PERCENT = 0.2
+MIN_RISK_PERCENT = 0.3
 IDEAL_MIN_RISK = 0.4
 IDEAL_MAX_RISK = 1.2
 MAX_RISK_PERCENT = 2.5
-TOP_COINS_TO_SCAN = 20   # change to 5, 15, 20 anytime
+
 
 # ================= RISK CALC =================
 def calculate_trade_levels(entry, sl, side):
     risk = abs(entry - sl)
     risk_percent = (risk / entry) * 100
 
-    if risk_percent < MIN_RISK_PERCENT:
-        return None
-    if risk_percent > MAX_RISK_PERCENT:
+    if risk_percent < MIN_RISK_PERCENT or risk_percent > MAX_RISK_PERCENT:
         return None
 
     for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
@@ -93,34 +92,18 @@ def fetch_pair_stats(pair):
 
 
 def get_top_movers(pairs, top_n=20):
-    gainers = []
-    losers = []
+    stats = []
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
-
         for f in as_completed(futures):
             res = f.result()
-            if not res:
-                continue
+            if res:
+                stats.append(res)
 
-            if res["change"] > 0:
-                gainers.append(res)
-            else:
-                losers.append(res)
-
-    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:top_n]
-    losers = sorted(losers, key=lambda x: x["change"])[:top_n]
-
-    # print("\nTop Gainers:")
-    # for g in gainers:
-    #     print(g["pair"], f"{g['change']:.2f}%")
-
-    # print("\nTop Losers:")
-    # for l in losers:
-    #     print(l["pair"], f"{l['change']:.2f}%")
-
-    return [x["pair"] for x in gainers + losers]
+    # strongest movers overall
+    stats = sorted(stats, key=lambda x: abs(x["change"]), reverse=True)
+    return [x["pair"] for x in stats[:top_n]]
 
 
 # ================= INDICATORS =================
@@ -162,14 +145,14 @@ def calculate_supertrend(df):
 
     for i in range(1, len(df)):
         if supertrend[i - 1]:
-            if df["HA_high"].iloc[i] < lowerband.iloc[i]:
+            if df["HA_close"].iloc[i] < lowerband.iloc[i]:
                 supertrend[i] = False
                 st_value[i] = upperband.iloc[i]
             else:
                 supertrend[i] = True
                 st_value[i] = lowerband.iloc[i]
         else:
-            if df["HA_low"].iloc[i] > upperband.iloc[i]:
+            if df["HA_close"].iloc[i] > upperband.iloc[i]:
                 supertrend[i] = True
                 st_value[i] = lowerband.iloc[i]
             else:
@@ -219,16 +202,15 @@ def load_watchlist(file):
     try:
         with open(file) as f:
             data = json.load(f)
-            for x in data:
-                x["entry_state"] = bool(x["entry_state"])
-            return data
+            return [{"pair": str(x["pair"]), "entry_state": bool(x["entry_state"])} for x in data]
     except:
         return []
 
 
 def save_watchlist(file, data):
+    clean_data = [{"pair": str(x["pair"]), "entry_state": bool(x["entry_state"])} for x in data]
     with open(file, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(clean_data, f, indent=2)
 
 
 def find_entry(pair, watchlist):
@@ -249,14 +231,12 @@ def process_pair(pair, buy_watch, sell_watch):
 
     results = []
 
-    # Remove invalid setups
     if find_entry(pair, sell_watch) and not st_state:
         sell_watch[:] = [x for x in sell_watch if x["pair"] != pair]
 
     if find_entry(pair, buy_watch) and st_state:
         buy_watch[:] = [x for x in buy_watch if x["pair"] != pair]
 
-    # Add to watchlist
     if not find_entry(pair, buy_watch) and not find_entry(pair, sell_watch):
 
         if last_closed["HA_close"] >= last_closed["BB_upper"] and st_state:
@@ -265,7 +245,6 @@ def process_pair(pair, buy_watch, sell_watch):
         elif last_closed["HA_close"] <= last_closed["BB_lower"] and not st_state:
             results.append(("add_buy", pair, False))
 
-    # Flip check
     if find_entry(pair, sell_watch) and not st_state:
         results.append(("sell_signal", pair,
                         float(last_closed["HA_low"]),
@@ -286,6 +265,7 @@ def main():
 
     buy_watch = load_watchlist(BUY_FILE)
     sell_watch = load_watchlist(SELL_FILE)
+
     buy_watch = [x for x in buy_watch if x["pair"] in pairs]
     sell_watch = [x for x in sell_watch if x["pair"] in pairs]
 
@@ -303,21 +283,16 @@ def main():
                 action = r[0]
 
                 if action == "add_buy":
-                    buy_watch.append({"pair": r[1], "entry_state": r[2]})
+                    buy_watch.append({"pair": r[1], "entry_state": bool(r[2])})
 
                 elif action == "add_sell":
-                    sell_watch.append({"pair": r[1], "entry_state": r[2]})
+                    sell_watch.append({"pair": r[1], "entry_state": bool(r[2])})
 
                 elif action == "buy_signal":
                     levels = calculate_trade_levels(r[2], r[3], "BUY")
                     if levels:
                         entry, sl, lev, margin_used, t2, t3, t4, risk_pct = levels
-
-                        # Ideal zone tag
-                        if IDEAL_MIN_RISK <= risk_pct <= IDEAL_MAX_RISK:
-                            risk_label = " (Ideal Zone)"
-                        else:
-                            risk_label = ""
+                        risk_label = " (Ideal Zone)" if IDEAL_MIN_RISK <= risk_pct <= IDEAL_MAX_RISK else ""
 
                         msg = (
                             f"🟢 BUY SIGNAL\n\n"
@@ -332,20 +307,13 @@ def main():
                             f"• 1:4 → {t4:.4f}\n"
                             f"-----------------------\n"
                         )
-
                         alerts.append(msg)
-
-                    buy_watch = [x for x in buy_watch if x["pair"] != r[1]]
 
                 elif action == "sell_signal":
                     levels = calculate_trade_levels(r[2], r[3], "SELL")
                     if levels:
                         entry, sl, lev, margin_used, t2, t3, t4, risk_pct = levels
-
-                        if IDEAL_MIN_RISK <= risk_pct <= IDEAL_MAX_RISK:
-                            risk_label = " (Ideal Zone)"
-                        else:
-                            risk_label = ""
+                        risk_label = " (Ideal Zone)" if IDEAL_MIN_RISK <= risk_pct <= IDEAL_MAX_RISK else ""
 
                         msg = (
                             f"🔴 SELL SIGNAL\n\n"
@@ -360,10 +328,7 @@ def main():
                             f"• 1:4 → {t4:.4f}\n"
                             f"-----------------------\n"
                         )
-
                         alerts.append(msg)
-
-                    sell_watch = [x for x in sell_watch if x["pair"] != r[1]]
 
     if alerts:
         Send_Swing_Telegram_Message("\n\n".join(alerts))
