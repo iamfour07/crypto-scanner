@@ -48,10 +48,6 @@
     "entry_state": true
   },
   {
-    "pair": "B-COW_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-CHILLGUY_USDT",
     "entry_state": true
   },
@@ -61,6 +57,14 @@
   },
   {
     "pair": "B-1000BONK_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-AIXBT_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-1000FLOKI_USDT",
     "entry_state": true
   }
 ]
