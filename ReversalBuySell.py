@@ -5,9 +5,7 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from Telegram_Swing import Send_Swing_Telegram_Message
 
-# =====================
 # CONFIG
-# =====================
 resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 15
@@ -27,9 +25,7 @@ MAX_ALLOWED_LEVERAGE = 20
 MIN_LEVERAGE = 5
 
 
-# ===================================================
-# API
-# ===================================================
+# ================= API =================
 def get_active_usdt_coins():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     resp = requests.get(url, timeout=30)
@@ -39,15 +35,13 @@ def get_active_usdt_coins():
     pairs = []
     for x in data:
         if isinstance(x, str):
-            pairs.append(x.strip().upper())
+            pairs.append(x)
         elif isinstance(x, dict) and "pair" in x:
-            pairs.append(x["pair"].strip().upper())
+            pairs.append(x["pair"])
     return pairs
 
 
-# ===================================================
-# INDICATORS
-# ===================================================
+# ================= INDICATORS =================
 def calculate_heikin_ashi(df):
     df["HA_close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
     df["HA_open"] = (df["open"].shift(1) + df["close"].shift(1)) / 2
@@ -66,7 +60,7 @@ def calculate_bollinger(df):
 
 
 def rma(series, period):
-    return series.ewm(alpha=1 / period, adjust=False).mean()
+    return series.ewm(alpha=1/period, adjust=False).mean()
 
 
 def calculate_supertrend(df):
@@ -105,9 +99,7 @@ def calculate_supertrend(df):
     return df
 
 
-# ===================================================
-# FETCH DATA
-# ===================================================
+# ================= FETCH =================
 def fetch_and_prepare(pair):
     try:
         now = int(datetime.now(timezone.utc).timestamp())
@@ -125,7 +117,6 @@ def fetch_and_prepare(pair):
 
         df = pd.DataFrame(data)
         df = df.sort_values("time").reset_index(drop=True)
-
         df = df.iloc[:-1].copy()
 
         for col in ["open", "high", "low", "close"]:
@@ -141,38 +132,7 @@ def fetch_and_prepare(pair):
         return None
 
 
-# ===================================================
-# RISK
-# ===================================================
-def calculate_trade_levels(entry, sl, side):
-    risk = abs(entry - sl)
-    if risk == 0 or pd.isna(risk):
-        return None
-
-    for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
-        position_value = CAPITAL_RS * lev
-        loss = (risk / entry) * position_value
-        if loss <= MAX_LOSS_RS:
-            leverage = lev
-            break
-    else:
-        leverage = MIN_LEVERAGE
-
-    if side == "BUY":
-        t2 = entry + risk * 2
-        t3 = entry + risk * 3
-        t4 = entry + risk * 4
-    else:
-        t2 = entry - risk * 2
-        t3 = entry - risk * 3
-        t4 = entry - risk * 4
-
-    return leverage, t2, t3, t4
-
-
-# ===================================================
-# WATCHLIST
-# ===================================================
+# ================= WATCHLIST =================
 def load_watchlist(file):
     try:
         with open(file) as f:
@@ -186,56 +146,51 @@ def save_watchlist(file, data):
         json.dump(data, f, indent=2)
 
 
-# ===================================================
-# PROCESS ONE COIN
-# ===================================================
+def find_entry(pair, watchlist):
+    for x in watchlist:
+        if x["pair"] == pair:
+            return x
+    return None
+
+
+# ================= PROCESS =================
 def process_pair(pair, buy_watch, sell_watch):
     df = fetch_and_prepare(pair)
     if df is None:
         return None
 
     last = df.iloc[-1]
+    current_state = last["supertrend"]
+
     results = []
 
-    # Step 1: Bollinger touch
-    if pair not in buy_watch and pair not in sell_watch:
+    # STEP 1: Add to watchlist
+    if not find_entry(pair, buy_watch) and not find_entry(pair, sell_watch):
 
-        if last["HA_high"] >= last["BB_upper"]:
-            results.append(("add_sell", pair))
+        # SELL setup
+        if last["HA_high"] >= last["BB_upper"] and current_state == True:
+            results.append(("add_sell", pair, current_state))
 
-        elif last["HA_low"] <= last["BB_lower"]:
-            results.append(("add_buy", pair))
+        # BUY setup
+        elif last["HA_low"] <= last["BB_lower"] and current_state == False:
+            results.append(("add_buy", pair, current_state))
 
-    # Step 2: Watchlist checks
+    # STEP 2: Check state change
 
-    # SELL trigger
-    if pair in sell_watch and last["supertrend"] == False:
-        entry = last["HA_close"]
-        sl = last["ST_value"]
+    sell_entry = find_entry(pair, sell_watch)
+    if sell_entry:
+        if sell_entry["entry_state"] == True and current_state == False:
+            results.append(("sell_signal", pair))
 
-        rr = calculate_trade_levels(entry, sl, "SELL")
-        if rr:
-            lev, t2, t3, t4 = rr
-            msg = f"🔴 SELL {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"
-            results.append(("sell_signal", msg, pair))
-
-    # BUY trigger
-    if pair in buy_watch and last["supertrend"] == True:
-        entry = last["HA_close"]
-        sl = last["ST_value"]
-
-        rr = calculate_trade_levels(entry, sl, "BUY")
-        if rr:
-            lev, t2, t3, t4 = rr
-            msg = f"🟢 BUY {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"
-            results.append(("buy_signal", msg, pair))
+    buy_entry = find_entry(pair, buy_watch)
+    if buy_entry:
+        if buy_entry["entry_state"] == False and current_state == True:
+            results.append(("buy_signal", pair))
 
     return results
 
 
-# ===================================================
-# MAIN
-# ===================================================
+# ================= MAIN =================
 def main():
     pairs = get_active_usdt_coins()
 
@@ -256,20 +211,18 @@ def main():
                 action = r[0]
 
                 if action == "add_buy":
-                    if r[1] not in buy_watch:
-                        buy_watch.append(r[1])
+                    buy_watch.append({"pair": r[1], "entry_state": r[2]})
 
                 elif action == "add_sell":
-                    if r[1] not in sell_watch:
-                        sell_watch.append(r[1])
+                    sell_watch.append({"pair": r[1], "entry_state": r[2]})
 
                 elif action == "buy_signal":
-                    alerts.append(r[1])
-                    buy_watch.remove(r[2])
+                    alerts.append(f"🟢 BUY {r[1]}")
+                    buy_watch = [x for x in buy_watch if x["pair"] != r[1]]
 
                 elif action == "sell_signal":
-                    alerts.append(r[1])
-                    sell_watch.remove(r[2])
+                    alerts.append(f"🔴 SELL {r[1]}")
+                    sell_watch = [x for x in sell_watch if x["pair"] != r[1]]
 
     if alerts:
         Send_Swing_Telegram_Message("\n\n".join(alerts))
