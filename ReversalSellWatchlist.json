@@ -56,15 +56,11 @@
     "entry_state": true
   },
   {
-    "pair": "B-1000BONK_USDT",
+    "pair": "B-ZEC_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-AIXBT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000FLOKI_USDT",
+    "pair": "B-SAFE_USDT",
     "entry_state": true
   }
 ]
