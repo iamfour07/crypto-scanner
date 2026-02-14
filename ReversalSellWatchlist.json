@@ -62,5 +62,65 @@
   {
     "pair": "B-AIXBT_USDT",
     "entry_state": true
+  },
+  {
+    "pair": "B-HBAR_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-NKN_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-RVN_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-ZEN_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-WET_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-AVAX_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-LUNA2_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-POLYX_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-FARTCOIN_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-1000000MOG_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-W_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-ETHFI_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-MEME_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-BRETT_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-MLN_USDT",
+    "entry_state": true
   }
 ]
