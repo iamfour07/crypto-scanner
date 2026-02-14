@@ -50,6 +50,53 @@ def fetch_pair_stats(pair):
     except:
         return None
 
+def fetch_pair_stats(pair):
+    try:
+        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        pc = r.json().get("price_change_percent", {}).get("1D")
+
+        if pc is None:
+            return None
+
+        return {"pair": pair, "change": float(pc)}
+    except:
+        return None
+    
+
+def get_top_movers(pairs):
+
+    gainers = []
+    losers = []
+
+    with ThreadPoolExecutor(max_workers=15) as executor:
+        futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
+
+        for f in as_completed(futures):
+            res = f.result()
+            if not res:
+                continue
+
+            if res["change"] > 0:
+                gainers.append(res)
+            elif res["change"] < 0:
+                losers.append(res)
+
+    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:10]
+    losers = sorted(losers, key=lambda x: x["change"])[:10]
+
+    selected_pairs = [x["pair"] for x in gainers + losers]
+
+    print("\nTop Gainers:")
+    for g in gainers:
+        print(g["pair"], f"{g['change']:.2f}%")
+
+    print("\nTop Losers:")
+    for l in losers:
+        print(l["pair"], f"{l['change']:.2f}%")
+
+    return selected_pairs
 
 def fetch_last_n_candles(pair, n=1000):
     try:
@@ -104,7 +151,8 @@ def fetch_last_n_candles(pair, n=1000):
 
 def main():
     print("Fetching active USDT pairs...")
-    pairs = get_active_usdt_coins()
+    all_pairs = get_active_usdt_coins()
+    pairs = get_top_movers(all_pairs)
 
     # Fetch 1D change %
     changes = []

@@ -1,82 +1,6 @@
 [
   {
-    "pair": "B-TRUMP_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-TAO_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-FIDA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-TON_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-VVV_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-HMSTR_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-COS_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000CAT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-GRASS_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-1000PEPE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-PNUT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-COMP_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ATOM_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-MORPHO_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000FLOKI_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-VIRTUAL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-CHILLGUY_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SPX_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-KAIA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-PENGU_USDT",
     "entry_state": true
   },
   {
@@ -84,163 +8,7 @@
     "entry_state": true
   },
   {
-    "pair": "B-VINE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SAFE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-XLM_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ZEC_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-VET_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-QTUM_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-IOST_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-THETA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AVNT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-DOGE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-NIGHT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ARPA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ZRX_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-TRB_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-PUMP_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SUSHI_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-UNI_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-EGLD_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-FIL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-BEL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-KSM_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-GMX_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-TUT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ENS_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SAND_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-IMX_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000SHIB_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-CHZ_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-JASMY_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-QNT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-FET_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ASTR_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-CFX_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-T_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-HAEDAL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-BOME_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-PENDLE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-WAXP_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-BIGTIME_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-TIA_USDT",
+    "pair": "B-PENGU_USDT",
     "entry_state": true
   },
   {
@@ -248,111 +16,7 @@
     "entry_state": true
   },
   {
-    "pair": "B-MANA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AUCTION_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-USTC_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-MTL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-OM_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-MEW_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AXL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-LINEA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-VANRY_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-POPCAT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AIXBT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SHELL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AVAAI_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-GRIFFAIN_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-BLUR_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-RPL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-POL_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-A_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1MBABYDOGE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-GOAT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-MOODENG_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000BONK_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ONG_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AKT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-DEGEN_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-WIF_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ZETA_USDT",
+    "pair": "B-SPX_USDT",
     "entry_state": true
   },
   {
@@ -360,59 +24,27 @@
     "entry_state": true
   },
   {
-    "pair": "B-XPL_USDT",
+    "pair": "B-VVV_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-EUL_USDT",
+    "pair": "B-VINE_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-MON_USDT",
+    "pair": "B-POPCAT_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-SAHARA_USDT",
+    "pair": "B-MOODENG_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-RENDER_USDT",
+    "pair": "B-MORPHO_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-C_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-NOT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-DOGS_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-JTO_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-GTC_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ATH_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-CGPT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ATA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ZEREBRO_USDT",
+    "pair": "B-WIF_USDT",
     "entry_state": true
   },
   {
@@ -420,55 +52,15 @@
     "entry_state": true
   },
   {
-    "pair": "B-CELO_USDT",
+    "pair": "B-CHILLGUY_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-FIO_USDT",
+    "pair": "B-VIRTUAL_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-ADA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-AAVE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-PEOPLE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-BSV_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000SATS_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-PHB_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SNX_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-WLD_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-SWARMS_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-TLM_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ONDO_USDT",
+    "pair": "B-AIXBT_USDT",
     "entry_state": true
   }
 ]
