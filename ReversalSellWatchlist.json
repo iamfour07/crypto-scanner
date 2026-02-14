@@ -470,5 +470,9 @@
   {
     "pair": "B-ONDO_USDT",
     "entry_state": true
+  },
+  {
+    "pair": "B-HBAR_USDT",
+    "entry_state": true
   }
 ]
