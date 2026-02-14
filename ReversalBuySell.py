@@ -39,9 +39,9 @@ def get_active_usdt_coins():
     pairs = []
     for x in data:
         if isinstance(x, str):
-            pairs.append(x)
+            pairs.append(x.strip().upper())
         elif isinstance(x, dict) and "pair" in x:
-            pairs.append(x["pair"])
+            pairs.append(x["pair"].strip().upper())
     return pairs
 
 
@@ -66,7 +66,7 @@ def calculate_bollinger(df):
 
 
 def rma(series, period):
-    return series.ewm(alpha=1/period, adjust=False).mean()
+    return series.ewm(alpha=1 / period, adjust=False).mean()
 
 
 def calculate_supertrend(df):
@@ -106,7 +106,7 @@ def calculate_supertrend(df):
 
 
 # ===================================================
-# FETCH + CALCULATE ONCE
+# FETCH DATA
 # ===================================================
 def fetch_and_prepare(pair):
     try:
@@ -120,13 +120,12 @@ def fetch_and_prepare(pair):
         r.raise_for_status()
 
         data = r.json().get("data", [])
-        if not data or len(data) < 250:
+        if not data or len(data) < BB_LENGTH + 10:
             return None
 
         df = pd.DataFrame(data)
         df = df.sort_values("time").reset_index(drop=True)
 
-        # remove running candle
         df = df.iloc[:-1].copy()
 
         for col in ["open", "high", "low", "close"]:
@@ -147,7 +146,7 @@ def fetch_and_prepare(pair):
 # ===================================================
 def calculate_trade_levels(entry, sl, side):
     risk = abs(entry - sl)
-    if risk == 0:
+    if risk == 0 or pd.isna(risk):
         return None
 
     for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
@@ -172,76 +171,8 @@ def calculate_trade_levels(entry, sl, side):
 
 
 # ===================================================
-# MAIN
+# WATCHLIST
 # ===================================================
-def main():
-    pairs = get_active_usdt_coins()
-
-    buy_watch = load_watchlist(BUY_FILE)
-    sell_watch = load_watchlist(SELL_FILE)
-
-    def process_pair(pair):
-        df = fetch_and_prepare(pair)
-        if df is None:
-            return None
-
-        last = df.iloc[-1]
-        prev = df.iloc[-2]
-
-        results = []
-
-        # Bollinger add
-        if pair not in buy_watch and pair not in sell_watch:
-            if last["HA_low"] <= last["BB_lower"]:
-                results.append(("add_buy", pair))
-            elif last["HA_high"] >= last["BB_upper"]:
-                results.append(("add_sell", pair))
-
-        # Supertrend flip
-        if pair in buy_watch and (not prev["supertrend"] and last["supertrend"]):
-            entry = last["HA_close"]
-            sl = last["ST_value"]
-            rr = calculate_trade_levels(entry, sl, "BUY")
-            if rr:
-                lev, t2, t3, t4 = rr
-                results.append(("buy_signal", f"🟢 BUY {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"))
-
-        if pair in sell_watch and (prev["supertrend"] and not last["supertrend"]):
-            entry = last["HA_close"]
-            sl = last["ST_value"]
-            rr = calculate_trade_levels(entry, sl, "SELL")
-            if rr:
-                lev, t2, t3, t4 = rr
-                results.append(("sell_signal", f"🔴 SELL {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"))
-
-        return results
-
-
-    alerts = []
-
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        futures = [executor.submit(process_pair, p) for p in pairs]
-
-        for f in as_completed(futures):
-            res = f.result()
-            if not res:
-                continue
-            for r in res:
-                action, data = r
-                if action == "add_buy":
-                    buy_watch.append(data)
-                elif action == "add_sell":
-                    sell_watch.append(data)
-                elif action in ("buy_signal", "sell_signal"):
-                    alerts.append(data)
-
-    if alerts:
-        Send_Swing_Telegram_Message("\n\n".join(alerts))
-
-    save_watchlist(BUY_FILE, buy_watch)
-    save_watchlist(SELL_FILE, sell_watch)
-
-
 def load_watchlist(file):
     try:
         with open(file) as f:
@@ -253,6 +184,98 @@ def load_watchlist(file):
 def save_watchlist(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=2)
+
+
+# ===================================================
+# PROCESS ONE COIN
+# ===================================================
+def process_pair(pair, buy_watch, sell_watch):
+    df = fetch_and_prepare(pair)
+    if df is None:
+        return None
+
+    last = df.iloc[-1]
+    results = []
+
+    # Step 1: Bollinger touch
+    if pair not in buy_watch and pair not in sell_watch:
+
+        if last["HA_high"] >= last["BB_upper"]:
+            results.append(("add_sell", pair))
+
+        elif last["HA_low"] <= last["BB_lower"]:
+            results.append(("add_buy", pair))
+
+    # Step 2: Watchlist checks
+
+    # SELL trigger
+    if pair in sell_watch and last["supertrend"] == False:
+        entry = last["HA_close"]
+        sl = last["ST_value"]
+
+        rr = calculate_trade_levels(entry, sl, "SELL")
+        if rr:
+            lev, t2, t3, t4 = rr
+            msg = f"🔴 SELL {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"
+            results.append(("sell_signal", msg, pair))
+
+    # BUY trigger
+    if pair in buy_watch and last["supertrend"] == True:
+        entry = last["HA_close"]
+        sl = last["ST_value"]
+
+        rr = calculate_trade_levels(entry, sl, "BUY")
+        if rr:
+            lev, t2, t3, t4 = rr
+            msg = f"🟢 BUY {pair}\nEntry {entry}\nSL {sl}\nLev {lev}x\nT2 {t2}\nT3 {t3}\nT4 {t4}"
+            results.append(("buy_signal", msg, pair))
+
+    return results
+
+
+# ===================================================
+# MAIN
+# ===================================================
+def main():
+    pairs = get_active_usdt_coins()
+
+    buy_watch = load_watchlist(BUY_FILE)
+    sell_watch = load_watchlist(SELL_FILE)
+
+    alerts = []
+
+    with ThreadPoolExecutor(MAX_WORKERS) as executor:
+        futures = [executor.submit(process_pair, p, buy_watch, sell_watch) for p in pairs]
+
+        for f in as_completed(futures):
+            res = f.result()
+            if not res:
+                continue
+
+            for r in res:
+                action = r[0]
+
+                if action == "add_buy":
+                    if r[1] not in buy_watch:
+                        buy_watch.append(r[1])
+
+                elif action == "add_sell":
+                    if r[1] not in sell_watch:
+                        sell_watch.append(r[1])
+
+                elif action == "buy_signal":
+                    alerts.append(r[1])
+                    buy_watch.remove(r[2])
+
+                elif action == "sell_signal":
+                    alerts.append(r[1])
+                    sell_watch.remove(r[2])
+
+    if alerts:
+        Send_Swing_Telegram_Message("\n\n".join(alerts))
+
+    save_watchlist(BUY_FILE, buy_watch)
+    save_watchlist(SELL_FILE, sell_watch)
 
 
 if __name__ == "__main__":
