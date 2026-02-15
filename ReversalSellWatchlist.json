@@ -44,7 +44,11 @@
     "entry_state": true
   },
   {
-    "pair": "B-1000BONK_USDT",
+    "pair": "B-PROM_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-XRP_USDT",
     "entry_state": true
   }
 ]
