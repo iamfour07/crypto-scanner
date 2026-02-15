@@ -24,10 +24,6 @@
     "entry_state": true
   },
   {
-    "pair": "B-MORPHO_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-CHILLGUY_USDT",
     "entry_state": true
   },
@@ -53,6 +49,10 @@
   },
   {
     "pair": "B-FARTCOIN_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-DEGEN_USDT",
     "entry_state": true
   }
 ]
