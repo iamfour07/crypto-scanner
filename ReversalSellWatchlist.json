@@ -24,10 +24,6 @@
     "entry_state": true
   },
   {
-    "pair": "B-GRASS_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-COMP_USDT",
     "entry_state": true
   },
@@ -36,7 +32,11 @@
     "entry_state": true
   },
   {
-    "pair": "B-XRP_USDT",
+    "pair": "B-HUMA_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-ZEREBRO_USDT",
     "entry_state": true
   }
 ]
