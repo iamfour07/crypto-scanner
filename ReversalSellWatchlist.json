@@ -12,15 +12,7 @@
     "entry_state": true
   },
   {
-    "pair": "B-SPX_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-POPCAT_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-MOODENG_USDT",
     "entry_state": true
   },
   {
@@ -48,11 +40,15 @@
     "entry_state": true
   },
   {
-    "pair": "B-GRASS_USDT",
+    "pair": "B-MORPHO_USDT",
     "entry_state": true
   },
   {
-    "pair": "B-MORPHO_USDT",
+    "pair": "B-VVV_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-EUL_USDT",
     "entry_state": true
   }
 ]
