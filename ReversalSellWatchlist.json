@@ -58,5 +58,9 @@
   {
     "pair": "B-FARTCOIN_USDT",
     "entry_state": true
+  },
+  {
+    "pair": "B-VINE_USDT",
+    "entry_state": true
   }
 ]
