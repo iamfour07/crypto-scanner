@@ -12,15 +12,7 @@
     "entry_state": true
   },
   {
-    "pair": "B-ZEC_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-DOGE_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000FLOKI_USDT",
     "entry_state": true
   },
   {
@@ -45,6 +37,14 @@
   },
   {
     "pair": "B-COMP_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-MUBARAK_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-1000BONK_USDT",
     "entry_state": true
   }
 ]
