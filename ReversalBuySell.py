@@ -8,7 +8,8 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 # CONFIG
 resolution = "60"
 limit_hours = 1000
-MAX_WORKERS = 15
+MAX_WORKERS = 8
+TOP_COINS_TO_SCAN = 30
 
 BUY_FILE = "ReversalBuyWatchlist.json"
 SELL_FILE = "ReversalSellWatchlist.json"
@@ -77,7 +78,7 @@ def fetch_pair_stats(pair):
 def get_top_movers(pairs):
     gainers, losers = [], []
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
         for f in as_completed(futures):
             res = f.result()
@@ -179,8 +180,9 @@ def load_watchlist(file):
 
 
 def save_watchlist(file, data):
+    clean_data = [{"pair": str(x["pair"]), "entry_state": bool(x["entry_state"])} for x in data]
     with open(file, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(clean_data, f, indent=2)
 
 
 # ================= WATCHLIST FLIP MODULE =================
