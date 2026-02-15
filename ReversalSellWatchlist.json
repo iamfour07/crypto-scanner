@@ -1,14 +1,14 @@
 [
   {
-    "pair": "B-1000PEPE_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-VVV_USDT",
     "entry_state": true
   },
   {
     "pair": "B-EUL_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-LUNA2_USDT",
     "entry_state": true
   }
 ]
