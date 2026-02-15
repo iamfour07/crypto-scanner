@@ -30,13 +30,5 @@
   {
     "pair": "B-PROM_USDT",
     "entry_state": true
-  },
-  {
-    "pair": "B-HUMA_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-ZEREBRO_USDT",
-    "entry_state": true
   }
 ]
