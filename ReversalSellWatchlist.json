@@ -24,19 +24,7 @@
     "entry_state": true
   },
   {
-    "pair": "B-CHILLGUY_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-VIRTUAL_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-ZEC_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-1000BONK_USDT",
     "entry_state": true
   },
   {
@@ -53,6 +41,18 @@
   },
   {
     "pair": "B-DEGEN_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-VINE_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-GRASS_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-MORPHO_USDT",
     "entry_state": true
   }
 ]
