@@ -8,10 +8,6 @@
     "entry_state": true
   },
   {
-    "pair": "B-PYTH_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-POPCAT_USDT",
     "entry_state": true
   },
@@ -49,6 +45,14 @@
   },
   {
     "pair": "B-EUL_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-1000000MOG_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-GRASS_USDT",
     "entry_state": true
   }
 ]
