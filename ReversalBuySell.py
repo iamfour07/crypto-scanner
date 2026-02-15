@@ -9,7 +9,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 8
-TOP_COINS_TO_SCAN = 20
+TOP_COINS_TO_SCAN = 30
 
 BUY_FILE = "ReversalBuyWatchlist.json"
 SELL_FILE = "ReversalSellWatchlist.json"
