@@ -24,18 +24,6 @@
     "entry_state": true
   },
   {
-    "pair": "B-FARTCOIN_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-DEGEN_USDT",
-    "entry_state": true
-  },
-  {
-    "pair": "B-VINE_USDT",
-    "entry_state": true
-  },
-  {
     "pair": "B-MORPHO_USDT",
     "entry_state": true
   },
@@ -53,6 +41,10 @@
   },
   {
     "pair": "B-GRASS_USDT",
+    "entry_state": true
+  },
+  {
+    "pair": "B-COMP_USDT",
     "entry_state": true
   }
 ]
