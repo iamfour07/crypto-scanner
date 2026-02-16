@@ -1,12 +1,18 @@
 [
   {
-    "pair": "B-PROM_USDT"
+    "pair": "B-USTC_USDT"
   },
   {
     "pair": "B-VVV_USDT"
   },
   {
-    "pair": "B-USTC_USDT"
+    "pair": "B-PROM_USDT"
+  },
+  {
+    "pair": "B-STABLE_USDT"
+  },
+  {
+    "pair": "B-UMA_USDT"
   },
   {
     "pair": "B-HUMA_USDT"
@@ -18,34 +24,22 @@
     "pair": "B-RAVE_USDT"
   },
   {
-    "pair": "B-UMA_USDT"
-  },
-  {
-    "pair": "B-STABLE_USDT"
-  },
-  {
     "pair": "B-SHELL_USDT"
-  },
-  {
-    "pair": "B-ALPINE_USDT"
   },
   {
     "pair": "B-INIT_USDT"
   },
   {
-    "pair": "B-MAGIC_USDT"
+    "pair": "B-ALPINE_USDT"
   },
   {
     "pair": "B-LUNA2_USDT"
   },
   {
-    "pair": "B-SUPER_USDT"
+    "pair": "B-SAGA_USDT"
   },
   {
     "pair": "B-STORJ_USDT"
-  },
-  {
-    "pair": "B-SAGA_USDT"
   },
   {
     "pair": "B-DOLO_USDT"
@@ -63,12 +57,21 @@
     "pair": "B-STO_USDT"
   },
   {
-    "pair": "B-MUBARAK_USDT"
-  },
-  {
     "pair": "B-SKL_USDT"
   },
   {
+    "pair": "B-MUBARAK_USDT"
+  },
+  {
     "pair": "B-ARPA_USDT"
+  },
+  {
+    "pair": "B-SUPER_USDT"
+  },
+  {
+    "pair": "B-MAGIC_USDT"
+  },
+  {
+    "pair": "B-ATOM_USDT"
   }
 ]
