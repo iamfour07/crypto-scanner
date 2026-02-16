@@ -250,12 +250,10 @@ def scan_for_setups(top_pairs, buy_watch, sell_watch):
 
         # SELL setup
         if last["HA_high"] >= last["BB_upper"] and st_now:
-            print(f"[DEBUG ADD SELL] {pair} | ST={st_color} | Close={last['HA_close']:.4f} | ST_Value={last['ST_value']:.4f}")
             return ("SELL", pair)
 
         # BUY setup
         if last["HA_low"] <= last["BB_lower"] and not st_now:
-            print(f"[DEBUG ADD BUY] {pair} | ST={st_color} | Close={last['HA_close']:.4f} | ST_Value={last['ST_value']:.4f}")
             return ("BUY", pair)
 
         return None
