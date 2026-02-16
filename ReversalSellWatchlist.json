@@ -1,9 +1,6 @@
 [
   {
-    "pair": "B-SAGA_USDT"
-  },
-  {
-    "pair": "B-STORJ_USDT"
+    "pair": "B-VVV_USDT"
   },
   {
     "pair": "B-RAVE_USDT"
@@ -12,24 +9,27 @@
     "pair": "B-PROM_USDT"
   },
   {
-    "pair": "B-LUNA2_USDT"
-  },
-  {
     "pair": "B-INIT_USDT"
   },
   {
     "pair": "B-HUMA_USDT"
   },
   {
-    "pair": "B-VVV_USDT"
+    "pair": "B-LUNA2_USDT"
+  },
+  {
+    "pair": "B-STORJ_USDT"
   },
   {
     "pair": "B-STABLE_USDT"
   },
   {
-    "pair": "B-TAO_USDT"
+    "pair": "B-USTC_USDT"
   },
   {
-    "pair": "B-USTC_USDT"
+    "pair": "B-SAGA_USDT"
+  },
+  {
+    "pair": "B-TAO_USDT"
   }
 ]
