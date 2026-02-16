@@ -174,13 +174,14 @@ def fetch_and_prepare(pair):
 def load_watchlist(file):
     try:
         with open(file) as f:
-            return json.load(f)
+            data = json.load(f)
+            return [{"pair": str(x["pair"])} for x in data if "pair" in x]
     except:
         return []
 
 
 def save_watchlist(file, data):
-    clean_data = [{"pair": str(x["pair"]), "entry_state": bool(x["entry_state"])} for x in data]
+    clean_data = [{"pair": str(x["pair"])} for x in data]
     with open(file, "w") as f:
         json.dump(clean_data, f, indent=2)
 
