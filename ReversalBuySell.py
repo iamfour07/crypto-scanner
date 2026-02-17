@@ -115,32 +115,56 @@ def rma(series, period):
 
 
 def calculate_supertrend(df):
-    hl = df["HA_high"] - df["HA_low"]
-    hc = (df["HA_high"] - df["HA_close"].shift()).abs()
-    lc = (df["HA_low"] - df["HA_close"].shift()).abs()
-    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
+    # ATR
+    df["H-L"] = df["HA_high"] - df["HA_low"]
+    df["H-PC"] = abs(df["HA_high"] - df["HA_close"].shift(1))
+    df["L-PC"] = abs(df["HA_low"] - df["HA_close"].shift(1))
+    df["TR"] = df[["H-L", "H-PC", "L-PC"]].max(axis=1)
+    df["ATR"] = rma(df["TR"], ST_LENGTH)
 
-    atr = rma(tr, ST_LENGTH)
     hl2 = (df["HA_high"] + df["HA_low"]) / 2
+    df["basic_upperband"] = hl2 + ST_FACTOR * df["ATR"]
+    df["basic_lowerband"] = hl2 - ST_FACTOR * df["ATR"]
 
-    upper = hl2 + ST_FACTOR * atr
-    lower = hl2 - ST_FACTOR * atr
+    final_upperband = [0] * len(df)
+    final_lowerband = [0] * len(df)
+    supertrend = [True] * len(df)
 
-    trend = [True] * len(df)
-    st_val = [0] * len(df)
+    for i in range(len(df)):
+        if i == 0:
+            final_upperband[i] = df["basic_upperband"].iloc[i]
+            final_lowerband[i] = df["basic_lowerband"].iloc[i]
+            supertrend[i] = True
+            continue
 
-    for i in range(1, len(df)):
-        if trend[i - 1]:
-            trend[i] = df["HA_high"].iloc[i] >= lower.iloc[i]
+        if (
+            df["basic_upperband"].iloc[i] < final_upperband[i - 1]
+            or df["HA_close"].iloc[i - 1] > final_upperband[i - 1]
+        ):
+            final_upperband[i] = df["basic_upperband"].iloc[i]
         else:
-            trend[i] = df["HA_low"].iloc[i] > upper.iloc[i]
+            final_upperband[i] = final_upperband[i - 1]
 
-        st_val[i] = lower.iloc[i] if trend[i] else upper.iloc[i]
+        if (
+            df["basic_lowerband"].iloc[i] > final_lowerband[i - 1]
+            or df["HA_close"].iloc[i - 1] < final_lowerband[i - 1]
+        ):
+            final_lowerband[i] = df["basic_lowerband"].iloc[i]
+        else:
+            final_lowerband[i] = final_lowerband[i - 1]
 
-    df["supertrend"] = trend
-    df["ST_value"] = st_val
+        if supertrend[i - 1]:
+            supertrend[i] = df["HA_close"].iloc[i] >= final_lowerband[i]
+        else:
+            supertrend[i] = df["HA_close"].iloc[i] > final_upperband[i]
+
+    df["supertrend"] = supertrend
+    df["ST_value"] = [
+        final_lowerband[i] if supertrend[i] else final_upperband[i]
+        for i in range(len(df))
+    ]
+
     return df
-
 
 # ================= FETCH =================
 def fetch_and_prepare(pair):
@@ -185,6 +209,18 @@ def save_watchlist(file, data):
     with open(file, "w") as f:
         json.dump(clean_data, f, indent=2)
 
+def format_signal(side, pair, entry, sl):
+    entry, sl, lev, targets, risk_percent = calculate_trade_levels(entry, sl, side)
+
+    msg = (
+        f"{'🟢 BUY' if side=='BUY' else '🔴 SELL'} {pair}\n"
+        f"Entry: {entry:.4f}\n"
+        f"SL: {sl:.4f}\n"
+        f"Leverage: {lev}x\n"
+        f"Targets: {', '.join([f'{t:.4f}' for t in targets])}\n"
+        f"Risk: {risk_percent:.2f}%"
+    )
+    return msg
 
 # ================= WATCHLIST FLIP MODULE =================
 def check_watchlist_flips(watchlist, side):
@@ -193,22 +229,22 @@ def check_watchlist_flips(watchlist, side):
 
     def check_pair(pair):
         df = fetch_and_prepare(pair)
-        if df is None or len(df) < 3:
+        if df is None or len(df) < 5:
             return ("KEEP", pair)
 
-        last = df.iloc[-1]
-        prev = df.iloc[-2]
+        prev2 = df.iloc[-3]
+        prev1 = df.iloc[-2]
 
-        st_now = last["HA_close"] > last["ST_value"]
-        st_prev = prev["HA_close"] > prev["ST_value"]
+        st_prev = prev2["supertrend"]
+        st_now = prev1["supertrend"]
 
         if side == "BUY":
             if (not st_prev) and st_now:
-                return ("SIGNAL", pair, float(last["HA_high"]), float(last["ST_value"]))
+                return ("SIGNAL", pair, float(prev1["HA_high"]), float(prev1["ST_value"]))
 
         if side == "SELL":
             if st_prev and not st_now:
-                return ("SIGNAL", pair, float(last["HA_low"]), float(last["ST_value"]))
+                return ("SIGNAL", pair, float(prev1["HA_low"]), float(prev1["ST_value"]))
 
         return ("KEEP", pair)
 
