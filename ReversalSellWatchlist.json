@@ -1,21 +1,12 @@
 [
   {
-    "pair": "B-HUMA_USDT"
-  },
-  {
-    "pair": "B-DRIFT_USDT"
-  },
-  {
-    "pair": "B-MMT_USDT"
+    "pair": "B-REZ_USDT"
   },
   {
     "pair": "B-JTO_USDT"
   },
   {
-    "pair": "B-MAGIC_USDT"
-  },
-  {
-    "pair": "B-REZ_USDT"
+    "pair": "B-MMT_USDT"
   },
   {
     "pair": "B-ORCA_USDT"
@@ -25,5 +16,14 @@
   },
   {
     "pair": "B-SAFE_USDT"
+  },
+  {
+    "pair": "B-MAGIC_USDT"
+  },
+  {
+    "pair": "B-HUMA_USDT"
+  },
+  {
+    "pair": "B-DRIFT_USDT"
   }
 ]
