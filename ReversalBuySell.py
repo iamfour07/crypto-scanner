@@ -9,7 +9,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 resolution = "60"
 limit_hours = 1000
 MAX_WORKERS = 8
-TOP_COINS_TO_SCAN = 30
+TOP_COINS_TO_SCAN = 20
 
 BUY_FILE = "ReversalBuyWatchlist.json"
 SELL_FILE = "ReversalSellWatchlist.json"
@@ -23,7 +23,6 @@ CAPITAL_RS = 1000
 MAX_LOSS_RS = 100
 MAX_ALLOWED_LEVERAGE = 20
 MIN_LEVERAGE = 5
-TOP_COINS_TO_SCAN = 20
 
 
 # ================= UTIL =================
@@ -115,7 +114,6 @@ def rma(series, period):
 
 
 def calculate_supertrend(df):
-    # ATR
     df["H-L"] = df["HA_high"] - df["HA_low"]
     df["H-PC"] = abs(df["HA_high"] - df["HA_close"].shift(1))
     df["L-PC"] = abs(df["HA_low"] - df["HA_close"].shift(1))
@@ -166,6 +164,7 @@ def calculate_supertrend(df):
 
     return df
 
+
 # ================= FETCH =================
 def fetch_and_prepare(pair):
     now = int(datetime.now(timezone.utc).timestamp())
@@ -209,10 +208,10 @@ def save_watchlist(file, data):
     with open(file, "w") as f:
         json.dump(clean_data, f, indent=2)
 
+
 def format_signal(side, pair, entry, sl):
     entry, sl, lev, targets, risk_percent = calculate_trade_levels(entry, sl, side)
-
-    msg = (
+    return (
         f"{'🟢 BUY' if side=='BUY' else '🔴 SELL'} {pair}\n"
         f"Entry: {entry:.4f}\n"
         f"SL: {sl:.4f}\n"
@@ -220,9 +219,9 @@ def format_signal(side, pair, entry, sl):
         f"Targets: {', '.join([f'{t:.4f}' for t in targets])}\n"
         f"Risk: {risk_percent:.2f}%"
     )
-    return msg
 
-# ================= WATCHLIST FLIP MODULE =================
+
+# ================= FLIP CHECK =================
 def check_watchlist_flips(watchlist, side):
     updated = []
     alerts = []
@@ -232,19 +231,17 @@ def check_watchlist_flips(watchlist, side):
         if df is None or len(df) < 5:
             return ("KEEP", pair)
 
-        prev2 = df.iloc[-3]
-        prev1 = df.iloc[-2]
+        prev = df.iloc[-3]
+        last = df.iloc[-2]
 
-        st_prev = prev2["supertrend"]
-        st_now = prev1["supertrend"]
+        st_prev = prev["supertrend"]
+        st_last = last["supertrend"]
 
-        if side == "BUY":
-            if (not st_prev) and st_now:
-                return ("SIGNAL", pair, float(prev1["HA_high"]), float(prev1["ST_value"]))
+        if side == "BUY" and (not st_prev) and st_last:
+            return ("SIGNAL", pair, float(last["HA_high"]), float(last["ST_value"]))
 
-        if side == "SELL":
-            if st_prev and not st_now:
-                return ("SIGNAL", pair, float(prev1["HA_low"]), float(prev1["ST_value"]))
+        if side == "SELL" and st_prev and (not st_last):
+            return ("SIGNAL", pair, float(last["HA_low"]), float(last["ST_value"]))
 
         return ("KEEP", pair)
 
@@ -261,9 +258,8 @@ def check_watchlist_flips(watchlist, side):
     return updated, alerts
 
 
-# ================= SETUP MODULE =================
+# ================= SETUP =================
 def scan_for_setups(top_pairs, buy_watch, sell_watch):
-
     buy_set = {x["pair"] for x in buy_watch}
     sell_set = {x["pair"] for x in sell_watch}
 
@@ -278,18 +274,17 @@ def scan_for_setups(top_pairs, buy_watch, sell_watch):
         if df is None:
             return None
 
-        last = df.iloc[-1]
-        st_now = last["HA_close"] > last["ST_value"]
+        last = df.iloc[-2]
+        prev = df.iloc[-3]
 
-        # DEBUG PRINT
-        st_color = "GREEN" if st_now else "RED"
+        st_now = last["supertrend"]
 
         # SELL setup
-        if last["HA_high"] >= last["BB_upper"] and st_now:
+        if last["HA_high"] >= last["BB_upper"] and prev["HA_high"] < prev["BB_upper"] and st_now:
             return ("SELL", pair)
 
         # BUY setup
-        if last["HA_low"] <= last["BB_lower"] and not st_now:
+        if last["HA_low"] <= last["BB_lower"] and prev["HA_low"] > prev["BB_lower"] and not st_now:
             return ("BUY", pair)
 
         return None
@@ -314,7 +309,6 @@ def scan_for_setups(top_pairs, buy_watch, sell_watch):
 
 # ================= MAIN =================
 def main():
-
     buy_watch = load_watchlist(BUY_FILE)
     sell_watch = load_watchlist(SELL_FILE)
 
