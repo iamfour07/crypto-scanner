@@ -512,7 +512,7 @@ def check_watchlist_for_signals(watchlist, side):
         if df is None or len(df) < 10:
             return ("KEEP", pair)
 
-        last = df.iloc[-2]
+        last = df.iloc[-1]
 
         if side == "SELL":
             if (
@@ -600,7 +600,7 @@ def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
         if df is None:
             return None
 
-        last = df.iloc[-2]
+        last = df.iloc[-1]
 
         if last["HA_close"] > last["BB_upper"]:
             return ("SELL", pair)
