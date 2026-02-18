@@ -374,30 +374,40 @@ def safe_get(url, params=None, timeout=10):
 # ================= RISK =================
 def calculate_trade_levels(entry, sl, side):
 
-    risk = abs(entry - sl)
+    risk_per_unit = abs(entry - sl)
+    if risk_per_unit == 0:
+        return None
 
-    for lev in range(MAX_ALLOWED_LEVERAGE, MIN_LEVERAGE - 1, -1):
-        position_value = CAPITAL_RS * lev
-        loss = (risk / entry) * position_value
+    # Position value required to risk ₹50
+    required_position_value = (MAX_LOSS_RS / risk_per_unit) * entry
 
-        if loss <= MAX_LOSS_RS:
-            leverage = lev
-            break
-    else:
+    # Capital required at 5x leverage
+    capital_needed_at_5x = required_position_value / MIN_LEVERAGE
+
+    # Decide leverage
+    if capital_needed_at_5x <= CAPITAL_RS:
         leverage = MIN_LEVERAGE
+    else:
+        leverage = required_position_value / CAPITAL_RS
+        leverage = min(leverage, MAX_ALLOWED_LEVERAGE)
+
+    leverage = round(leverage, 2)
 
     used_capital = CAPITAL_RS
+    position_value = used_capital * leverage
+    expected_loss = (risk_per_unit / entry) * position_value
 
+    # Targets
     if side == "BUY":
-        t2 = entry + risk * 2
-        t3 = entry + risk * 3
-        t4 = entry + risk * 4
+        t2 = entry + risk_per_unit * 2
+        t3 = entry + risk_per_unit * 3
+        t4 = entry + risk_per_unit * 4
     else:
-        t2 = entry - risk * 2
-        t3 = entry - risk * 3
-        t4 = entry - risk * 4
+        t2 = entry - risk_per_unit * 2
+        t3 = entry - risk_per_unit * 3
+        t4 = entry - risk_per_unit * 4
 
-    return entry, sl, leverage, used_capital, t2, t3, t4
+    return entry, sl, leverage, used_capital, expected_loss, t2, t3, t4
 
 
 # ================= API =================
@@ -512,18 +522,18 @@ def check_watchlist_for_signals(watchlist, side):
         if df is None or len(df) < 10:
             return ("KEEP", pair)
 
-        last = df.iloc[-2]
+        last = df.iloc[1]
 
         if side == "SELL":
             if (
                 last["HA_close"] < last["BB_upper"] and
                 last["HA_close"] < last["SMA5"] and
-                last["HA_high"] < last["BB_upper"]
+                last["HA_high"] <= last["BB_upper"]
             ):
                 entry = float(last["HA_low"])
                 sl = float(last["HA_high"])
 
-                e, s, lev, cap, t2, t3, t4 = calculate_trade_levels(entry, sl, "SELL")
+                e, s, lev, cap, loss, t2, t3, t4 = calculate_trade_levels(entry, sl, "SELL")
 
                 link = f"https://coindcx.com/futures/{pair}"
 
@@ -532,6 +542,7 @@ def check_watchlist_for_signals(watchlist, side):
                     f"Entry   : {round(e,4)}\n"
                     f"SL      : {round(s,4)}\n"
                     f"Capital : ₹{cap} ({lev}×)\n\n"
+                    f"Risk    : ₹{round(loss,2)}\n"
                     f"Targets\n"
                     f"2R → {round(t2,4)}\n"
                     f"3R → {round(t3,4)}\n"
@@ -545,12 +556,12 @@ def check_watchlist_for_signals(watchlist, side):
             if (
                 last["HA_close"] > last["BB_lower"] and
                 last["HA_close"] > last["SMA5"] and
-                last["HA_low"] > last["BB_lower"]
+                last["HA_low"] >= last["BB_lower"]
             ):
                 entry = float(last["HA_high"])
                 sl = float(last["HA_low"])
 
-                e, s, lev, cap, t2, t3, t4 = calculate_trade_levels(entry, sl, "BUY")
+                e, s, lev, cap, loss, t2, t3, t4 = calculate_trade_levels(entry, sl, "BUY")
 
                 link = f"https://coindcx.com/futures/{pair}"
 
@@ -559,6 +570,7 @@ def check_watchlist_for_signals(watchlist, side):
                     f"Entry   : {round(e,4)}\n"
                     f"SL      : {round(s,4)}\n"
                     f"Capital : ₹{cap} ({lev}×)\n\n"
+                    f"Risk    : ₹{round(loss,2)}\n"
                     f"Targets\n"
                     f"2R → {round(t2,4)}\n"
                     f"3R → {round(t3,4)}\n"
@@ -600,7 +612,7 @@ def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
         if df is None:
             return None
 
-        last = df.iloc[-2]
+        last = df.iloc[-1]
 
         if last["HA_close"] > last["BB_upper"]:
             return ("SELL", pair)
