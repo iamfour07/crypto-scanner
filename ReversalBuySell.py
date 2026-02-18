@@ -355,9 +355,9 @@ SELL_FILE = "ReversalSellWatchlist.json"
 BB_LENGTH = 200
 BB_MULT = 2.5
 
-CAPITAL_RS = 1000
-MAX_LOSS_RS = 100
-MAX_ALLOWED_LEVERAGE = 20
+CAPITAL_RS = 600
+MAX_LOSS_RS = 50
+MAX_ALLOWED_LEVERAGE = 30
 MIN_LEVERAGE = 5
 
 
@@ -522,7 +522,7 @@ def check_watchlist_for_signals(watchlist, side):
         if df is None or len(df) < 10:
             return ("KEEP", pair)
 
-        last = df.iloc[1]
+        last = df.iloc[-1]
 
         if side == "SELL":
             if (
