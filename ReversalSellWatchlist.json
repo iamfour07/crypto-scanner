@@ -1,17 +1,23 @@
 [
   {
-    "pair": "B-MAGIC_USDT"
+    "pair": "B-REZ_USDT"
   },
   {
     "pair": "B-CYBER_USDT"
   },
   {
-    "pair": "B-REZ_USDT"
+    "pair": "B-TWT_USDT"
+  },
+  {
+    "pair": "B-MAGIC_USDT"
   },
   {
     "pair": "B-SAFE_USDT"
   },
   {
-    "pair": "B-TWT_USDT"
+    "pair": "B-STEEM_USDT"
+  },
+  {
+    "pair": "B-ONT_USDT"
   }
 ]
