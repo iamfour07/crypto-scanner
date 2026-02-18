@@ -635,7 +635,6 @@ def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
 
 # ================= MAIN =================
 def main():
-
     buy_watch = load_watchlist(BUY_FILE)
     sell_watch = load_watchlist(SELL_FILE)
 
