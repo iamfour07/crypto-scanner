@@ -346,7 +346,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 # CONFIG
 resolution = "60"
 limit_hours = 500
-TOP_COINS_TO_SCAN = 5  # Pick Top 5 Gainers
+TOP_COINS_TO_SCAN = 20
 MAX_WORKERS = 8
 
 BUY_FILE = "ReversalBuyWatchlist.json"
@@ -355,14 +355,13 @@ SELL_FILE = "ReversalSellWatchlist.json"
 BB_LENGTH = 200
 BB_MULT = 2.5
 
+ST_LENGTH = 9
+ST_FACTOR = 1.5
+
 CAPITAL_RS = 600
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 30
 MIN_LEVERAGE = 5
-
-# Boolean flag to enable/disable buy and sell trades
-buy_trade_enabled = True  # Set to False to disable buy trades
-sell_trade_enabled = True  # Set to False to disable sell trades
 
 
 # ================= UTIL =================
@@ -432,7 +431,6 @@ def fetch_pair_stats(pair):
     return {"pair": pair, "change": float(pc)} if pc else None
 
 
-
 def get_top_movers(pairs):
     gainers, losers = [], []
 
@@ -444,9 +442,8 @@ def get_top_movers(pairs):
                 continue
             (gainers if res["change"] > 0 else losers).append(res)
 
-    # Limit to Top 5 gainers and losers
-    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:5]
-    losers = sorted(losers, key=lambda x: x["change"])[:5]
+    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:TOP_COINS_TO_SCAN]
+    losers = sorted(losers, key=lambda x: x["change"])[:TOP_COINS_TO_SCAN]
 
     return [x["pair"] for x in gainers + losers]
 
@@ -475,6 +472,58 @@ def calculate_sma(df):
     return df
 
 
+# ================= SUPERTREND =================
+def rma(series, period):
+    return series.ewm(alpha=1 / period, adjust=False).mean()
+
+
+def calculate_supertrend(df):
+    df["H-L"] = df["HA_high"] - df["HA_low"]
+    df["H-PC"] = abs(df["HA_high"] - df["HA_close"].shift(1))
+    df["L-PC"] = abs(df["HA_low"] - df["HA_close"].shift(1))
+    df["TR"] = df[["H-L", "H-PC", "L-PC"]].max(axis=1)
+    df["ATR"] = rma(df["TR"], ST_LENGTH)
+
+    hl2 = (df["HA_high"] + df["HA_low"]) / 2
+    df["basic_upperband"] = hl2 + ST_FACTOR * df["ATR"]
+    df["basic_lowerband"] = hl2 - ST_FACTOR * df["ATR"]
+
+    final_upperband = [0.0] * len(df)
+    final_lowerband = [0.0] * len(df)
+    supertrend = [True] * len(df)
+
+    for i in range(len(df)):
+        if i == 0:
+            final_upperband[i] = df["basic_upperband"].iloc[i]
+            final_lowerband[i] = df["basic_lowerband"].iloc[i]
+            supertrend[i] = True
+            continue
+
+        if (
+            df["basic_upperband"].iloc[i] < final_upperband[i - 1]
+            or df["HA_close"].iloc[i - 1] > final_upperband[i - 1]
+        ):
+            final_upperband[i] = df["basic_upperband"].iloc[i]
+        else:
+            final_upperband[i] = final_upperband[i - 1]
+
+        if (
+            df["basic_lowerband"].iloc[i] > final_lowerband[i - 1]
+            or df["HA_close"].iloc[i - 1] < final_lowerband[i - 1]
+        ):
+            final_lowerband[i] = df["basic_lowerband"].iloc[i]
+        else:
+            final_lowerband[i] = final_lowerband[i - 1]
+
+        if supertrend[i - 1]:
+            supertrend[i] = df["HA_close"].iloc[i] >= final_lowerband[i]
+        else:
+            supertrend[i] = df["HA_close"].iloc[i] > final_upperband[i]
+
+    df["supertrend"] = supertrend  # True = GREEN (bullish), False = RED (bearish)
+    return df
+
+
 # ================= FETCH =================
 def fetch_candles(pair):
     now = int(datetime.now(timezone.utc).timestamp())
@@ -499,6 +548,7 @@ def fetch_candles(pair):
     df = calculate_heikin_ashi(df)
     df = calculate_bollinger(df)
     df = calculate_sma(df)
+    df = calculate_supertrend(df)
 
     return df.dropna()
 
@@ -530,11 +580,12 @@ def check_watchlist_for_signals(watchlist, side):
 
         last = df.iloc[-1]
 
-        if side == "SELL" and sell_trade_enabled:
+        if side == "SELL":
             if (
                 last["HA_close"] < last["BB_upper"] and
                 last["HA_close"] < last["SMA5"] and
-                last["HA_high"] <= last["BB_upper"]
+                last["HA_high"] <= last["BB_upper"] and
+                last["supertrend"] == False  # Supertrend RED
             ):
                 entry = float(last["HA_low"])
                 sl = float(last["HA_high"])
@@ -558,11 +609,12 @@ def check_watchlist_for_signals(watchlist, side):
                 )
                 return ("SIGNAL", pair, msg)
 
-        if side == "BUY" and buy_trade_enabled:
+        if side == "BUY":
             if (
                 last["HA_close"] > last["BB_lower"] and
                 last["HA_close"] > last["SMA5"] and
-                last["HA_low"] >= last["BB_lower"]
+                last["HA_low"] >= last["BB_lower"] and
+                last["supertrend"] == True  # Supertrend GREEN
             ):
                 entry = float(last["HA_high"])
                 sl = float(last["HA_low"])
