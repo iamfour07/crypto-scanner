@@ -346,7 +346,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 # CONFIG
 resolution = "60"
 limit_hours = 500
-TOP_COINS_TO_SCAN = 20
+TOP_COINS_TO_SCAN = 5  # Pick Top 5 Gainers
 MAX_WORKERS = 8
 
 BUY_FILE = "ReversalBuyWatchlist.json"
@@ -359,6 +359,10 @@ CAPITAL_RS = 600
 MAX_LOSS_RS = 50
 MAX_ALLOWED_LEVERAGE = 30
 MIN_LEVERAGE = 5
+
+# Boolean flag to enable/disable buy and sell trades
+buy_trade_enabled = True  # Set to False to disable buy trades
+sell_trade_enabled = True  # Set to False to disable sell trades
 
 
 # ================= UTIL =================
@@ -428,6 +432,7 @@ def fetch_pair_stats(pair):
     return {"pair": pair, "change": float(pc)} if pc else None
 
 
+
 def get_top_movers(pairs):
     gainers, losers = [], []
 
@@ -439,8 +444,9 @@ def get_top_movers(pairs):
                 continue
             (gainers if res["change"] > 0 else losers).append(res)
 
-    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:TOP_COINS_TO_SCAN]
-    losers = sorted(losers, key=lambda x: x["change"])[:TOP_COINS_TO_SCAN]
+    # Limit to Top 5 gainers and losers
+    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:5]
+    losers = sorted(losers, key=lambda x: x["change"])[:5]
 
     return [x["pair"] for x in gainers + losers]
 
@@ -524,7 +530,7 @@ def check_watchlist_for_signals(watchlist, side):
 
         last = df.iloc[-1]
 
-        if side == "SELL":
+        if side == "SELL" and sell_trade_enabled:
             if (
                 last["HA_close"] < last["BB_upper"] and
                 last["HA_close"] < last["SMA5"] and
@@ -552,7 +558,7 @@ def check_watchlist_for_signals(watchlist, side):
                 )
                 return ("SIGNAL", pair, msg)
 
-        if side == "BUY":
+        if side == "BUY" and buy_trade_enabled:
             if (
                 last["HA_close"] > last["BB_lower"] and
                 last["HA_close"] > last["SMA5"] and
