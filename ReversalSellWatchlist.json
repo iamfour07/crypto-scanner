@@ -1,8 +1,8 @@
 [
-  "B-ENSO_USDT",
-  "B-DENT_USDT",
-  "B-HOLO_USDT",
   "B-POWER_USDT",
+  "B-DENT_USDT",
   "B-ARC_USDT",
-  "B-ESP_USDT"
+  "B-HOLO_USDT",
+  "B-ESP_USDT",
+  "B-VIRTUAL_USDT"
 ]
