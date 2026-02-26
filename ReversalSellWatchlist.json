@@ -1,9 +1,9 @@
 [
-  "B-DENT_USDT",
-  "B-WET_USDT",
-  "B-POWER_USDT",
+  "B-STABLE_USDT",
   "B-DOT_USDT",
-  "B-VIRTUAL_USDT",
   "B-AERO_USDT",
-  "B-STABLE_USDT"
+  "B-POWER_USDT",
+  "B-WET_USDT",
+  "B-VIRTUAL_USDT",
+  "B-DENT_USDT"
 ]
