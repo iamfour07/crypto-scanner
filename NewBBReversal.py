@@ -84,17 +84,14 @@ def fetch_pair_stats(pair):
 
 
 def get_top_movers(pairs):
-    gainers = []
-    losers  = []
+    gainers, losers = [], []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
-
         for f in as_completed(futures):
             res = f.result()
             if not res:
                 continue
-
             if res["change"] > 0:
                 gainers.append(res)
             else:
@@ -124,11 +121,6 @@ def calculate_bollinger(df):
     return df
 
 
-def calculate_sma(df):
-    df["SMA5"] = df["HA_close"].rolling(5).mean()
-    return df
-
-
 def calculate_rsi(df):
     delta = df["HA_close"].diff()
     gain  = delta.clip(lower=0)
@@ -149,13 +141,7 @@ def fetch_candles(pair):
     from_time = now - limit_hours * 3600
 
     url = "https://public.coindcx.com/market_data/candlesticks"
-    params = {
-        "pair": pair,
-        "from": from_time,
-        "to": now,
-        "resolution": resolution,
-        "pcode": "f"
-    }
+    params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
 
     data = safe_get(url, params)
     if not data or "data" not in data:
@@ -172,7 +158,6 @@ def fetch_candles(pair):
 
     df = calculate_heikin_ashi(df)
     df = calculate_bollinger(df)
-    df = calculate_sma(df)
     df = calculate_rsi(df)
 
     return df.dropna()
@@ -183,9 +168,6 @@ def load_watchlist(file):
     try:
         with open(file) as f:
             return json.load(f)
-    except FileNotFoundError:
-        save_watchlist(file, [])
-        return []
     except:
         return []
 
@@ -195,9 +177,8 @@ def save_watchlist(file, data):
         json.dump(data, f, indent=2)
 
 
-# ================= WATCHLIST ALERT =================
+# ================= WATCHLIST SIGNAL CHECK =================
 def check_watchlist_for_signals(watchlist, side):
-
     updated_watchlist = []
     alerts = []
 
@@ -208,61 +189,11 @@ def check_watchlist_for_signals(watchlist, side):
 
         last = df.iloc[-1]
 
-        if side == "SELL":
-            if (
-                last["HA_high"] < last["BB_upper"] and
-                last["HA_close"] < last["BB_upper"] and
-                last["RSI"] < RSI_UPPER
-            ):
-                entry = float(last["HA_low"])
-                sl    = float(last["HA_high"])
+        if side == "SELL" and last["RSI"] < RSI_UPPER:
+            return ("SIGNAL", pair, f"🔴 SELL {pair}")
 
-                trade = calculate_trade_levels(entry, sl, "SELL")
-                if not trade:
-                    return ("KEEP", pair)
-
-                e, s, lev, cap, loss, t2, t3, t4 = trade
-
-                msg = (
-                    f"🔴 SELL {pair}\n"
-                    f"Entry   : {round(e,4)}\n"
-                    f"SL      : {round(s,4)}\n"
-                    f"Capital : ₹{cap} ({lev}×)\n\n"
-                    f"Risk    : ₹{round(loss,2)}\n"
-                    f"2R → {round(t2,4)}\n"
-                    f"3R → {round(t3,4)}\n"
-                    f"4R → {round(t4,4)}\n"
-                )
-
-                return ("SIGNAL", pair, msg)
-
-        if side == "BUY":
-            if (
-                last["HA_low"] > last["BB_lower"] and
-                last["HA_close"] > last["BB_lower"] and
-                last["RSI"] > RSI_LOWER
-            ):
-                entry = float(last["HA_high"])
-                sl    = float(last["HA_low"])
-
-                trade = calculate_trade_levels(entry, sl, "BUY")
-                if not trade:
-                    return ("KEEP", pair)
-
-                e, s, lev, cap, loss, t2, t3, t4 = trade
-
-                msg = (
-                    f"🟢 BUY {pair}\n"
-                    f"Entry   : {round(e,4)}\n"
-                    f"SL      : {round(s,4)}\n"
-                    f"Capital : ₹{cap} ({lev}×)\n\n"
-                    f"Risk    : ₹{round(loss,2)}\n"
-                    f"2R → {round(t2,4)}\n"
-                    f"3R → {round(t3,4)}\n"
-                    f"4R → {round(t4,4)}\n"
-                )
-
-                return ("SIGNAL", pair, msg)
+        if side == "BUY" and last["RSI"] > RSI_LOWER:
+            return ("SIGNAL", pair, f"🟢 BUY {pair}")
 
         return ("KEEP", pair)
 
@@ -271,9 +202,6 @@ def check_watchlist_for_signals(watchlist, side):
 
         for f in as_completed(futures):
             res = f.result()
-            if not res:
-                continue
-
             if res[0] == "SIGNAL":
                 alerts.append(res[2])
             else:
@@ -282,20 +210,56 @@ def check_watchlist_for_signals(watchlist, side):
     return updated_watchlist, alerts
 
 
+# ================= ADD TO WATCHLIST =================
+def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
+
+    buy_set  = set(buy_watch)
+    sell_set = set(sell_watch)
+
+    def process_pair(pair):
+        if pair in buy_set or pair in sell_set:
+            return None
+
+        df = fetch_candles(pair)
+        if df is None:
+            return None
+
+        last = df.iloc[-1]
+
+        if last["RSI"] > RSI_UPPER:
+            return ("SELL", pair)
+
+        if last["RSI"] < RSI_LOWER:
+            return ("BUY", pair)
+
+        return None
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [executor.submit(process_pair, p) for p in top_pairs]
+
+        for f in as_completed(futures):
+            res = f.result()
+            if not res:
+                continue
+            if res[0] == "BUY":
+                buy_watch.append(res[1])
+            else:
+                sell_watch.append(res[1])
+
+    return buy_watch, sell_watch
+
+
 # ================= MAIN =================
 def main():
-    buy_watch  = load_watchlist(BUY_FILE)  if ENABLE_BUY  else []
-    sell_watch = load_watchlist(SELL_FILE) if ENABLE_SELL else []
+    buy_watch  = load_watchlist(BUY_FILE)
+    sell_watch = load_watchlist(SELL_FILE)
 
     alerts = []
 
-    if ENABLE_SELL:
-        sell_watch, sell_alerts = check_watchlist_for_signals(sell_watch, "SELL")
-        alerts += sell_alerts
+    sell_watch, sell_alerts = check_watchlist_for_signals(sell_watch, "SELL")
+    buy_watch,  buy_alerts  = check_watchlist_for_signals(buy_watch,  "BUY")
 
-    if ENABLE_BUY:
-        buy_watch, buy_alerts = check_watchlist_for_signals(buy_watch, "BUY")
-        alerts += buy_alerts
+    alerts += sell_alerts + buy_alerts
 
     if alerts:
         Send_EMA_Telegram_Message("\n\n".join(alerts))
@@ -303,14 +267,10 @@ def main():
     pairs = get_active_usdt_coins()
     top_pairs = get_top_movers(pairs)
 
-    if ENABLE_BUY or ENABLE_SELL:
-        buy_watch, sell_watch = scan_for_breakouts(top_pairs, buy_watch, sell_watch)
+    buy_watch, sell_watch = scan_for_breakouts(top_pairs, buy_watch, sell_watch)
 
-    if ENABLE_BUY:
-        save_watchlist(BUY_FILE, buy_watch)
-
-    if ENABLE_SELL:
-        save_watchlist(SELL_FILE, sell_watch)
+    save_watchlist(BUY_FILE, buy_watch)
+    save_watchlist(SELL_FILE, sell_watch)
 
 
 if __name__ == "__main__":
