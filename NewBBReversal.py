@@ -175,6 +175,10 @@ def load_watchlist(file):
     try:
         with open(file) as f:
             return json.load(f)
+    except FileNotFoundError:
+        # File doesn't exist → create it as empty list
+        save_watchlist(file, [])
+        return []
     except:
         return []
 
