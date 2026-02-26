@@ -255,9 +255,9 @@ def check_watchlist_for_signals(watchlist, side):
                     f"{link}\n"
                     f"------------------------------------------------"
                 )
-                 return ("SIGNAL", pair, msg)
+                return ("SIGNAL", pair, msg)
 
-        return ("KEEP", pair)
+         return ("KEEP", pair)
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         futures = [executor.submit(process_pair, p) for p in watchlist]
