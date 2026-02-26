@@ -1,9 +1,8 @@
 [
-  "B-DOT_USDT",
-  "B-FIL_USDT",
-  "B-DENT_USDT",
   "B-NEAR_USDT",
-  "B-POWER_USDT",
+  "B-DOT_USDT",
+  "B-DENT_USDT",
   "B-VIRTUAL_USDT",
-  "B-APT_USDT"
+  "B-APT_USDT",
+  "B-POWER_USDT"
 ]
