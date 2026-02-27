@@ -15,7 +15,9 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4   # v4 is the latest
+      uses: actions/checkout@v4 
+      with:
+        fetch-depth: 0
 
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -37,7 +39,14 @@ jobs:
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
+    
         git add NewReversalBuyWatchlist.json NewReversalSellWatchlist.json || true
-        git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"
-        git push
+        git commit -m "Update watchlists [skip ci]" || echo "No changes"
+    
+        for i in {1..5}; do
+          echo "Attempt $i"
+          git pull --rebase origin main && git push origin main && break
+          echo "Push failed. Retrying in 3 seconds..."
+          sleep 3
+        done
 
