@@ -2,9 +2,6 @@ name: Swing Scanner
 
 on:
 
-schedule:
-
-# - cron: '30 * * * *'   # every hour at minute 30
 
 workflow_dispatch:
 
