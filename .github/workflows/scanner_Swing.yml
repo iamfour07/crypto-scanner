@@ -1,40 +1,41 @@
 name: Swing Scanner
 
 on:
-
-
-workflow_dispatch:
+  workflow_dispatch:
 
 permissions:
-contents: write   # required for pushing changes
+  contents: write
 
 jobs:
-run-new-scanner:
-runs-on: ubuntu-latest
+  run-new-scanner:
+    runs-on: ubuntu-latest
 
-steps:  
-- name: Checkout Repository  
-  uses: actions/checkout@v4  
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Important for pushing
 
-- name: Setup Python  
-  uses: actions/setup-python@v5  
-  with:  
-    python-version: '3.11'  
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-- name: Install Dependencies  
-  run: |  
-    python -m pip install --upgrade pip  
-    pip install pandas requests  
-- name: Run New Scanner  
-  run: python ReversalBuySell.py  
-  env:  
-    TELEGRAM_BOT_TOKEN_Swing: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}  
-    TELEGRAM_CHAT_ID_Swing: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}  
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests
 
-- name: Commit Watchlist Updates  
-  run: |  
-    git config --local user.email "github-actions[bot]@users.noreply.github.com"  
-    git config --local user.name "github-actions[bot]"  
-    git add ReversalBuyWatchlist.json ReversalSellWatchlist.json || true  
-    git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"  
-    git push
+      - name: Run New Scanner
+        run: python ReversalBuySell.py
+        env:
+          TELEGRAM_BOT_TOKEN_Swing: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
+          TELEGRAM_CHAT_ID_Swing: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
+
+      - name: Commit Watchlist Updates
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add ReversalBuyWatchlist.json ReversalSellWatchlist.json || true
+          git diff --cached --quiet || git commit -m "Update watchlists [skip ci]"
+          git push
