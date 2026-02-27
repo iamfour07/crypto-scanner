@@ -12,7 +12,7 @@ TOP_COINS_TO_SCAN = 5
 MAX_WORKERS = 8
 
 # ── Toggle Signals ON/OFF ──
-ENABLE_BUY  = True   # Set False to disable BUY scanning
+ENABLE_BUY  = False   # Set False to disable BUY scanning
 ENABLE_SELL = True   # Set False to disable SELL scanning
 
 BUY_FILE  = "NewReversalBuyWatchlist.json"
@@ -255,9 +255,9 @@ def check_watchlist_for_signals(watchlist, side):
                     f"{link}\n"
                     f"------------------------------------------------"
                 )
-        #         return ("SIGNAL", pair, msg)
+                return ("SIGNAL", pair, msg)
 
-        # return ("KEEP", pair)
+        return ("KEEP", pair)
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
         futures = [executor.submit(process_pair, p) for p in watchlist]
