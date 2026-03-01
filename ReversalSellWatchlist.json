@@ -1,10 +1,10 @@
 [
-  "B-VIC_USDT",
   "B-LAYER_USDT",
-  "B-GRASS_USDT",
   "B-VVV_USDT",
-  "B-ALICE_USDT",
-  "B-COS_USDT",
+  "B-VIC_USDT",
   "B-RIVER_USDT",
-  "B-FIO_USDT"
+  "B-COS_USDT",
+  "B-GRASS_USDT",
+  "B-FIO_USDT",
+  "B-ALICE_USDT"
 ]
