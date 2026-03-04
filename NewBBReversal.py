@@ -12,7 +12,7 @@ TOP_COINS_TO_SCAN = 5
 MAX_WORKERS = 8
 
 # ── Toggle Signals ON/OFF ──
-ENABLE_BUY  = True   # Set False to disable BUY scanning
+ENABLE_BUY  = False   # Set False to disable BUY scanning
 ENABLE_SELL = True   # Set False to disable SELL scanning
 
 BUY_FILE  = "NewReversalBuyWatchlist.json"
