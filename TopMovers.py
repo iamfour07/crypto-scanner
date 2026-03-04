@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from Telegram_Momentum import Send_Momentum_Telegram_Message
 
 # ── CONFIG ──
-TOP_N        = 10    # Scan top N gainers & losers
+TOP_N        = 5    # Scan top N gainers & losers
 MAX_WORKERS  = 20
 RESOLUTION   = "60"  # 1H candles
 CANDLE_HOURS = 250
@@ -90,8 +90,8 @@ def fetch_indicators(pair):
     Returns dict or None on failure.
 
     RSI cross uses:
-      prev = df.iloc[-3]  (current-3)
-      curr = df.iloc[-2]  (current-2 — confirmed closed cross candle)
+      prev = df.iloc[-2]  (second last closed candle)
+      curr = df.iloc[-1]  (last closed candle — fires immediately on close)
     """
     now             = int(datetime.now(timezone.utc).timestamp())
     from_time       = now - CANDLE_HOURS * 3600
@@ -122,8 +122,8 @@ def fetch_indicators(pair):
     if len(df) < 3:
         return None
 
-    prev = df.iloc[-3]   # current-3
-    curr = df.iloc[-2]   # current-2 (cross candle)
+    prev = df.iloc[-2]   # second last closed candle
+    curr = df.iloc[-1]   # last closed candle (most recent confirmed)
 
     return {
         "close":      float(curr["close"]),
@@ -173,9 +173,84 @@ def scan(rows, side):
     return matched
 
 
+# ================= EMA-ONLY SCAN (ALL PAIRS) =================
+def scan_ema_only(gainer_rows, loser_rows):
+    """
+    Checks EMA alignment only (no RSI filter) on Top-N gainers & losers.
+      bullish : EMA20 > EMA50 > EMA200  (checked on gainers)
+      bearish : EMA20 < EMA50 < EMA200  (checked on losers)
+    """
+    all_rows = gainer_rows + loser_rows
+    results  = {}
+
+    def fetch(row):
+        return row["pair"], fetch_indicators(row["pair"])
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(fetch, r): r for r in all_rows}
+        for f in as_completed(futures):
+            pair, ind = f.result()
+            results[pair] = ind
+
+    bullish, bearish = [], []
+    for row in gainer_rows:
+        ind = results.get(row["pair"])
+        if ind and ind["ema20"] > ind["ema50"] > ind["ema200"]:
+            bullish.append({**row, **ind})
+
+    for row in loser_rows:
+        ind = results.get(row["pair"])
+        if ind and ind["ema20"] < ind["ema50"] < ind["ema200"]:
+            bearish.append({**row, **ind})
+
+    bullish.sort(key=lambda x: x["pair"])
+    bearish.sort(key=lambda x: x["pair"])
+    return bullish, bearish
+
+
+def print_ema_list(bullish, bearish):
+    sep = "─" * 55
+    print(f"\n{'═'*55}")
+    print(f"  📈 BULLISH EMA Stack  (EMA20 > EMA50 > EMA200)  — {len(bullish)} coins")
+    print(sep)
+    for s in bullish:
+        print(f"  🟢 {s['pair']:<30}  Close: {s['close']}")
+        print(f"     EMA20={s['ema20']:.4f}  EMA50={s['ema50']:.4f}  EMA200={s['ema200']:.4f}")
+        print(f"     RSI: prev={s['prev_rsi']:.1f}  curr={s['curr_rsi']:.1f}")
+        print()
+
+    print(f"\n{'═'*55}")
+    print(f"  📉 BEARISH EMA Stack  (EMA20 < EMA50 < EMA200)  — {len(bearish)} coins")
+    print(sep)
+    for s in bearish:
+        print(f"  🔴 {s['pair']:<30}  Close: {s['close']}")
+        print(f"     EMA20={s['ema20']:.4f}  EMA50={s['ema50']:.4f}  EMA200={s['ema200']:.4f}")
+        print(f"     RSI: prev={s['prev_rsi']:.1f}  curr={s['curr_rsi']:.1f}")
+        print()
+    print(f"{'═'*55}\n")
+
+
+# ================= RSI CROSS 50 FILTER =================
+def filter_rsi_signals(bullish, bearish):
+    """
+    BUY  : prev_rsi < 50  →  curr_rsi > 50  +  close > ema20
+    SELL : prev_rsi > 50  →  curr_rsi < 50  +  close < ema20
+    """
+    buy_signals = [
+        s for s in bullish
+        if s["prev_rsi"] < 50 and s["curr_rsi"] > 50 and s["close"] > s["ema20"]
+    ]
+    sell_signals = [
+        s for s in bearish
+        if s["prev_rsi"] > 50 and s["curr_rsi"] < 50 and s["close"] < s["ema20"]
+    ]
+    return buy_signals, sell_signals
+
+
 # ================= PRINT / ALERT =================
 def send_alerts(buy_signals, sell_signals):
     if not buy_signals and not sell_signals:
+        # print("  ⚪ No RSI cross-50 signals found in Top movers.")
         return
 
     parts = []
@@ -183,16 +258,22 @@ def send_alerts(buy_signals, sell_signals):
         parts.append(
             f"🟢 BUY  {s['pair']}\n"
             f"Close  : {s['close']}\n"
+            f"EMA20  : {s['ema20']:.4f}\n"
+            f"RSI    : {s['prev_rsi']:.1f} → {s['curr_rsi']:.1f} (crossed above 50)\n"
             f"{'─'*35}"
         )
     for s in sell_signals:
         parts.append(
             f"🔴 SELL {s['pair']}\n"
             f"Close  : {s['close']}\n"
+            f"EMA20  : {s['ema20']:.4f}\n"
+            f"RSI    : {s['prev_rsi']:.1f} → {s['curr_rsi']:.1f} (crossed below 50)\n"
             f"{'─'*35}"
         )
 
-    Send_Momentum_Telegram_Message("\n".join(parts))
+    msg = "\n".join(parts)
+    print(f"\n📤 Sending Telegram alert:\n{msg}")
+    Send_Momentum_Telegram_Message(msg)
 
 
 # ================= MAIN =================
@@ -201,11 +282,12 @@ def main():
     if not pairs:
         return
 
+    # ── Top-N movers ──
     gainers, losers = get_top_movers(pairs)
 
-    buy_signals  = scan(gainers, "BUY")
-    sell_signals = scan(losers,  "SELL")
-
+    # ── EMA alignment → RSI cross-50 filter → Telegram ──
+    bullish, bearish = scan_ema_only(gainers, losers)
+    buy_signals, sell_signals = filter_rsi_signals(bullish, bearish)
     send_alerts(buy_signals, sell_signals)
 
 
