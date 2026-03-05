@@ -1,9 +1,9 @@
 [
-  "B-SIGN_USDT",
   "B-ORCA_USDT",
-  "B-HOLO_USDT",
-  "B-FHE_USDT",
-  "B-H_USDT",
   "B-BARD_USDT",
-  "B-HUMA_USDT"
+  "B-HOLO_USDT",
+  "B-H_USDT",
+  "B-SIGN_USDT",
+  "B-HUMA_USDT",
+  "B-FHE_USDT"
 ]
