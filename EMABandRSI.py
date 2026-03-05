@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_EMA import Send_EMA_Telegram_Message
+from Telegram_Momentum import Send_Momentum_Telegram_Message
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -302,7 +302,7 @@ def send_alerts(buy_signals, sell_signals):
             f"{sep}"
         )
     print("\n".join(parts))
-    Send_EMA_Telegram_Message("\n".join(parts))
+    Send_Momentum_Telegram_Message("\n".join(parts))
 
 
 # =========================
