@@ -24,6 +24,10 @@ RSI_LOWER  = 45         # SELL : RSI below this
 
 CoinList = ['B-SOL_USDT']
 
+# ── Risk / Reward ──
+RISK_RS  = 70       # Fixed risk per trade in ₹
+LEVERAGE = 5         # Default leverage to calculate required capital
+
 
 # =========================
 # RSI CALCULATION
@@ -36,6 +40,36 @@ def calc_rsi(series, period=RSI_PERIOD):
     avg_loss = loss.ewm(alpha=1 / period, adjust=False).mean()
     rs       = avg_gain / avg_loss
     return 100 - (100 / (1 + rs))
+
+
+# =========================
+# RISK / REWARD CALCULATION
+# =========================
+def calculate_trade_levels(entry, sl, side):
+    risk_per_unit = abs(entry - sl)
+    if risk_per_unit == 0:
+        return None
+
+    # Position Value = (Risk / risk_per_unit) * entry
+    position_value = (RISK_RS / risk_per_unit) * entry
+    used_capital   = round(position_value / LEVERAGE, 2)
+    
+    # Targets & Profit
+    if side == "BUY":
+        t2 = entry + risk_per_unit * 2
+        t3 = entry + risk_per_unit * 3
+        t4 = entry + risk_per_unit * 4
+    else:
+        t2 = entry - risk_per_unit * 2
+        t3 = entry - risk_per_unit * 3
+        t4 = entry - risk_per_unit * 4
+
+    # Profit in ₹ for reaching each target
+    p2 = RISK_RS * 2
+    p3 = RISK_RS * 3
+    p4 = RISK_RS * 4
+
+    return used_capital, t2, t3, t4, p2, p3, p4
 
 
 # =========================
@@ -122,6 +156,7 @@ def fetch_indicators(symbol):
         "prev_close":    float(prev["close"]),
         "prev_ema_high": float(prev["ema_high"]),
         "prev_ema_low":  float(prev["ema_low"]),
+        "prev_rsi":      float(prev["rsi"]),
     }
 
 
@@ -149,9 +184,9 @@ def scan():
     buy_signals, sell_signals = [], []
 
     sep = "─" * 45
-    print(f"\n{'═'*45}")
-    print(f"  DEBUG — EMA Band({EMA_PERIOD}) + RSI({RSI_PERIOD}) | {RESOLUTION}")
-    print(sep)
+    # print(f"\n{'═'*45}")
+    # print(f"  DEBUG — EMA Band({EMA_PERIOD}) + RSI({RSI_PERIOD}) | {RESOLUTION}")
+    # print(sep)
 
     for coin in CoinList:
         ind = results.get(coin)
@@ -159,40 +194,60 @@ def scan():
             print(f"  ⚠️  {coin:<12} — no data")
             continue
 
-        just_crossed_up = ind["prev_close"] < ind["prev_ema_high"] and ind["close"] > ind["ema_high"]
-        just_crossed_dn = ind["prev_close"] > ind["prev_ema_low"]  and ind["close"] < ind["ema_low"]
+        # User explicit logic:
+        # Buy: Current Close > EMA High AND Prev RSI < 55 AND Curr RSI > 55
+        # Sell: Current Close < EMA Low AND Prev RSI > 45 AND Curr RSI < 45
+        
+        price_buy_ok = ind["close"] > ind["ema_high"]
+        price_sell_ok = ind["close"] < ind["ema_low"]
 
-        buy_ok  = just_crossed_up and ind["rsi"] > RSI_UPPER
-        sell_ok = just_crossed_dn and ind["rsi"] < RSI_LOWER
+        rsi_cross_up = ind["prev_rsi"] < RSI_UPPER and ind["rsi"] > RSI_UPPER
+        rsi_cross_dn = ind["prev_rsi"] > RSI_LOWER and ind["rsi"] < RSI_LOWER
 
-        tag = "🟢 BUY " if buy_ok else ("🔴 SELL" if sell_ok else "  ----")
+        buy_ok  = price_buy_ok and rsi_cross_up
+        sell_ok = price_sell_ok and rsi_cross_dn
+
+        tag = "🟢 BUY " if buy_ok else ("🔴 SELL" if sell_ok else "  ---- ")
 
         print(
-            f"  {tag}  {coin:<16} "
+            f"  {tag} {coin:<14} "
             f"[{ind['candle_time']}]  "
-            f"Close={ind['close']:<12} "
-            f"EMAHigh={round(ind['ema_high'],2):<12} "
-            f"EMALow={round(ind['ema_low'],2):<12} "
-            f"RSI={ind['rsi']:.2f}  "
-            f"CrossUp={'✅' if just_crossed_up else '❌'}  "
-            f"CrossDn={'✅' if just_crossed_dn else '❌'}"
+            f"Close={ind['close']:<8.2f} "
+            f"EMAHigh={ind['ema_high']:<8.2f} "
+            f"EMALow={ind['ema_low']:<8.2f} "
+            f"RSI={ind['rsi']:<6.2f} "
+            f"RSICrossUp={'✅' if rsi_cross_up else '❌'}  "
+            f"RSICrossDn={'✅' if rsi_cross_dn else '❌'}  "
+            f"Signal={'✅' if buy_ok or sell_ok else '❌'}"
         )
 
         # ── BUY ──
         if buy_ok:
-            buy_signals.append({
-                "pair": coin, **ind,
-                "entry": ind["high"],
-                "sl":    ind["low"],
-            })
+            entry = ind["high"]
+            sl    = ind["low"]
+            levels = calculate_trade_levels(entry, sl, "BUY")
+            if levels:
+                cap, t2, t3, t4, p2, p3, p4 = levels
+                buy_signals.append({
+                    "pair": coin, **ind,
+                    "entry": entry, "sl": sl,
+                    "cap": cap, "t2": t2, "t3": t3, "t4": t4,
+                    "p2": p2, "p3": p3, "p4": p4
+                })
 
         # ── SELL ──
         if sell_ok:
-            sell_signals.append({
-                "pair": coin, **ind,
-                "entry": ind["low"],
-                "sl":    ind["high"],
-            })
+            entry = ind["low"]
+            sl    = ind["high"]
+            levels = calculate_trade_levels(entry, sl, "SELL")
+            if levels:
+                cap, t2, t3, t4, p2, p3, p4 = levels
+                sell_signals.append({
+                    "pair": coin, **ind,
+                    "entry": entry, "sl": sl,
+                    "cap": cap, "t2": t2, "t3": t3, "t4": t4,
+                    "p2": p2, "p3": p3, "p4": p4
+                })
 
     print(sep)
 
@@ -221,6 +276,12 @@ def send_alerts(buy_signals, sell_signals):
             f"Entry    : {s['entry']}\n"
             f"SL       : {s['sl']}\n"
             f"RSI      : {s['rsi']:.1f} (above {RSI_UPPER})\n"
+            f"Capital  : ₹{s['cap']} ({LEVERAGE}× leverage)\n"
+            f"Risk     : ₹{RISK_RS}\n\n"
+            f"🎯 Targets & Profit:\n"
+            f"2R → {round(s['t2'], 4)}  (Profit: ₹{s['p2']})\n"
+            f"3R → {round(s['t3'], 4)}  (Profit: ₹{s['p3']})\n"
+            f"4R → {round(s['t4'], 4)}  (Profit: ₹{s['p4']})\n"
             f"{sep}"
         )
 
@@ -232,6 +293,12 @@ def send_alerts(buy_signals, sell_signals):
             f"Entry   : {s['entry']}\n"
             f"SL      : {s['sl']}\n"
             f"RSI     : {s['rsi']:.1f} (below {RSI_LOWER})\n"
+            f"Capital : ₹{s['cap']} ({LEVERAGE}× leverage)\n"
+            f"Risk    : ₹{RISK_RS}\n\n"
+            f"🎯 Targets & Profit:\n"
+            f"2R → {round(s['t2'], 4)}  (Profit: ₹{s['p2']})\n"
+            f"3R → {round(s['t3'], 4)}  (Profit: ₹{s['p3']})\n"
+            f"4R → {round(s['t4'], 4)}  (Profit: ₹{s['p4']})\n"
             f"{sep}"
         )
     print("\n".join(parts))
