@@ -7,7 +7,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 import os
 
 # ── CONFIG ──
-TOP_N        = 5    # Scan top N gainers & losers
+TOP_N        = 20    # Scan top N gainers & losers
 MAX_WORKERS  = 20
 RESOLUTION   = "60"  # 1H candles
 CANDLE_HOURS = 250
