@@ -1,11 +1,11 @@
 [
     {
-        "pair": "B-KMNO_USDT",
+        "pair": "B-MBOX_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-MBOX_USDT",
+        "pair": "B-KMNO_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
