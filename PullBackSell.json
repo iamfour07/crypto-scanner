@@ -1,16 +1,21 @@
 [
     {
-        "pair": "B-KMNO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-MAGMA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-MBOX_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-KMNO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-WIF_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
