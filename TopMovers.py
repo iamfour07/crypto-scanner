@@ -1,8 +1,10 @@
 import requests
 import pandas as pd
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from Telegram_Momentum import Send_Momentum_Telegram_Message
+from Telegram_Swing import Send_Swing_Telegram_Message
+import os
 
 # ── CONFIG ──
 TOP_N        = 5    # Scan top N gainers & losers
@@ -20,6 +22,9 @@ EMA_SLOW = 200
 RSI_LENGTH = 14
 RSI_UPPER  = 55   # BUY : RSI crosses above this
 RSI_LOWER  = 45   # SELL: RSI crosses below this
+RSI_BUY_ACTIVATION = 45   # Buy watch activation when RSI goes below this
+RSI_SELL_ACTIVATION = 55  # Sell watch activation when RSI goes above this
+RSI_REENTRY_LEVEL = 50  # Pullback re-entry trigger for alert
 
 
 # ================= UTIL =================
@@ -30,6 +35,104 @@ def safe_get(url, params=None, timeout=10):
         return r.json()
     except Exception:
         return None
+
+
+# ================= JSON LOAD/SAVE =================
+def load_json(filename):
+    if not os.path.exists(filename):
+        return []
+    with open(filename, 'r') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+def save_to_json(filename, data):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
+
+
+def normalize_watch_item(item):
+    """Keep watchlist schema minimal and consistent."""
+    return {
+        "pair": item.get("pair", ""),
+        "prev_rsi": item.get("prev_rsi", ""),
+        "curr_rsi": item.get("curr_rsi", ""),
+    }
+
+# ================= ACTIVE TRACKING SCAN =================
+def scan_active_tracking(filename, side):
+    """
+    Reads existing JSON. Checks RSI for each coin.
+    BUY side:
+      - If prev_rsi == "", waits for RSI to cross BELOW RSI_BUY_ACTIVATION. Once it does, sets prev_rsi.
+      - If prev_rsi != "", waits for RSI to cross ABOVE RSI_REENTRY_LEVEL. Once it does, sets curr_rsi, ALERTS and REMOVES.
+    SELL side:
+      - If prev_rsi == "", waits for RSI to cross ABOVE RSI_SELL_ACTIVATION. Once it does, sets prev_rsi.
+      - If prev_rsi != "", waits for RSI to cross BELOW RSI_REENTRY_LEVEL. Once it does, sets curr_rsi, ALERTS and REMOVES.
+    """
+    items = [normalize_watch_item(x) for x in load_json(filename)]
+    if not items:
+        return items
+        
+    updated_items = []
+    alerts = []
+    
+    # Check all active items
+    def fetch(item):
+        return item, fetch_indicators(item["pair"])
+        
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(fetch, it): it for it in items}
+        for f in as_completed(futures):
+            item, ind = f.result()
+            if not ind:
+                    updated_items.append(normalize_watch_item(item))
+                    continue
+                
+            pair = item["pair"]
+            remove_item = False
+            
+            if side == "BUY":
+                # Wait for RSI drop below buy activation level
+                if item["prev_rsi"] == "":
+                    if ind["curr_rsi"] < RSI_BUY_ACTIVATION:
+                        item["prev_rsi"] = round(ind["curr_rsi"], 2)
+                        item["curr_rsi"] = ""
+                # Wait for RSI recovering above re-entry level for alert/exit
+                elif item["prev_rsi"] != "":
+                    if ind["curr_rsi"] > RSI_REENTRY_LEVEL:
+                        item["curr_rsi"] = round(ind["curr_rsi"], 2)
+                        alerts.append(
+                            f"🟢 BUY ALERT: {pair} - prev_rsi={item['prev_rsi']}, curr_rsi={item['curr_rsi']}"
+                        )
+                        remove_item = True
+                        
+            elif side == "SELL":
+                # Wait for RSI spike above sell activation level
+                if item["prev_rsi"] == "":
+                    if ind["curr_rsi"] > RSI_SELL_ACTIVATION:
+                        item["prev_rsi"] = round(ind["curr_rsi"], 2)
+                        item["curr_rsi"] = ""
+                # Wait for RSI dropping below re-entry level for alert/exit
+                elif item["prev_rsi"] != "":
+                    if ind["curr_rsi"] < RSI_REENTRY_LEVEL:
+                        item["curr_rsi"] = round(ind["curr_rsi"], 2)
+                        alerts.append(
+                            f"🔴 SELL ALERT: {pair} - prev_rsi={item['prev_rsi']}, curr_rsi={item['curr_rsi']}"
+                        )
+                        remove_item = True
+                        
+            if not remove_item:
+                updated_items.append(normalize_watch_item(item))
+                
+    # Send all alerts found
+    if alerts:
+        msg = "\n".join(alerts)
+        print(f"\n📤 Sending Telegram alerts for tracked coins:\n{msg}")
+        Send_Swing_Telegram_Message(msg)
+        
+    return [normalize_watch_item(x) for x in updated_items]
 
 
 # ================= API =================
@@ -130,6 +233,8 @@ def fetch_indicators(pair):
         "ema20":      float(curr["ema20"]),
         "ema50":      float(curr["ema50"]),
         "ema200":     float(curr["ema200"]),
+        "prev_ema50": float(prev["ema50"]),
+        "prev_ema200": float(prev["ema200"]),
         "prev_rsi":   float(prev["rsi"]),
         "curr_rsi":   float(curr["rsi"]),
     }
@@ -174,7 +279,7 @@ def scan(rows, side):
 
 
 # ================= EMA-ONLY SCAN (ALL PAIRS) =================
-def scan_ema_only(gainer_rows, loser_rows):
+def scan_pullback_ema(gainer_rows, loser_rows):
     """
     Checks EMA alignment only (no RSI filter) on Top-N gainers & losers.
       bullish : EMA20 > EMA50 > EMA200  (checked on gainers)
@@ -192,88 +297,36 @@ def scan_ema_only(gainer_rows, loser_rows):
             pair, ind = f.result()
             results[pair] = ind
 
-    bullish, bearish = [], []
+    buy_signals, sell_signals = [], []
     for row in gainer_rows:
         ind = results.get(row["pair"])
-        if ind and ind["ema20"] > ind["ema50"] > ind["ema200"]:
-            bullish.append({**row, **ind})
+        if ind:
+            is_20_above_50 = ind["ema20"] > ind["ema50"]
+            is_50_cross_above_200 = (ind["prev_ema50"] < ind["prev_ema200"]) and (ind["ema50"] > ind["ema200"])
+            
+            if is_20_above_50 and is_50_cross_above_200:
+                buy_signals.append({
+                    "pair": row["pair"],
+                    "prev_rsi": "",
+                    "curr_rsi": ""
+                })
 
     for row in loser_rows:
         ind = results.get(row["pair"])
-        if ind and ind["ema20"] < ind["ema50"] < ind["ema200"]:
-            bearish.append({**row, **ind})
+        if ind:
+            is_20_below_50 = ind["ema20"] < ind["ema50"]
+            is_50_cross_below_200 = (ind["prev_ema50"] > ind["prev_ema200"]) and (ind["ema50"] < ind["ema200"])
+            
+            if is_20_below_50 and is_50_cross_below_200:
+                sell_signals.append({
+                    "pair": row["pair"],
+                    "prev_rsi": "",
+                    "curr_rsi": ""
+                })
 
-    bullish.sort(key=lambda x: x["pair"])
-    bearish.sort(key=lambda x: x["pair"])
-    return bullish, bearish
-
-
-def print_ema_list(bullish, bearish):
-    sep = "─" * 55
-    print(f"\n{'═'*55}")
-    print(f"  📈 BULLISH EMA Stack  (EMA20 > EMA50 > EMA200)  — {len(bullish)} coins")
-    print(sep)
-    for s in bullish:
-        print(f"  🟢 {s['pair']:<30}  Close: {s['close']}")
-        print(f"     EMA20={s['ema20']:.4f}  EMA50={s['ema50']:.4f}  EMA200={s['ema200']:.4f}")
-        print(f"     RSI: prev={s['prev_rsi']:.1f}  curr={s['curr_rsi']:.1f}")
-        print()
-
-    print(f"\n{'═'*55}")
-    print(f"  📉 BEARISH EMA Stack  (EMA20 < EMA50 < EMA200)  — {len(bearish)} coins")
-    print(sep)
-    for s in bearish:
-        print(f"  🔴 {s['pair']:<30}  Close: {s['close']}")
-        print(f"     EMA20={s['ema20']:.4f}  EMA50={s['ema50']:.4f}  EMA200={s['ema200']:.4f}")
-        print(f"     RSI: prev={s['prev_rsi']:.1f}  curr={s['curr_rsi']:.1f}")
-        print()
-    print(f"{'═'*55}\n")
-
-
-# ================= RSI CROSS 50 FILTER =================
-def filter_rsi_signals(bullish, bearish):
-    """
-    BUY  : prev_rsi < 50  →  curr_rsi > 50  +  close > ema20
-    SELL : prev_rsi > 50  →  curr_rsi < 50  +  close < ema20
-    """
-    buy_signals = [
-        s for s in bullish
-        if s["prev_rsi"] < 50 and s["curr_rsi"] > 50 and s["close"] > s["ema20"]
-    ]
-    sell_signals = [
-        s for s in bearish
-        if s["prev_rsi"] > 50 and s["curr_rsi"] < 50 and s["close"] < s["ema20"]
-    ]
+    buy_signals.sort(key=lambda x: x["pair"])
+    sell_signals.sort(key=lambda x: x["pair"])
     return buy_signals, sell_signals
-
-
-# ================= PRINT / ALERT =================
-def send_alerts(buy_signals, sell_signals):
-    if not buy_signals and not sell_signals:
-        # print("  ⚪ No RSI cross-50 signals found in Top movers.")
-        return
-
-    parts = []
-    for s in buy_signals:
-        parts.append(
-            f"🟢 BUY  {s['pair']}\n"
-            f"Close  : {s['close']}\n"
-            f"EMA20  : {s['ema20']:.4f}\n"
-            f"RSI    : {s['prev_rsi']:.1f} → {s['curr_rsi']:.1f} (crossed above 50)\n"
-            f"{'─'*35}"
-        )
-    for s in sell_signals:
-        parts.append(
-            f"🔴 SELL {s['pair']}\n"
-            f"Close  : {s['close']}\n"
-            f"EMA20  : {s['ema20']:.4f}\n"
-            f"RSI    : {s['prev_rsi']:.1f} → {s['curr_rsi']:.1f} (crossed below 50)\n"
-            f"{'─'*35}"
-        )
-
-    msg = "\n".join(parts)
-    print(f"\n📤 Sending Telegram alert:\n{msg}")
-    Send_Momentum_Telegram_Message(msg)
 
 
 # ================= MAIN =================
@@ -282,13 +335,36 @@ def main():
     if not pairs:
         return
 
+    # ── 1. Process existing active tracked coins ──
+    print("Scanning active tracked coins for RSI triggers...")
+    tracked_buy = scan_active_tracking("PullBackBuy.json", "BUY")
+    tracked_sell = scan_active_tracking("PullBackSell.json", "SELL")
+
     # ── Top-N movers ──
+    print(f"Fetching Top-{TOP_N} Gainers & Losers...")
     gainers, losers = get_top_movers(pairs)
 
-    # ── EMA alignment → RSI cross-50 filter → Telegram ──
-    bullish, bearish = scan_ema_only(gainers, losers)
-    buy_signals, sell_signals = filter_rsi_signals(bullish, bearish)
-    send_alerts(buy_signals, sell_signals)
+    # ── 2. EMA Pullback Scan for NEW coins ──
+    print("Checking EMA Pullback Strategy conditions for new coins...")
+    new_buy_signals, new_sell_signals = scan_pullback_ema(gainers, losers)
+    
+    # ── Merge new coins into tracked list ──
+    tracked_buy_pairs = {x["pair"] for x in tracked_buy}
+    for new_b in new_buy_signals:
+        if new_b["pair"] not in tracked_buy_pairs:
+            tracked_buy.append(new_b)
+            
+    tracked_sell_pairs = {x["pair"] for x in tracked_sell}
+    for new_s in new_sell_signals:
+        if new_s["pair"] not in tracked_sell_pairs:
+            tracked_sell.append(new_s)
+    
+    # ── Save updated lists to JSON ──
+    save_to_json("PullBackBuy.json", [normalize_watch_item(x) for x in tracked_buy])
+    save_to_json("PullBackSell.json", [normalize_watch_item(x) for x in tracked_sell])
+    
+    print(f"✅ Saved total {len(tracked_buy)} tracked pairs to PullBackBuy.json")
+    print(f"✅ Saved total {len(tracked_sell)} tracked pairs to PullBackSell.json")
 
 
 if __name__ == "__main__":
