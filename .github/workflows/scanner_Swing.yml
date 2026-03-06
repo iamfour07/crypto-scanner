@@ -27,7 +27,7 @@ jobs:
           pip install pandas requests
 
       - name: Run New Scanner
-        run: python ReversalBuySell.py
+        run: python TopMovers.py
         env:
           TELEGRAM_BOT_TOKEN_Swing: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
           TELEGRAM_CHAT_ID_Swing: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
