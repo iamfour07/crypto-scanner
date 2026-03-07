@@ -1,6 +1,6 @@
 [
     {
-        "pair": "B-TNSR_USDT",
+        "pair": "B-BAN_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -15,7 +15,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-BAN_USDT",
+        "pair": "B-TNSR_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
