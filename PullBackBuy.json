@@ -5,17 +5,22 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-MAV_USDT",
-        "prev_rsi": 43.66,
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-TNSR_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-FLOW_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-MAV_USDT",
+        "prev_rsi": 43.66,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-BANANA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
