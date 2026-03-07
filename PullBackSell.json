@@ -1,12 +1,22 @@
 [
     {
-        "pair": "B-ENA_USDT",
+        "pair": "B-MITO_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-MITO_USDT",
+        "pair": "B-WIF_USDT",
         "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-XPL_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-FHE_USDT",
+        "prev_rsi": 60.38,
         "curr_rsi": ""
     },
     {
@@ -15,17 +25,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KMNO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-MBOX_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-WIF_USDT",
+        "pair": "B-ENA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -40,12 +40,12 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-FHE_USDT",
-        "prev_rsi": 60.38,
+        "pair": "B-KMNO_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-XPL_USDT",
+        "pair": "B-MBOX_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
