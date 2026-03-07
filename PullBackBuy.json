@@ -1,6 +1,6 @@
 [
     {
-        "pair": "B-FLOW_USDT",
+        "pair": "B-MAV_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -10,7 +10,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-MAV_USDT",
+        "pair": "B-FLOW_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }

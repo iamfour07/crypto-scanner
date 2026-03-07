@@ -1,6 +1,6 @@
 [
     {
-        "pair": "B-MBOX_USDT",
+        "pair": "B-WIF_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -10,17 +10,17 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-WIF_USDT",
+        "pair": "B-FHE_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-MBOX_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-KMNO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-FHE_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
