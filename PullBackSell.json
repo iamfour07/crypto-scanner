@@ -1,6 +1,6 @@
 [
     {
-        "pair": "B-MAGMA_USDT",
+        "pair": "B-WIF_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -10,7 +10,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-WIF_USDT",
+        "pair": "B-MAGMA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
