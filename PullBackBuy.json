@@ -1,11 +1,11 @@
 [
     {
-        "pair": "B-FLOW_USDT",
+        "pair": "B-BAN_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-BAN_USDT",
+        "pair": "B-FLOW_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
