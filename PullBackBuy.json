@@ -1,11 +1,21 @@
 [
     {
-        "pair": "B-TAO_USDT",
-        "prev_rsi": 40.25,
+        "pair": "B-FLOW_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-FLOW_USDT",
+        "pair": "B-TNSR_USDT",
+        "prev_rsi": 44.17,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-MLN_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-BANANA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -15,18 +25,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-BANANA_USDT",
-        "prev_rsi": "",
+        "pair": "B-TAO_USDT",
+        "prev_rsi": 40.25,
         "curr_rsi": ""
     },
     {
-        "pair": "B-MLN_USDT",
+        "pair": "B-BAND_USDT",
         "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TNSR_USDT",
-        "prev_rsi": 44.17,
         "curr_rsi": ""
     }
 ]
