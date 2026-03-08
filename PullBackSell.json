@@ -1,5 +1,10 @@
 [
     {
+        "pair": "B-HAEDAL_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-WIF_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
@@ -10,23 +15,18 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-HAEDAL_USDT",
+        "pair": "B-XPL_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-KMNO_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-TOWNS_USDT",
         "prev_rsi": 55.19,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-SCR_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-XPL_USDT",
-        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
@@ -40,18 +40,18 @@
         "curr_rsi": ""
     },
     {
+        "pair": "B-SCR_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-ENA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-KMNO_USDT",
+        "pair": "B-SAHARA_USDT",
         "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-FHE_USDT",
-        "prev_rsi": 60.38,
         "curr_rsi": ""
     }
 ]
