@@ -1,16 +1,11 @@
 [
     {
+        "pair": "B-BAN_USDT",
+        "prev_rsi": 43.54,
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-FF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TAO_USDT",
-        "prev_rsi": 40.25,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BAND_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -20,8 +15,8 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-BAN_USDT",
-        "prev_rsi": 43.54,
+        "pair": "B-BAND_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     }
 ]
