@@ -1,6 +1,6 @@
 [
     {
-        "pair": "B-SAHARA_USDT",
+        "pair": "B-XPL_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -10,17 +10,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-WIF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-ATH_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-MITO_USDT",
+        "pair": "B-HAEDAL_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -30,32 +20,42 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KMNO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-JUP_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-ENA_USDT",
+        "pair": "B-WIF_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-HAEDAL_USDT",
+        "pair": "B-SAHARA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-XPL_USDT",
+        "pair": "B-MITO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-KMNO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-ATH_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-SCR_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-ENA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
