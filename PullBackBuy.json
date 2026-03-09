@@ -1,11 +1,6 @@
 [
     {
-        "pair": "B-BAND_USDT",
-        "prev_rsi": 41.83,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TA_USDT",
+        "pair": "B-KERNEL_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -15,12 +10,12 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KERNEL_USDT",
-        "prev_rsi": "",
+        "pair": "B-FF_USDT",
+        "prev_rsi": 44.09,
         "curr_rsi": ""
     },
     {
-        "pair": "B-SQD_USDT",
+        "pair": "B-ILV_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -35,17 +30,17 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-FF_USDT",
-        "prev_rsi": 44.09,
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-CHZ_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-ILV_USDT",
+        "pair": "B-TA_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-SQD_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
