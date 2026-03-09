@@ -1,41 +1,11 @@
 [
     {
-        "pair": "B-WIF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-JUP_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BICO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BREV_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-SAHARA_USDT",
-        "prev_rsi": 58.43,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-VVV_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-ATH_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-XPL_USDT",
+        "pair": "B-HOLO_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -45,8 +15,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-MBOX_USDT",
-        "prev_rsi": 61.45,
+        "pair": "B-SAHARA_USDT",
+        "prev_rsi": 58.43,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-WIF_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
@@ -55,7 +30,22 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-MITO_USDT",
+        "pair": "B-JUP_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-KMNO_USDT",
+        "prev_rsi": 62.34,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-BICO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-VVV_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -65,12 +55,22 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KMNO_USDT",
+        "pair": "B-BREV_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-HOLO_USDT",
+        "pair": "B-MBOX_USDT",
+        "prev_rsi": 61.45,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-MITO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-XPL_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
