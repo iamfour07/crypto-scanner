@@ -1,16 +1,6 @@
 [
     {
-        "pair": "B-TAO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-COS_USDT",
-        "prev_rsi": 44.43,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BABY_USDT",
+        "pair": "B-MBOX_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -20,7 +10,12 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KERNEL_USDT",
+        "pair": "B-BABY_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-TAO_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -30,17 +25,17 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-MBOX_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-FF_USDT",
-        "prev_rsi": 44.09,
+        "pair": "B-COS_USDT",
+        "prev_rsi": 44.43,
         "curr_rsi": ""
     },
     {
         "pair": "B-TA_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-KERNEL_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
