@@ -1,7 +1,7 @@
 [
     {
-        "pair": "B-BAN_USDT",
-        "prev_rsi": "",
+        "pair": "B-XPL_USDT",
+        "prev_rsi": 55.57,
         "curr_rsi": ""
     },
     {
@@ -20,13 +20,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-RIVER_USDT",
-        "prev_rsi": 57.32,
+        "pair": "B-BAN_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-XPL_USDT",
-        "prev_rsi": 55.57,
+        "pair": "B-RIVER_USDT",
+        "prev_rsi": 57.32,
         "curr_rsi": ""
     }
 ]

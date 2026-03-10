@@ -1,36 +1,11 @@
 [
     {
+        "pair": "B-DOGS_USDT",
+        "prev_rsi": 42.82,
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-TAO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TUT_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-SXT_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-RIF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BABY_USDT",
-        "prev_rsi": 43.58,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-ILV_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-JASMY_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -40,18 +15,8 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KOMA_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-ZK_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-SQD_USDT",
-        "prev_rsi": 44.23,
+        "pair": "B-JASMY_USDT",
+        "prev_rsi": 40.32,
         "curr_rsi": ""
     },
     {
@@ -60,12 +25,47 @@
         "curr_rsi": ""
     },
     {
+        "pair": "B-ILV_USDT",
+        "prev_rsi": 44.83,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-ZK_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-TA_USDT",
         "prev_rsi": 39.2,
         "curr_rsi": ""
     },
     {
+        "pair": "B-SXT_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-TUT_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-RIF_USDT",
+        "prev_rsi": 44.75,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-SQD_USDT",
+        "prev_rsi": 44.23,
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-1000SATS_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-PUFFER_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -75,13 +75,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-PUFFER_USDT",
-        "prev_rsi": "",
+        "pair": "B-BABY_USDT",
+        "prev_rsi": 43.58,
         "curr_rsi": ""
     },
     {
-        "pair": "B-DOGS_USDT",
-        "prev_rsi": 42.82,
+        "pair": "B-KOMA_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
