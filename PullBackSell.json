@@ -1,12 +1,27 @@
 [
     {
+        "pair": "B-BREV_USDT",
+        "prev_rsi": 55.42,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-WIF_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-MBOX_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-XPL_USDT",
         "prev_rsi": 55.57,
         "curr_rsi": ""
     },
     {
-        "pair": "B-BAN_USDT",
-        "prev_rsi": "",
+        "pair": "B-RIVER_USDT",
+        "prev_rsi": 57.32,
         "curr_rsi": ""
     },
     {
@@ -20,33 +35,18 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-BREV_USDT",
-        "prev_rsi": 55.42,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BICO_USDT",
-        "prev_rsi": 64.84,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-WIF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-RIVER_USDT",
-        "prev_rsi": 57.32,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-MBOX_USDT",
+        "pair": "B-BAN_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-JUP_USDT",
         "prev_rsi": 55.9,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-BICO_USDT",
+        "prev_rsi": 64.84,
         "curr_rsi": ""
     },
     {
