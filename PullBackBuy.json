@@ -1,6 +1,21 @@
 [
     {
-        "pair": "B-1000SATS_USDT",
+        "pair": "B-SQD_USDT",
+        "prev_rsi": 44.23,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-CHZ_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-TA_USDT",
+        "prev_rsi": 39.2,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-SXT_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -10,42 +25,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-TUT_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-SXT_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TA_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BABY_USDT",
-        "prev_rsi": 43.58,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TAO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-ILV_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-STO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-KOMA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -55,12 +35,27 @@
         "curr_rsi": ""
     },
     {
+        "pair": "B-BABY_USDT",
+        "prev_rsi": 43.58,
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-DOGS_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-ZK_USDT",
+        "pair": "B-TAO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-TUT_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-1000SATS_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -70,17 +65,22 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-CHZ_USDT",
+        "pair": "B-ZK_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-SQD_USDT",
-        "prev_rsi": 44.23,
+        "pair": "B-STO_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-RIF_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-KOMA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
