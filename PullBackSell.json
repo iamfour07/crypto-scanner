@@ -5,22 +5,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-XPL_USDT",
-        "prev_rsi": 55.57,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-WIF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-BAN_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-PHA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -30,7 +15,22 @@
         "curr_rsi": ""
     },
     {
+        "pair": "B-XPL_USDT",
+        "prev_rsi": 55.57,
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-FOGO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-PHA_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-WIF_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
