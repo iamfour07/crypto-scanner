@@ -1,21 +1,6 @@
 [
     {
-        "pair": "B-BSV_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-TUT_USDT",
-        "prev_rsi": 43.14,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-KOMA_USDT",
-        "prev_rsi": 42.78,
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-ACE_USDT",
+        "pair": "B-KAIA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -25,13 +10,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-SXT_USDT",
-        "prev_rsi": 42.9,
+        "pair": "B-TUT_USDT",
+        "prev_rsi": 43.14,
         "curr_rsi": ""
     },
     {
-        "pair": "B-TAO_USDT",
-        "prev_rsi": 44.92,
+        "pair": "B-BSV_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
@@ -40,13 +25,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-ZK_USDT",
-        "prev_rsi": 44.84,
+        "pair": "B-FLUX_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-FLUX_USDT",
-        "prev_rsi": "",
+        "pair": "B-ZK_USDT",
+        "prev_rsi": 44.84,
         "curr_rsi": ""
     },
     {
@@ -55,12 +40,17 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-KAIA_USDT",
+        "pair": "B-ICX_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-ICX_USDT",
+        "pair": "B-SXT_USDT",
+        "prev_rsi": 42.9,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-ACE_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
