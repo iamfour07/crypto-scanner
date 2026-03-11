@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from Telegram_Momentum import Send_Momentum_Telegram_Message
 
 
 TOP_N = 15
@@ -189,10 +190,19 @@ def build_trade_message(row):
     )
 
 
-def print_list(title, rows):
-    print(f"\n{title}")
-    for row in rows:
-        print(build_trade_message(row))
+# def print_list(title, rows):
+#     print(f"\n{title}")
+#     for row in rows:
+#         print(build_trade_message(row))
+
+
+def send_telegram_alerts(title, rows):
+    if not rows:
+        return
+
+    header = f"{title}\n\n"
+    message = header + "\n".join(build_trade_message(row) for row in rows)
+    Send_Momentum_Telegram_Message(message)
 
 
 def main():
@@ -203,11 +213,14 @@ def main():
 
     gainers, _ = get_top_movers(pairs)
     breakout_gainers = attach_bb_signals(gainers)
-
-    print_list(
-        f"Top {TOP_N} 1D Gainers Closing Above BB Upper After {PRE_BREAKOUT_CANDLES} Candles Below ({BB_LENGTH}, {BB_STD}) | Risk Rs {RISK_AMOUNT_RS}",
-        breakout_gainers,
+    title = (
+        f"Top {TOP_N} 1D Gainers Closing Above BB Upper After "
+        f"{PRE_BREAKOUT_CANDLES} Candles Below ({BB_LENGTH}, {BB_STD}) | "
+        f"Risk Rs {RISK_AMOUNT_RS}"
     )
+
+    # print_list(title, breakout_gainers)
+    send_telegram_alerts(title, breakout_gainers)
 
 
 if __name__ == "__main__":
