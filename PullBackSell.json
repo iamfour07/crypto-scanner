@@ -1,7 +1,22 @@
 [
     {
+        "pair": "B-BAN_USDT",
+        "prev_rsi": 57.6,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-WIF_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-RIVER_USDT",
         "prev_rsi": 57.32,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-MBOX_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     },
     {
@@ -12,21 +27,6 @@
     {
         "pair": "B-FOGO_USDT",
         "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-MBOX_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-WIF_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-BAN_USDT",
-        "prev_rsi": 57.6,
         "curr_rsi": ""
     },
     {
