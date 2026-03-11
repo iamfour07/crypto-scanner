@@ -12,10 +12,8 @@ TOP_COINS_TO_SCAN = 5
 MAX_WORKERS = 8
 
 # ── Toggle Signals ON/OFF ──
-ENABLE_BUY  = False   # Set False to disable BUY scanning
 ENABLE_SELL = True   # Set False to disable SELL scanning
 
-BUY_FILE  = "ReversalBuyWatchlist.json"
 SELL_FILE = "ReversalSellWatchlist.json"
 
 BB_LENGTH = 200
@@ -52,15 +50,10 @@ def calculate_trade_levels(entry, sl, side):
     used_capital = round(position_value / LEVERAGE, 2)
     expected_loss = RISK_RS  # Always exactly RISK_RS
 
-    # Targets
-    if side == "BUY":
-        t2 = entry + risk_per_unit * 2
-        t3 = entry + risk_per_unit * 3
-        t4 = entry + risk_per_unit * 4
-    else:
-        t2 = entry - risk_per_unit * 2
-        t3 = entry - risk_per_unit * 3
-        t4 = entry - risk_per_unit * 4
+    # Sell-side targets
+    t2 = entry - risk_per_unit * 2
+    t3 = entry - risk_per_unit * 3
+    t4 = entry - risk_per_unit * 4
 
     return entry, sl, LEVERAGE, used_capital, expected_loss, t2, t3, t4
 
@@ -252,33 +245,6 @@ def check_watchlist_for_signals(watchlist, side):
                 )
                 return ("SIGNAL", pair, msg)
 
-        if side == "BUY":
-            if (
-                prev["supertrend"] == False and
-                last["supertrend"] == True  # Supertrend GREEN
-            ):
-                entry = float(last["high"])
-                sl = float(last["supertrend_value"])
-
-                e, s, lev, cap, loss, t2, t3, t4 = calculate_trade_levels(entry, sl, "BUY")
-
-                link = f"https://coindcx.com/futures/{pair}"
-
-                msg = (
-                    f"🟢 BUY {pair}\n"
-                    f"Entry   : {round(e,4)}\n"
-                    f"SL      : {round(s,4)}\n"
-                    f"Capital : ₹{cap} ({lev}×)\n\n"
-                    f"Risk    : ₹{round(loss,2)}\n"
-                    f"Targets\n"
-                    f"2R → {round(t2,4)}\n"
-                    f"3R → {round(t3,4)}\n"
-                    f"4R → {round(t4,4)}\n"
-                    f"{link}\n"
-                    f"------------------------------------------------"
-                )
-                return ("SIGNAL", pair, msg)
-
         return ("KEEP", pair)
 
     with ThreadPoolExecutor(MAX_WORKERS) as executor:
@@ -295,16 +261,13 @@ def check_watchlist_for_signals(watchlist, side):
 
 
 # ================= ADD TO WATCHLIST MODULE =================
-def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
-
-    buy_set = set(buy_watch)
+def scan_for_breakouts(top_pairs, sell_watch):
     sell_set = set(sell_watch)
 
-    new_buy = []
     new_sell = []
 
     def process_pair(pair):
-        if pair in buy_set or pair in sell_set:
+        if pair in sell_set:
             return None
 
         df = fetch_candles(pair)
@@ -313,11 +276,8 @@ def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
 
         last = df.iloc[-1]
 
-        if last["close"] > last["BB_upper"]:
+        if last["close"] > last["BB_upper"] and last["supertrend"] == True:
             return ("SELL", pair)
-
-        if last["close"] < last["BB_lower"]:
-            return ("BUY", pair)
 
         return None
 
@@ -328,25 +288,17 @@ def scan_for_breakouts(top_pairs, buy_watch, sell_watch):
             res = f.result()
             if not res:
                 continue
-            if res[0] == "BUY":
-                new_buy.append(res[1])
-            else:
-                new_sell.append(res[1])
-
-    for coin in new_buy:
-        if coin not in buy_watch:
-            buy_watch.append(coin)
+            new_sell.append(res[1])
 
     for coin in new_sell:
         if coin not in sell_watch:
             sell_watch.append(coin)
 
-    return buy_watch, sell_watch
+    return sell_watch
 
 
 # ================= MAIN =================
 def main():
-    buy_watch  = load_watchlist(BUY_FILE)  if ENABLE_BUY  else []
     sell_watch = load_watchlist(SELL_FILE) if ENABLE_SELL else []
 
     alerts = []
@@ -356,10 +308,6 @@ def main():
         sell_watch, sell_alerts = check_watchlist_for_signals(sell_watch, "SELL")
         alerts += sell_alerts
 
-    if ENABLE_BUY:
-        buy_watch, buy_alerts = check_watchlist_for_signals(buy_watch, "BUY")
-        alerts += buy_alerts
-
     if alerts:
         Send_Swing_Telegram_Message("\n\n".join(alerts))
 
@@ -367,10 +315,7 @@ def main():
     pairs    = get_active_usdt_coins()
     top_pairs = get_top_movers(pairs)
 
-    buy_watch, sell_watch = scan_for_breakouts(top_pairs, buy_watch, sell_watch)
-
-    if ENABLE_BUY:
-        save_watchlist(BUY_FILE, buy_watch)
+    sell_watch = scan_for_breakouts(top_pairs, sell_watch)
 
     if ENABLE_SELL:
         save_watchlist(SELL_FILE, sell_watch)
