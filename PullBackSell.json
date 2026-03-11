@@ -5,16 +5,6 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-BAN_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-MBOX_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-XPL_USDT",
         "prev_rsi": 55.57,
         "curr_rsi": ""
@@ -25,12 +15,22 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-PHA_USDT",
+        "pair": "B-MBOX_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
         "pair": "B-WIF_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-BAN_USDT",
+        "prev_rsi": 57.6,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-PHA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
