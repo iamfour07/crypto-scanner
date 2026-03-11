@@ -1,12 +1,12 @@
 [
     {
-        "pair": "B-DENT_USDT",
+        "pair": "B-FOGO_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-FOGO_USDT",
-        "prev_rsi": "",
+        "pair": "B-WIF_USDT",
+        "prev_rsi": 57.44,
         "curr_rsi": ""
     },
     {
@@ -15,7 +15,7 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-MBOX_USDT",
+        "pair": "B-AGLD_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -25,13 +25,13 @@
         "curr_rsi": ""
     },
     {
-        "pair": "B-AGLD_USDT",
+        "pair": "B-DENT_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
     {
-        "pair": "B-WIF_USDT",
-        "prev_rsi": 57.44,
+        "pair": "B-MBOX_USDT",
+        "prev_rsi": "",
         "curr_rsi": ""
     }
 ]
