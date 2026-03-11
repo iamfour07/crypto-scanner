@@ -213,11 +213,7 @@ def main():
 
     gainers, _ = get_top_movers(pairs)
     breakout_gainers = attach_bb_signals(gainers)
-    title = (
-        f"Top {TOP_N} 1D Gainers Closing Above BB Upper After "
-        f"{PRE_BREAKOUT_CANDLES} Candles Below ({BB_LENGTH}, {BB_STD}) | "
-        f"Risk Rs {RISK_AMOUNT_RS}"
-    )
+    title = (f"Momentum Alert")
 
     # print_list(title, breakout_gainers)
     send_telegram_alerts(title, breakout_gainers)
