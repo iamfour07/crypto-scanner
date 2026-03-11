@@ -1,26 +1,11 @@
 [
     {
-        "pair": "B-FOGO_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-WIF_USDT",
         "prev_rsi": 57.44,
         "curr_rsi": ""
     },
     {
-        "pair": "B-RIVER_USDT",
-        "prev_rsi": 57.32,
-        "curr_rsi": ""
-    },
-    {
         "pair": "B-AGLD_USDT",
-        "prev_rsi": "",
-        "curr_rsi": ""
-    },
-    {
-        "pair": "B-PHA_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     },
@@ -30,7 +15,27 @@
         "curr_rsi": ""
     },
     {
+        "pair": "B-FOGO_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
         "pair": "B-MBOX_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-PHA_USDT",
+        "prev_rsi": "",
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-RIVER_USDT",
+        "prev_rsi": 57.32,
+        "curr_rsi": ""
+    },
+    {
+        "pair": "B-ZEC_USDT",
         "prev_rsi": "",
         "curr_rsi": ""
     }
