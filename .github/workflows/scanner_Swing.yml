@@ -14,12 +14,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # Important for pushing
+          fetch-depth: 0 # Important for pushing
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install Dependencies
         run: |
@@ -27,7 +27,7 @@ jobs:
           pip install pandas requests
 
       - name: Run New Scanner
-        run: python TopMovers.py
+        run: python ReversalBuySell.py
         env:
           TELEGRAM_BOT_TOKEN_Swing: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
           TELEGRAM_CHAT_ID_Swing: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
