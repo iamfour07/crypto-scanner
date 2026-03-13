@@ -40,15 +40,16 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-
-          # Sari JSON files ko stage karna
+          
+          # 1. Sabse pehle remote changes ko pull karein taaki hum up-to-date rahein
+          git pull origin main --rebase --autostash
+          
+          # 2. Ab apni JSON files ko add karein
           git add ReversalSellWatchlist.json TrendPullbackBuy.json TrendPullbackSell.json || true
-
-          # Check karna ki kuch badla hai ya nahi
+          
+          # 3. Check karein ki kuch badla hai ya nahi, phir commit aur push
           if ! git diff --cached --quiet; then
             git commit -m "Automated Watchlist Update [skip ci]"
-            # Pull before push to handle any minor sync issues
-            git pull --rebase origin main
             git push origin main
           else
             echo "No changes in watchlists to commit."
