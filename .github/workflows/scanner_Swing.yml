@@ -1,20 +1,22 @@
-name: Swing Scanner
+name: Master Strategy Scanner
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: "5 * * * *" # Har ghante ke 5th minute par chalega (Avoids congestion)
+  workflow_dispatch: # Manual trigger button
 
 permissions:
   contents: write
 
 jobs:
-  run-new-scanner:
+  run-trading-bot:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Important for pushing
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -26,16 +28,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas requests
 
-      - name: Run New Scanner
-        run: python ReversalBuySell.py
+      - name: Run Master Scanner
+        run: python NewBBReversal.py
         env:
           TELEGRAM_BOT_TOKEN_Swing: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
           TELEGRAM_CHAT_ID_Swing: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
-      - name: Commit Watchlist Updates
+      - name: Commit and Push Watchlist
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add PullBackBuy.json PullBackSell.json || true
-          git diff --cached --quiet || git commit -m "Update watchlists [skip ci]"
-          git push
+
+          # Sari JSON files ko stage karna
+          git add ReversalSellWatchlist.json TrendPullbackBuy.json TrendPullbackSell.json || true
+
+          # Check karna ki kuch badla hai ya nahi
+          if ! git diff --cached --quiet; then
+            git commit -m "Automated Watchlist Update [skip ci]"
+            # Pull before push to handle any minor sync issues
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "No changes in watchlists to commit."
+          fi
