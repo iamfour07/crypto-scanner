@@ -1,11 +1,11 @@
 [
   {
-    "pair": "B-BANK_USDT",
+    "pair": "B-FIO_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
   {
-    "pair": "B-FIO_USDT",
+    "pair": "B-BANK_USDT",
     "pullback_done": false,
     "side": "SELL"
   }
