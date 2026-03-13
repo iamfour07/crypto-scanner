@@ -1,7 +1,7 @@
 [
   {
     "pair": "B-SPX_USDT",
-    "pullback_done": false,
+    "pullback_done": true,
     "side": "BUY"
   },
   {
