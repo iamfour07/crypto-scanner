@@ -1,6 +1,6 @@
 [
   {
-    "pair": "B-FIO_USDT",
+    "pair": "B-PHB_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
@@ -15,7 +15,7 @@
     "side": "SELL"
   },
   {
-    "pair": "B-PHB_USDT",
+    "pair": "B-FIO_USDT",
     "pullback_done": false,
     "side": "SELL"
   }
