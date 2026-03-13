@@ -145,7 +145,7 @@ def main():
     l_6_20 = [x["pair"] for x in losers[5:20]]
 
     new_sw, sw_alerts = [], []
-    new_eb, new_es, em_alerts = [], []
+    new_eb, new_es, em_alerts = [], [], []
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
