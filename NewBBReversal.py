@@ -33,21 +33,16 @@ RSI_P_SELL, RSI_T_SELL = 55, 45
 
 # ================= INDICATORS =================
 def calculate_all_indicators(df):
-    # EMAs for Strategy 1
     df["EMA15"] = df["close"].ewm(span=EMA_S1_FAST, adjust=False).mean()
     df["EMA45"] = df["close"].ewm(span=EMA_S1_SLOW, adjust=False).mean()
-    
-    # EMAs for Strategy 2
     df["EMA20"] = df["close"].ewm(span=20, adjust=False).mean()
     df["EMA50"] = df["close"].ewm(span=EMA_S2_FAST, adjust=False).mean()
     df["EMA200"] = df["close"].ewm(span=EMA_S2_SLOW, adjust=False).mean()
 
-    # Bollinger Bands
     mid = df["close"].rolling(BB_LENGTH).mean()
     std = df["close"].rolling(BB_LENGTH).std()
     df["BB_upper"] = mid + BB_MULT * std
 
-    # RSI
     delta = df["close"].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -74,46 +69,40 @@ def fetch_candles(pair):
     return calculate_all_indicators(df).dropna()
 
 # ================= CORE LOGIC FUNCTIONS =================
-
 def process_swing_logic(pair, swing_watch):
-    """Bollinger Breakout + EMA 15/45 Cross Below"""
     df = fetch_candles(pair)
     if df is None: return None
     last = df.iloc[-1]
     
-    # Check if already in watchlist
     if pair in swing_watch:
         prev_5 = df.iloc[-6:-1]
-        # Just Cross Below: Current 15 < 45, but was above in last 5
         if last["EMA15"] < last["EMA45"] and (prev_5["EMA15"] > prev_5["EMA45"]).any():
             return ("SIGNAL_SWING", pair, last["close"])
         return ("KEEP_SWING", pair)
     else:
-        # Scan New: Price above BB_upper and EMA 15 still above 45
         if last["close"] > last["BB_upper"] and last["EMA15"] > last["EMA45"]:
             return ("ADD_SWING", pair)
     return None
 
 def process_ema_logic(pair, side, item):
-    """EMA 50/200 Just-Cross + RSI Pullback"""
     df = fetch_candles(pair)
     if df is None: return None
     last = df.iloc[-1]
     
-    if item: # Checking existing watchlist items
+    if item:
         prev_rsi = df.iloc[-2]["RSI"]
         if side == "BUY":
             if not (last["EMA50"] > last["EMA200"]): return ("REMOVE_EMA", pair)
             if last["RSI"] < RSI_P_BUY: item["pullback_done"] = True
-            if item["pullback_done"] and last["RSI"] > RSI_T_BUY and prev_rsi <= RSI_T_BUY:
+            if item.get("pullback_done") and last["RSI"] > RSI_T_BUY and prev_rsi <= RSI_T_BUY:
                 return ("SIGNAL_EMA", pair, "BUY", last["close"])
-        else: # SELL
+        else:
             if not (last["EMA50"] < last["EMA200"]): return ("REMOVE_EMA", pair)
             if last["RSI"] > RSI_P_SELL: item["pullback_done"] = True
-            if item["pullback_done"] and last["RSI"] < RSI_T_SELL and prev_rsi >= RSI_T_SELL:
+            if item.get("pullback_done") and last["RSI"] < RSI_T_SELL and prev_rsi >= RSI_T_SELL:
                 return ("SIGNAL_EMA", pair, "SELL", last["close"])
         return ("KEEP_EMA", item)
-    else: # Scanning new coins
+    else:
         prev_5 = df.iloc[-6:-1]
         if side == "BUY" and last["EMA20"] > last["EMA50"] > last["EMA200"]:
             if (prev_5["EMA50"] < prev_5["EMA200"]).any():
@@ -127,7 +116,6 @@ def process_ema_logic(pair, side, item):
 def main():
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Master Scanner Started...")
     
-    # 1. Load Persistence
     def load_json(file):
         try:
             with open(file, "r") as f: return json.load(f)
@@ -137,7 +125,10 @@ def main():
     e_buy_watch = load_json(EB_FILE := EMA_BUY_FILE)
     e_sell_watch = load_json(ES_FILE := EMA_SELL_FILE)
 
-    # 2. Market Stats & Sorting
+    # Sets to track existing pairs and prevent duplicates during scanning
+    existing_swing = set(s_watch)
+    existing_ema = {item['pair'] for item in e_buy_watch} | {item['pair'] for item in e_sell_watch}
+
     url_stats = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
     all_pairs = [x["pair"] if isinstance(x, dict) else x for x in (safe_get(url_stats) or [])]
     
@@ -156,18 +147,26 @@ def main():
     g_6_20 = [x["pair"] for x in gainers[5:20]]
     l_6_20 = [x["pair"] for x in losers[5:20]]
 
-    # 3. Parallel Execution
     new_sw, sw_alerts = [], []
     new_eb, new_es, em_alerts = [], [], []
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        # Strategy 1 Tasks
-        tasks = [executor.submit(process_swing_logic, p, s_watch) for p in set(s_watch + g_top8)]
-        # Strategy 2 Tasks
-        tasks += [executor.submit(process_ema_logic, item['pair'], "BUY", item) for item in e_buy_watch]
-        tasks += [executor.submit(process_ema_logic, item['pair'], "SELL", item) for item in e_sell_watch]
-        tasks += [executor.submit(process_ema_logic, p, "BUY", None) for p in g_6_20]
-        tasks += [executor.submit(process_ema_logic, p, "SELL", None) for p in l_6_20]
+        tasks = []
+        # Strategy 1 Tasks (Swing)
+        for p in set(s_watch + g_top8):
+            tasks.append(executor.submit(process_swing_logic, p, s_watch))
+        
+        # Strategy 2 Tasks (Existing EMA Watchlist)
+        for item in e_buy_watch: tasks.append(executor.submit(process_ema_logic, item['pair'], "BUY", item))
+        for item in e_sell_watch: tasks.append(executor.submit(process_ema_logic, item['pair'], "SELL", item))
+        
+        # Strategy 2 Tasks (New Scans - Duplicate Protected)
+        for p in g_6_20:
+            if p not in existing_ema:
+                tasks.append(executor.submit(process_ema_logic, p, "BUY", None))
+        for p in l_6_20:
+            if p not in existing_ema:
+                tasks.append(executor.submit(process_ema_logic, p, "SELL", None))
 
         for future in as_completed(tasks):
             res = future.result()
@@ -181,13 +180,16 @@ def main():
                 if res[1]["side"] == "BUY": new_eb.append(res[1])
                 else: new_es.append(res[1])
 
-    # 4. Final Save & Telegram
+    # Final Deduplication for safety
+    final_eb = {v['pair']: v for v in new_eb}.values()
+    final_es = {v['pair']: v for v in new_es}.values()
+
     if sw_alerts: Send_Swing_Telegram_Message("\n\n".join(sw_alerts))
     if em_alerts: Send_Momentum_Telegram_Message("\n\n".join(em_alerts))
 
     with open(SW_FILE, "w") as f: json.dump(list(set(new_sw)), f, indent=2)
-    with open(EB_FILE, "w") as f: json.dump(new_eb, f, indent=2)
-    with open(ES_FILE, "w") as f: json.dump(new_es, f, indent=2)
+    with open(EB_FILE, "w") as f: json.dump(list(final_eb), f, indent=2)
+    with open(ES_FILE, "w") as f: json.dump(list(final_es), f, indent=2)
 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Master Run Complete. Files Updated.")
 
