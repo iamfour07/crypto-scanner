@@ -1,11 +1,6 @@
 [
   {
-    "pair": "B-SPX_USDT",
-    "pullback_done": true,
-    "side": "BUY"
-  },
-  {
-    "pair": "B-MET_USDT",
+    "pair": "B-KMNO_USDT",
     "pullback_done": false,
     "side": "BUY"
   },
@@ -15,8 +10,13 @@
     "side": "BUY"
   },
   {
-    "pair": "B-KMNO_USDT",
+    "pair": "B-MET_USDT",
     "pullback_done": false,
+    "side": "BUY"
+  },
+  {
+    "pair": "B-SPX_USDT",
+    "pullback_done": true,
     "side": "BUY"
   }
 ]
