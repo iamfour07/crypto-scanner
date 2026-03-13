@@ -2,6 +2,7 @@ import json
 import requests
 import pandas as pd
 import time
+import os
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -10,23 +11,19 @@ try:
     from Telegram_Swing import Send_Swing_Telegram_Message
     from Telegram_Momentum import Send_Momentum_Telegram_Message
 except ImportError:
-    print("Error: Telegram modules (Telegram_Swing/Telegram_EMA) not found!")
+    print("Error: Telegram modules not found!")
 
 # ================= MASTER CONFIG =================
 resolution = "60"
 limit_hours = 500
 MAX_WORKERS = 15 
 
-# Persistence Files
 SWING_SELL_FILE = "ReversalSellWatchlist.json"
 EMA_BUY_FILE    = "TrendPullbackBuy.json"
 EMA_SELL_FILE   = "TrendPullbackSell.json"
 
-# Strategy 1 Settings (Swing)
 BB_LENGTH, BB_MULT = 200, 2.5
 EMA_S1_FAST, EMA_S1_SLOW = 15, 45
-
-# Strategy 2 Settings (Trend Pullback)
 EMA_S2_FAST, EMA_S2_SLOW = 50, 200
 RSI_P_BUY, RSI_T_BUY = 45, 55
 RSI_P_SELL, RSI_T_SELL = 55, 45
@@ -121,16 +118,16 @@ def main():
             with open(file, "r") as f: return json.load(f)
         except: return []
 
-    s_watch = load_json(SW_FILE := SWING_SELL_FILE)
-    e_buy_watch = load_json(EB_FILE := EMA_BUY_FILE)
-    e_sell_watch = load_json(ES_FILE := EMA_SELL_FILE)
+    s_watch = load_json(SWING_SELL_FILE)
+    e_buy_watch = load_json(EMA_BUY_FILE)
+    e_sell_watch = load_json(EMA_SELL_FILE)
 
-    # Sets to track existing pairs and prevent duplicates during scanning
-    existing_swing = set(s_watch)
     existing_ema = {item['pair'] for item in e_buy_watch} | {item['pair'] for item in e_sell_watch}
 
     url_stats = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
-    all_pairs = [x["pair"] if isinstance(x, dict) else x for x in (safe_get(url_stats) or [])]
+    all_pairs_data = safe_get(url_stats)
+    if not all_pairs_data: return
+    all_pairs = [x["pair"] if isinstance(x, dict) else x for x in all_pairs_data]
     
     stats = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
@@ -148,25 +145,18 @@ def main():
     l_6_20 = [x["pair"] for x in losers[5:20]]
 
     new_sw, sw_alerts = [], []
-    new_eb, new_es, em_alerts = [], [], []
+    new_eb, new_es, em_alerts = [], []
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = []
-        # Strategy 1 Tasks (Swing)
         for p in set(s_watch + g_top8):
             tasks.append(executor.submit(process_swing_logic, p, s_watch))
-        
-        # Strategy 2 Tasks (Existing EMA Watchlist)
         for item in e_buy_watch: tasks.append(executor.submit(process_ema_logic, item['pair'], "BUY", item))
         for item in e_sell_watch: tasks.append(executor.submit(process_ema_logic, item['pair'], "SELL", item))
-        
-        # Strategy 2 Tasks (New Scans - Duplicate Protected)
         for p in g_6_20:
-            if p not in existing_ema:
-                tasks.append(executor.submit(process_ema_logic, p, "BUY", None))
+            if p not in existing_ema: tasks.append(executor.submit(process_ema_logic, p, "BUY", None))
         for p in l_6_20:
-            if p not in existing_ema:
-                tasks.append(executor.submit(process_ema_logic, p, "SELL", None))
+            if p not in existing_ema: tasks.append(executor.submit(process_ema_logic, p, "SELL", None))
 
         for future in as_completed(tasks):
             res = future.result()
@@ -180,18 +170,19 @@ def main():
                 if res[1]["side"] == "BUY": new_eb.append(res[1])
                 else: new_es.append(res[1])
 
-    # Final Deduplication for safety
-    final_eb = {v['pair']: v for v in new_eb}.values()
-    final_es = {v['pair']: v for v in new_es}.values()
+    # Final Deduplication
+    final_sw = list(set(new_sw))
+    final_eb = list({v['pair']: v for v in new_eb}.values())
+    final_es = list({v['pair']: v for v in new_es}.values())
 
     if sw_alerts: Send_Swing_Telegram_Message("\n\n".join(sw_alerts))
     if em_alerts: Send_Momentum_Telegram_Message("\n\n".join(em_alerts))
 
-    with open(SW_FILE, "w") as f: json.dump(list(set(new_sw)), f, indent=2)
-    with open(EB_FILE, "w") as f: json.dump(list(final_eb), f, indent=2)
-    with open(ES_FILE, "w") as f: json.dump(list(final_es), f, indent=2)
+    with open(SWING_SELL_FILE, "w") as f: json.dump(final_sw, f, indent=2)
+    with open(EMA_BUY_FILE, "w") as f: json.dump(final_eb, f, indent=2)
+    with open(EMA_SELL_FILE, "w") as f: json.dump(final_es, f, indent=2)
 
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Master Run Complete. Files Updated.")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Master Run Complete.")
 
 if __name__ == "__main__":
     main()
