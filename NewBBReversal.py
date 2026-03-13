@@ -30,20 +30,30 @@ RSI_P_SELL, RSI_T_SELL = 55, 45
 
 # ================= INDICATORS =================
 def calculate_all_indicators(df):
+    # EMA calculations (Same as before)
     df["EMA15"] = df["close"].ewm(span=EMA_S1_FAST, adjust=False).mean()
     df["EMA45"] = df["close"].ewm(span=EMA_S1_SLOW, adjust=False).mean()
     df["EMA20"] = df["close"].ewm(span=20, adjust=False).mean()
     df["EMA50"] = df["close"].ewm(span=EMA_S2_FAST, adjust=False).mean()
     df["EMA200"] = df["close"].ewm(span=EMA_S2_SLOW, adjust=False).mean()
 
+    # Bollinger Bands
     mid = df["close"].rolling(BB_LENGTH).mean()
     std = df["close"].rolling(BB_LENGTH).std()
     df["BB_upper"] = mid + BB_MULT * std
 
+# --- FIXED RSI (Wilder's Smoothing) ---
     delta = df["close"].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    df["RSI"] = 100 - (100 / (1 + (gain / (loss + 1e-9))))
+    gain = (delta.where(delta > 0, 0))
+    loss = (-delta.where(delta < 0, 0))
+    
+    # alpha=1/14 Wilder's Smoothing ke liye use hota hai
+    avg_gain = gain.ewm(alpha=1/14, min_periods=14, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1/14, min_periods=14, adjust=False).mean()
+    
+    rs = avg_gain / (avg_loss + 1e-9)
+    df["RSI"] = 100 - (100 / (1 + rs))
+    
     return df
 
 # ================= API HELPERS =================
@@ -85,7 +95,17 @@ def process_ema_logic(pair, side, item):
     df = fetch_candles(pair)
     if df is None: return None
     last = df.iloc[-1]
-    
+    # --- DEBUG SECTION ---
+    # Sirf un coins ke liye jo pehle se watchlist (item) mein hain
+    if item:
+        status = "PULLBACK_WAITING" if not item.get("pullback_done") else "TRIGGER_WAITING"
+        print(f"--- DEBUG [{pair}] ---")
+        print(f"  Side: {side} | Status: {status}")
+        print(f"  Price: {last['close']} | RSI: {round(last['RSI'], 2)}")
+        print(f"  EMA50: {round(last['EMA50'], 2)} | EMA200: {round(last['EMA200'], 2)}")
+        print(f"  EMA Trend: {'BULLISH' if last['EMA50'] > last['EMA200'] else 'BEARISH'}")
+        print(f"----------------------\n")
+    # ---------------------
     if item:
         prev_rsi = df.iloc[-2]["RSI"]
         if side == "BUY":
