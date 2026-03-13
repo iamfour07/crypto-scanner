@@ -36,21 +36,11 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
-      - name: Commit and Push Watchlist
+      - name: Commit Watchlist Updates
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          
-          # 1. Sabse pehle remote changes ko pull karein taaki hum up-to-date rahein
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git pull origin main --rebase --autostash
-          
-          # 2. Ab apni JSON files ko add karein
           git add ReversalSellWatchlist.json TrendPullbackBuy.json TrendPullbackSell.json || true
-          
-          # 3. Check karein ki kuch badla hai ya nahi, phir commit aur push
-          if ! git diff --cached --quiet; then
-            git commit -m "Automated Watchlist Update [skip ci]"
-            git push origin main
-          else
-            echo "No changes in watchlists to commit."
-          fi
+          git commit -m "Update watchlists [skip ci]" || echo "No changes to commit"
+          git push origin main
