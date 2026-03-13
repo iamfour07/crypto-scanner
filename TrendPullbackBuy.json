@@ -1,12 +1,12 @@
 [
   {
-    "pair": "B-SPX_USDT",
-    "pullback_done": true,
+    "pair": "B-ENSO_USDT",
+    "pullback_done": false,
     "side": "BUY"
   },
   {
-    "pair": "B-ENSO_USDT",
-    "pullback_done": false,
+    "pair": "B-SPX_USDT",
+    "pullback_done": true,
     "side": "BUY"
   }
 ]
