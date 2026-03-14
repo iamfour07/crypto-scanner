@@ -1,11 +1,27 @@
 [
+<<<<<<< Updated upstream
   "B-MEW_USDT",
   "B-SCR_USDT",
   "B-RENDER_USDT",
   "B-COS_USDT",
   "B-TLM_USDT",
+=======
+  "B-AXS_USDT",
+  "B-MELANIA_USDT",
+  "B-SCR_USDT",
+  "B-TRUMP_USDT",
+  "B-STO_USDT",
+  "B-MEW_USDT",
+  "B-COS_USDT",
+  "B-TOWNS_USDT",
+  "B-C_USDT",
+>>>>>>> Stashed changes
   "B-INX_USDT",
+  "B-STEEM_USDT",
+  "B-TAO_USDT",
+  "B-BERA_USDT",
   "B-BANANAS31_USDT",
+<<<<<<< Updated upstream
   "B-BERA_USDT",
   "B-TAO_USDT",
   "B-C_USDT",
@@ -17,4 +33,10 @@
   "B-TRUMP_USDT",
   "B-TOWNS_USDT",
   "B-MOODENG_USDT"
+=======
+  "B-TLM_USDT",
+  "B-MOODENG_USDT",
+  "B-RENDER_USDT",
+  "B-LA_USDT"
+>>>>>>> Stashed changes
 ]

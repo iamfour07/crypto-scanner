@@ -2,10 +2,23 @@
   {
     "pair": "B-PHB_USDT",
     "pullback_done": true,
+<<<<<<< Updated upstream
+=======
     "side": "SELL"
   },
   {
-    "pair": "B-SPX_USDT",
+    "pair": "B-BARD_USDT",
+    "pullback_done": false,
+    "side": "SELL"
+  },
+  {
+    "pair": "B-CHR_USDT",
+    "pullback_done": false,
+>>>>>>> Stashed changes
+    "side": "SELL"
+  },
+  {
+    "pair": "B-1000PEPE_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
@@ -25,7 +38,7 @@
     "side": "SELL"
   },
   {
-    "pair": "B-1000PEPE_USDT",
+    "pair": "B-SPX_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
