@@ -15,17 +15,17 @@
     "side": "SELL"
   },
   {
-    "pair": "B-A2Z_USDT",
-    "pullback_done": false,
-    "side": "SELL"
-  },
-  {
     "pair": "B-CHR_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
   {
     "pair": "B-SPX_USDT",
+    "pullback_done": false,
+    "side": "SELL"
+  },
+  {
+    "pair": "B-A2Z_USDT",
     "pullback_done": false,
     "side": "SELL"
   }
