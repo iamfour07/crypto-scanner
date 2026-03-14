@@ -5,13 +5,13 @@
     "side": "BUY"
   },
   {
-    "pair": "B-KMNO_USDT",
-    "pullback_done": true,
+    "pair": "B-AXS_USDT",
+    "pullback_done": false,
     "side": "BUY"
   },
   {
-    "pair": "B-WET_USDT",
-    "pullback_done": false,
+    "pair": "B-KMNO_USDT",
+    "pullback_done": true,
     "side": "BUY"
   },
   {
@@ -20,8 +20,8 @@
     "side": "BUY"
   },
   {
-    "pair": "B-AXS_USDT",
-    "pullback_done": false,
+    "pair": "B-WET_USDT",
+    "pullback_done": true,
     "side": "BUY"
   }
 ]

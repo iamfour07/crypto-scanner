@@ -5,11 +5,6 @@
     "side": "SELL"
   },
   {
-    "pair": "B-CHR_USDT",
-    "pullback_done": false,
-    "side": "SELL"
-  },
-  {
     "pair": "B-BARD_USDT",
     "pullback_done": false,
     "side": "SELL"
@@ -20,12 +15,17 @@
     "side": "SELL"
   },
   {
-    "pair": "B-A2Z_USDT",
+    "pair": "B-CHR_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
   {
     "pair": "B-FIO_USDT",
+    "pullback_done": false,
+    "side": "SELL"
+  },
+  {
+    "pair": "B-A2Z_USDT",
     "pullback_done": false,
     "side": "SELL"
   }
