@@ -5,12 +5,12 @@
     "side": "SELL"
   },
   {
-    "pair": "B-BARD_USDT",
+    "pair": "B-SPX_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
   {
-    "pair": "B-SPX_USDT",
+    "pair": "B-BARD_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
