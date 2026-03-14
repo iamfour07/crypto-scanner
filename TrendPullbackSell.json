@@ -5,7 +5,7 @@
     "side": "SELL"
   },
   {
-    "pair": "B-A2Z_USDT",
+    "pair": "B-FIO_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
@@ -15,7 +15,7 @@
     "side": "SELL"
   },
   {
-    "pair": "B-FIO_USDT",
+    "pair": "B-A2Z_USDT",
     "pullback_done": false,
     "side": "SELL"
   }
