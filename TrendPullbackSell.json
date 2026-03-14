@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "pair": "B-BABY_USDT",
+    "pullback_done": false,
+    "side": "SELL"
+  }
+]
