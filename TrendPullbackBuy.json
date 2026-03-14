@@ -1,28 +1,5 @@
 [
   {
-    "pair": "B-ENSO_USDT",
-    "pullback_done": true,
-    "side": "BUY"
-  },
-  {
-<<<<<<< Updated upstream
-=======
-    "pair": "B-WET_USDT",
-    "pullback_done": true,
-    "side": "BUY"
-  },
-  {
->>>>>>> Stashed changes
-    "pair": "B-AXS_USDT",
-    "pullback_done": false,
-    "side": "BUY"
-  },
-  {
-    "pair": "B-INX_USDT",
-    "pullback_done": false,
-    "side": "BUY"
-  },
-  {
     "pair": "B-INX_USDT",
     "pullback_done": false,
     "side": "BUY"
