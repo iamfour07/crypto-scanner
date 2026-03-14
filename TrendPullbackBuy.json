@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-ENSO_USDT",
-    "pullback_done": false,
-    "side": "BUY"
-  },
-  {
     "pair": "B-KMNO_USDT",
     "pullback_done": false,
     "side": "BUY"
@@ -16,6 +11,11 @@
   },
   {
     "pair": "B-MET_USDT",
+    "pullback_done": false,
+    "side": "BUY"
+  },
+  {
+    "pair": "B-ENSO_USDT",
     "pullback_done": false,
     "side": "BUY"
   }
