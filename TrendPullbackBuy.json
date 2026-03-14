@@ -5,16 +5,6 @@
     "side": "BUY"
   },
   {
-    "pair": "B-KMNO_USDT",
-    "pullback_done": true,
-    "side": "BUY"
-  },
-  {
-    "pair": "B-MET_USDT",
-    "pullback_done": true,
-    "side": "BUY"
-  },
-  {
     "pair": "B-AXS_USDT",
     "pullback_done": false,
     "side": "BUY"
@@ -22,6 +12,11 @@
   {
     "pair": "B-WET_USDT",
     "pullback_done": true,
+    "side": "BUY"
+  },
+  {
+    "pair": "B-INX_USDT",
+    "pullback_done": false,
     "side": "BUY"
   }
 ]
