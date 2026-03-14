@@ -5,17 +5,17 @@
     "side": "SELL"
   },
   {
-    "pair": "B-BARD_USDT",
-    "pullback_done": false,
-    "side": "SELL"
-  },
-  {
     "pair": "B-PHB_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
   {
     "pair": "B-FIO_USDT",
+    "pullback_done": false,
+    "side": "SELL"
+  },
+  {
+    "pair": "B-BARD_USDT",
     "pullback_done": false,
     "side": "SELL"
   },
