@@ -18,5 +18,10 @@
     "pair": "B-WET_USDT",
     "pullback_done": false,
     "side": "BUY"
+  },
+  {
+    "pair": "B-AXS_USDT",
+    "pullback_done": false,
+    "side": "BUY"
   }
 ]
