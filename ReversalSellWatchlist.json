@@ -1,5 +1,4 @@
 [
-<<<<<<< Updated upstream
   "B-HOOK_USDT",
   "B-BIRB_USDT",
   "B-C_USDT",
@@ -19,26 +18,5 @@
   "B-TAO_USDT",
   "B-EIGEN_USDT",
   "B-LINEA_USDT",
-=======
-  "B-C_USDT",
-  "B-GAS_USDT",
-  "B-INX_USDT",
-  "B-TOWNS_USDT",
-  "B-LINEA_USDT",
-  "B-HOOK_USDT",
-  "B-S_USDT",
-  "B-NEO_USDT",
-  "B-ALLO_USDT",
-  "B-RECALL_USDT",
-  "B-EIGEN_USDT",
-  "B-XAN_USDT",
-  "B-ATH_USDT",
-  "B-BIRB_USDT",
-  "B-BAN_USDT",
-  "B-TAO_USDT",
-  "B-QTUM_USDT",
-  "B-COS_USDT",
-  "B-TA_USDT",
->>>>>>> Stashed changes
   "B-THE_USDT"
 ]
