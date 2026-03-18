@@ -138,7 +138,7 @@ def process_logic(pair, watch_list):
         if flip_red:
 
             entry = last["low"]
-            sl = last["supertrend"]
+            sl = max(last["upperband"], last["high"])
 
             risk_per_coin = sl - entry
 
@@ -248,26 +248,23 @@ def main():
 
             if res[0] == "SIGNAL":
 
-                alerts.append(
-f"""
-🔴 REVERSAL SELL: {res[1]}
+               alerts.append(
+f"""🔴 REVERSAL SELL — {res[1]}
 
-Entry: {res[2]:.6f}
-StopLoss: {res[3]:.6f}
+Entry      : {res[2]:.6f}
+Stop Loss  : {res[3]:.6f}
+Capital    : ₹{res[4]:.2f} (5x)
 
-Capital Required (5x): ₹{res[4]:.2f}
+Risk       : ₹{RISK_PER_TRADE}
 
-Target 1 (1:2): {res[5]:.6f}
-Profit: ₹{res[8]}
+🎯 Targets
+• 1:2 → {res[5]:.6f}   | ₹{res[8]}
+• 1:3 → {res[6]:.6f}   | ₹{res[9]}
+• 1:4 → {res[7]:.6f}   | ₹{res[10]}
 
-Target 2 (1:3): {res[6]:.6f}
-Profit: ₹{res[9]}
-
-Target 3 (1:4): {res[7]:.6f}
-Profit: ₹{res[10]}
+━━━━━━━━━━━━━━━━━━
 """
-                )
-
+)
             elif res[0] in ["KEEP", "ADD"]:
                 results.append(res[1])
 
