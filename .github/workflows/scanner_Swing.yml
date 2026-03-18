@@ -1,9 +1,7 @@
 name: Master Strategy Scanner
 
 on:
-  #schedule:
-   # - cron: "5 * * * *"
-  workflow_dispatch:
+  workflow_dispatch:   # cronjob.org se trigger hoga
 
 concurrency:
   group: scanner
@@ -15,6 +13,7 @@ permissions:
 jobs:
   run-trading-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout Repository
@@ -42,15 +41,7 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-
-          # Latest repo lo
-          git fetch origin main
-          git reset --hard origin/main
-
-          # Updated watchlist add karo
           git add ReversalSellWatchlist.json
-
-          # Agar change hai tabhi commit
           git diff --cached --quiet || git commit -m "Update watchlist [skip ci]"
-
+          git pull --rebase origin main
           git push origin main
