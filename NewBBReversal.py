@@ -19,7 +19,7 @@ BB_LENGTH, BB_MULT = 200, 2.5
 ST_LENGTH = 20
 ST_MULT = 2
 
-RISK_PER_TRADE = 50
+RISK_PER_TRADE = 100
 LEVERAGE = 5
 
 # ================= API HELPERS =================
