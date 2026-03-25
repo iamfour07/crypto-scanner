@@ -2,18 +2,18 @@ import json, requests, pandas as pd, os
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+try:
+    from Telegram_Swing import Send_Swing_Telegram_Message
+except ImportError:
+    def Send_Swing_Telegram_Message(msg): 
+        print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
+
 # ================= CONFIG =================
 RESOLUTION = "60" 
 GAINER_FILE = "TopGainerWatchlist.json"
 LOSER_FILE = "TopLoserWatchlist.json"
 MAX_WORKERS = 20
 
-try:
-    from Telegram_Swing import Send_Swing_Telegram_Message
-except ImportError:
-    def Send_Swing_Telegram_Message(msg): 
-        print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
-Send_Swing_Telegram_Message("df")
 
 # ================= INDICATORS (TRADINGVIEW STYLE) =================
 def calculate_indicators(df):
