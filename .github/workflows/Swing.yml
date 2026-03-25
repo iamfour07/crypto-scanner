@@ -1,19 +1,19 @@
-name: Master Reversal Scanner
+name: Swing Scanner
 
 on:
-  workflow_dispatch:   # cronjob.org se trigger hoga
+  workflow_dispatch:
 
+# Concurrency group ensures this waits if the Master Scanner is running
 concurrency:
-  group: scanner
+  group: scanner-lock
   cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  run-trading-bot:
+  run-scanner:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     steps:
       - name: Checkout Repository
@@ -31,17 +31,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas requests
 
-      - name: Run Master Scanner
-        run: python NewBBReversal.py
+      - name: Run Scanner
+        run: python EMARsiSwing.py
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
       - name: Commit Watchlist Updates
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add ReversalSellWatchlist.json
-          git diff --cached --quiet || git commit -m "Update watchlist [skip ci]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Nayi files ko add karein jo script generate karti hai
+          git add TopGainerWatchlist.json TopLoserWatchlist.json || true
+          
+          # Rebase taaki agar dusri script ne pehle push kiya ho to conflict na aaye
           git pull --rebase origin main
+          
+          git diff --cached --quiet || git commit -m "Update momentum watchlists [skip ci]"
           git push origin main
