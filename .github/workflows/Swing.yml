@@ -34,21 +34,21 @@ jobs:
       - name: Run Scanner
         run: python EMARsiSwing.py
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_SWING }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_SWING }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_Swing }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_Swing }}
 
       - name: Commit Watchlist Updates
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           git add TopGainerWatchlist.json TopLoserWatchlist.json || true
-          
+
           # PEHLE COMMIT (Order changed here)
           git diff --cached --quiet || git commit -m "Update momentum watchlists [skip ci]"
-          
+
           # FIR PULL REBASE
           git pull --rebase origin main
-          
+
           # FIR PUSH
           git push origin main
