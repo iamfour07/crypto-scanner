@@ -8,15 +8,19 @@ GAINER_FILE = "TopGainerWatchlist.json"
 LOSER_FILE = "TopLoserWatchlist.json"
 MAX_WORKERS = 20
 
-def send_telegram(msg):
-    try:
-        from Telegram_Swing import Send_Swing_Telegram_Message
-        Send_Swing_Telegram_Message(msg)
-    except:
-        print(f"TELEGRAM ALERT:\n{msg}")
+
+
+
+try:
+    from Telegram_Swing import Send_Swing_Telegram_Message
+except ImportError:
+    def Send_Swing_Telegram_Message(msg): 
+        print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
+
 
 # ================= INDICATORS (TRADINGVIEW STYLE) =================
 def calculate_indicators(df):
+    
     # EMA Calculation
     df['ema20'] = df['close'].ewm(span=20, adjust=False).mean()
     df['ema50'] = df['close'].ewm(span=50, adjust=False).mean()
