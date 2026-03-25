@@ -8,9 +8,6 @@ GAINER_FILE = "TopGainerWatchlist.json"
 LOSER_FILE = "TopLoserWatchlist.json"
 MAX_WORKERS = 20
 
-
-
-
 try:
     from Telegram_Swing import Send_Swing_Telegram_Message
 except ImportError:
