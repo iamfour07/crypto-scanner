@@ -119,7 +119,7 @@ def main():
                     if res[1] in updated_l_watch: updated_l_watch.remove(res[1])
 
     if alerts_to_send:
-        send_telegram("\n\n".join(alerts_to_send))
+        Send_Swing_Telegram_Message("\n\n".join(alerts_to_send))
 
     # 2. Scan Top 10 for New Adds (Always Runs)
     # print("--- Scanning Top 10 Gainers/Losers ---")
