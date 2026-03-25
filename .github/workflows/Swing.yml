@@ -1,4 +1,4 @@
-name: Swing Scanner
+name: Master Swing Scanner
 
 on:
   workflow_dispatch:
