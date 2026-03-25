@@ -34,8 +34,8 @@ jobs:
       - name: Run Scanner
         run: python EMARsiSwing.py
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_SWING }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID_SWING }}
+          TELEGRAM_BOT_TOKEN_SWING: ${{ secrets.TELEGRAM_BOT_TOKEN_SWING }}
+          TELEGRAM_CHAT_ID_SWING: ${{ secrets.TELEGRAM_CHAT_ID_SWING }}
 
       - name: Commit Watchlist Updates
         run: |
