@@ -1,4 +1,4 @@
-name: Master Strategy Scanner
+name: Master Reversal Scanner
 
 on:
   workflow_dispatch:   # cronjob.org se trigger hoga
