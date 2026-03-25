@@ -1,12 +1,14 @@
 [
-  "B-ZRO_USDT",
-  "B-PARTI_USDT",
-  "B-IRYS_USDT",
   "B-GAS_USDT",
   "B-SAPIEN_USDT",
-  "B-INIT_USDT",
-  "B-ONT_USDT",
-  "B-FHE_USDT",
+  "B-ZRO_USDT",
   "B-TA_USDT",
+  "B-FHE_USDT",
+  "B-IRYS_USDT",
+  "B-C_USDT",
+  "B-ONT_USDT",
+  "B-HUMA_USDT",
+  "B-PARTI_USDT",
+  "B-INIT_USDT",
   "B-IOTX_USDT"
 ]
