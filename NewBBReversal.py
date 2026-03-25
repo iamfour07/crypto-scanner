@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ================= TELEGRAM CONFIG =================
-# Ensure Telegram_Momentum.py is in the same folder
 try:
     from Telegram_Momentum import Send_Momentum_Telegram_Message
 except ImportError:
@@ -12,8 +11,8 @@ except ImportError:
 
 # ================= STRATEGY CONFIG =================
 RESOLUTION = "60"           # 1 Hour timeframe
-LIMIT_HOURS = 500           # Required for accurate RSI/BB smoothing
-MAX_WORKERS = 25            # Parallel processing threads
+LIMIT_HOURS = 500           # Indicator smoothing ke liye accurate lookback
+MAX_WORKERS = 25            
 FILE_NAME = "ReversalSellWatchlist.json"
 
 # Indicators Parameters
@@ -84,7 +83,6 @@ def fetch_candles(pair):
     }
     try:
         r = requests.get(url, params=params, timeout=10).json()
-        # Drop the current running candle to use the LAST CLOSED candle
         df = pd.DataFrame(r["data"]).sort_values("time").iloc[:-1] 
         for col in ["open", "high", "low", "close"]: 
             df[col] = pd.to_numeric(df[col])
@@ -99,22 +97,18 @@ def process_logic(pair, watch_list):
     if df is None or df.empty: return None
 
     last = df.iloc[-1]
-    prev = df.iloc[-2]
     last_rsi = round(last['rsi'], 2)
 
     # --- CASE 1: Check for Sell Signal (Already in Watchlist) ---
     if pair in watch_list:
-        # Flip Condition: Prev was Green, Last is Red
-        flip_red = (prev["st_dir"] == True and last["st_dir"] == False)
-        
-        # Combined Logic: Red Flip AND RSI < 45
-        if flip_red and last['rsi'] < 45:
+        # UPDATED LOGIC: No flip required, just check CURRENT state
+        # Agar SuperTrend RED (st_dir is False) AUR RSI < 45
+        if last["st_dir"] == False and last['rsi'] < 45:
             entry = last["close"]
-            # Stop Loss: Supertrend or Candle High (whichever is higher)
             sl = max(last["supertrend"], last["high"])
             risk_per_coin = sl - entry
             
-            if risk_per_coin <= 1e-9: return None # Avoid Zero Division
+            if risk_per_coin <= 1e-9: return None 
 
             qty = RISK_PER_TRADE / risk_per_coin
             margin = (qty * entry) / LEVERAGE
@@ -126,12 +120,13 @@ def process_logic(pair, watch_list):
                 "t3": entry - (risk_per_coin * 3), 
                 "t4": entry - (risk_per_coin * 4)
             }
-        # If not flipped yet, keep in watchlist
+        
+        # Agar condition meet nahi hui, list mein hi rakho
         return {"type": "KEEP", "pair": pair}
 
     # --- CASE 2: Discovery (Add new coins to Watchlist) ---
     else:
-        # Condition: Breakout above BB Upper and Trend is Green
+        # Breakout condition: Price BB Upper ke upar ho aur SuperTrend Green ho
         breakout = last["close"] > last["BB_upper"]
         if breakout and last["st_dir"] == True:
             return {"type": "ADD", "pair": pair}
@@ -140,12 +135,10 @@ def process_logic(pair, watch_list):
 
 # ================= MAIN EXECUTION =================
 def main():
-    # 1. Load existing watchlist
     if os.path.exists(FILE_NAME):
         with open(FILE_NAME, "r") as f: watch_list = json.load(f)
     else: watch_list = []
 
-    # 2. Get All Active Futures Pairs
     try:
         url_active = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
         all_pairs_raw = requests.get(url_active).json()
@@ -154,7 +147,6 @@ def main():
         print(f"Error fetching active pairs: {e}")
         return
 
-    # 3. Get Price Stats to find Top Gainers
     def get_stats(p):
         try:
             d = requests.get(f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={p}", timeout=5).json()
@@ -166,13 +158,11 @@ def main():
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         stats = [r for r in ex.map(get_stats, all_pairs) if r]
     
-    # Take Top 15 Gainers for discovery + current watchlist
     top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:15]]
     scan_pool = list(set(watch_list + top_gainers))
 
     alerts, new_watchlist = [], []
 
-    # 4. Process Logic for Scan Pool
     print(f"Scanning {len(scan_pool)} coins...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = [executor.submit(process_logic, p, watch_list) for p in scan_pool]
@@ -187,27 +177,31 @@ def main():
                     f"Entry: {res['entry']:.6f}\n"
                     f"Stop Loss: {res['sl']:.6f}\n"
                     f"Capital: ₹{res['margin']:.2f} (5x)\n\n"
-                    f"🎯 Target 1:2 -> {res['t2']:.6f}\n"
-                    f"🎯 Target 1:3 -> {res['t3']:.6f}\n"
-                    f"🎯 Target 1:4 -> {res['t4']:.6f}"
+                    f"🎯 T2: {res['t2']:.6f}\n"
+                    f"🎯 T3: {res['t3']:.6f}\n"
+                    f"🎯 T4: {res['t4']:.6f}"
                 )
                 alerts.append(msg)
             elif res["type"] in ["KEEP", "ADD"]:
                 new_watchlist.append(res["pair"])
 
-    # 5. Send Telegram Alerts
     if alerts:
         Send_Momentum_Telegram_Message("\n\n".join(alerts))
     
-    # 6. Final Save & Cleanup
-    # Logic: Signaled coins are removed from watchlist
-    signaled_pairs = [a.split("**")[1].split("**")[0].split(":")[1].strip() if ":" in a else "" for a in alerts]
+    # Signaled coins ko list se remove karna taaki repeat alert na aaye
+    signaled_pairs = []
+    for a in alerts:
+        try:
+            p_name = a.split("**")[1].split("**")[0].split(":")[1].strip()
+            signaled_pairs.append(p_name)
+        except: continue
+
     final_list = sorted(list(set([p for p in new_watchlist if p not in signaled_pairs])))
 
     with open(FILE_NAME, "w") as f:
         json.dump(final_list, f, indent=2)
     
-    print(f"Done. Current Watchlist Size: {len(final_list)}")
+    print(f"Scan complete. Watchlist size: {len(final_list)}")
 
 if __name__ == "__main__":
     main()
