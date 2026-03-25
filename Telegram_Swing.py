@@ -1,7 +1,7 @@
 import os
 import requests
-bot_token = os.environ.get("TELEGRAM_BOT_TOKEN_Swing")
-chat_id = os.environ.get("TELEGRAM_CHAT_ID_Swing") #
+bot_token = os.environ.get("TELEGRAM_BOT_TOKEN_SWING")
+chat_id = os.environ.get("TELEGRAM_CHAT_ID_SWING") #
 
 def Send_Swing_Telegram_Message(message):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"

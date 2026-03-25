@@ -13,7 +13,7 @@ try:
 except ImportError:
     def Send_Swing_Telegram_Message(msg): 
         print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
-
+Send_Swing_Telegram_Message("df")
 
 # ================= INDICATORS (TRADINGVIEW STYLE) =================
 def calculate_indicators(df):
