@@ -41,14 +41,18 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-
-          git add TopGainerWatchlist.json TopLoserWatchlist.json || true
-
-          # PEHLE COMMIT (Order changed here)
-          git diff --cached --quiet || git commit -m "Update momentum watchlists [skip ci]"
-
-          # FIR PULL REBASE
-          git pull --rebase origin main
-
-          # FIR PUSH
-          git push origin main
+          
+          # Sirf zaroori files add karein
+          git add TopGainerWatchlist.json TopLoserWatchlist.json
+          
+          # Kisi bhi extra temporary file change ko discard karein
+          git checkout -- . || true
+          
+          # Agar changes hain toh hi commit aur push karein
+          if ! git diff --cached --quiet; then
+            git commit -m "Update momentum watchlists [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
