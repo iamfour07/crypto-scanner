@@ -44,8 +44,11 @@ jobs:
           
           git add ReversalSellWatchlist.json || true
           
-          # Rebase to sync changes from Momentum Scanner if it pushed first
+          # PEHLE COMMIT (Order changed here)
+          git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
+          
+          # FIR PULL REBASE
           git pull --rebase origin main
           
-          git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
+          # FIR PUSH
           git push origin main
