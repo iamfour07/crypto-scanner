@@ -1,15 +1,17 @@
 [
   "B-ONG_USDT",
-  "B-ZRO_USDT",
-  "B-PARTI_USDT",
-  "B-GAS_USDT",
-  "B-C_USDT",
-  "B-IOTX_USDT",
-  "B-IRYS_USDT",
-  "B-HUMA_USDT",
-  "B-DUSK_USDT",
-  "B-FHE_USDT",
   "B-INIT_USDT",
+  "B-PARTI_USDT",
+  "B-C_USDT",
+  "B-HUMA_USDT",
+  "B-FHE_USDT",
+  "B-DUSK_USDT",
+  "B-OPEN_USDT",
+  "B-IOTX_USDT",
   "B-SAPIEN_USDT",
-  "B-TA_USDT"
+  "B-IRYS_USDT",
+  "B-TOWNS_USDT",
+  "B-ZRO_USDT",
+  "B-TA_USDT",
+  "B-GAS_USDT"
 ]
