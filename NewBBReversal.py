@@ -10,10 +10,15 @@ except ImportError:
         print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
 
 # ================= STRATEGY CONFIG =================
-RESOLUTION = "60"           
+RESOLUTION = "60"           # 1 Hour timeframe
 LIMIT_HOURS = 500           
 MAX_WORKERS = 25            
 FILE_NAME = "ReversalSellWatchlist.json"
+
+# EMA Periods (Global Variables)
+EMA_FAST = 5
+EMA_MEDIUM = 10
+EMA_SLOW = 100
 
 # Indicators Parameters
 BB_LENGTH, BB_MULT = 200, 2.5
@@ -25,18 +30,17 @@ LEVERAGE = 5
 
 # ================= INDICATOR CALCULATIONS =================
 def calculate_indicators(df):
-    # Bollinger Bands
+    # 1. Bollinger Bands (Discovery ke liye same rakha hai)
     mid = df["close"].rolling(BB_LENGTH).mean()
     std = df["close"].rolling(BB_LENGTH).std()
     df["BB_upper"] = mid + BB_MULT * std
 
-    # EMA Setup (UPDATED)
-    df['ema9'] = df['close'].ewm(span=9, adjust=False).mean()
-    df['ema30'] = df['close'].ewm(span=30, adjust=False).mean()
-    df['ema89'] = df['close'].ewm(span=89, adjust=False).mean()
-    df['ema100'] = df['close'].ewm(span=100, adjust=False).mean()
+    # 2. EMA Setup (Using Global Variables)
+    df['ema_fast'] = df['close'].ewm(span=EMA_FAST, adjust=False).mean()
+    df['ema_med'] = df['close'].ewm(span=EMA_MEDIUM, adjust=False).mean()
+    df['ema_slow'] = df['close'].ewm(span=EMA_SLOW, adjust=False).mean()
 
-    # RSI
+    # 3. RSI
     delta = df['close'].diff()
     gain = (delta.where(delta > 0, 0))
     loss = (-delta.where(delta < 0, 0))
@@ -60,69 +64,54 @@ def fetch_candles(pair):
     }
     try:
         r = requests.get(url, params=params, timeout=10).json()
-        df = pd.DataFrame(r["data"]).sort_values("time")  # ✅ FIXED (no iloc[:-1])
-
+        df = pd.DataFrame(r["data"]).sort_values("time").iloc[:-1] 
         for col in ["open", "high", "low", "close"]: 
             df[col] = pd.to_numeric(df[col])
-
-        if len(df) < BB_LENGTH: 
-            return None
-
+        
+        if len(df) < max(BB_LENGTH, EMA_SLOW): return None
         return calculate_indicators(df).dropna()
-    except Exception: 
-        return None
+    except Exception: return None
 
 # ================= CORE SIGNAL LOGIC =================
 def process_logic(pair, watch_list):
     df = fetch_candles(pair)
-    if df is None or df.empty: 
-        return None
+    if df is None or df.empty: return None
 
-    # ✅ USING LATEST CANDLE (NO LAG)
     last = df.iloc[-1]
     prev = df.iloc[-2]
-
     last_rsi = round(last['rsi'], 2)
 
-    # --- CASE 1: SELL SIGNAL (UPDATED EMA LOGIC) ---
+    # --- CASE 1: Check for Sell Signal (Using EMA Strategy) ---
     if pair in watch_list:
-
-        momentum_bearish = last['ema9'] < last['ema89']
-
-        ema_crossover = (
-            prev['ema9'] <= prev['ema89'] and 
-            last['ema9'] > last['ema89']
-        )
+        # CONDITION: Fast EMA < Medium EMA AND Medium EMA Just Cross Below Slow EMA
+        momentum_bearish = last['ema_fast'] < last['ema_med']
+        ema_crossover = (prev['ema_med'] >= prev['ema_slow']) and (last['ema_med'] < last['ema_slow'])
 
         if momentum_bearish and ema_crossover:
             entry = last["close"]
-
-            # Stop Loss: EMA100 or Candle High
-            sl = max(last["ema100"], last["high"])
+            # Stop Loss: Slow EMA ya Candle High (jo bhi bada ho)
+            sl = max(last["ema_slow"], last["high"])
             risk_per_coin = sl - entry
-
-            if risk_per_coin <= 1e-9: 
-                return None 
+            
+            if risk_per_coin <= 1e-9: return None 
 
             qty = RISK_PER_TRADE / risk_per_coin
             margin = (qty * entry) / LEVERAGE
 
             return {
-                "type": "SIGNAL",
-                "pair": pair,
-                "entry": entry,
-                "sl": sl,
-                "margin": margin,
-                "rsi": last_rsi,
-                "t2": entry - (risk_per_coin * 2),
-                "t3": entry - (risk_per_coin * 3),
+                "type": "SIGNAL", "pair": pair, "entry": entry, "sl": sl, 
+                "margin": margin, "rsi": last_rsi,
+                "t2": entry - (risk_per_coin * 2), 
+                "t3": entry - (risk_per_coin * 3), 
                 "t4": entry - (risk_per_coin * 4)
             }
-
+        
+        # Signal nahi mila toh list mein hi rakho
         return {"type": "KEEP", "pair": pair}
 
-    # --- CASE 2: DISCOVERY (UNCHANGED) ---
+    # --- CASE 2: Discovery (Adding using BB Upper Breakout) ---
     else:
+        # Agar price Bollinger Upper Band ke upar hai, toh watchlist mein dalo
         if last["close"] > last["BB_upper"]:
             return {"type": "ADD", "pair": pair}
 
@@ -131,10 +120,8 @@ def process_logic(pair, watch_list):
 # ================= MAIN EXECUTION =================
 def main():
     if os.path.exists(FILE_NAME):
-        with open(FILE_NAME, "r") as f: 
-            watch_list = json.load(f)
-    else: 
-        watch_list = []
+        with open(FILE_NAME, "r") as f: watch_list = json.load(f)
+    else: watch_list = []
 
     try:
         url_active = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
@@ -149,28 +136,29 @@ def main():
             d = requests.get(f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={p}", timeout=5).json()
             pc = d.get("price_change_percent", {}).get("1D", 0)
             return {"pair": p, "change": float(pc)}
-        except: 
-            return None
+        except: return None
 
     print("Fetching market stats...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         stats = [r for r in ex.map(get_stats, all_pairs) if r]
-
+    
+    # Discovery ke liye Top 15 Gainers check karenge
     top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:15]]
     scan_pool = list(set(watch_list + top_gainers))
 
     alerts, new_watchlist = [], []
 
-    print(f"Scanning {len(scan_pool)} coins...")
+    print(f"Scanning {len(scan_pool)} coins (Discovery: BB | Alert: EMA)...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = [executor.submit(process_logic, p, watch_list) for p in scan_pool]
         for f in as_completed(tasks):
             res = f.result()
             if not res: continue
-
+            
             if res["type"] == "SIGNAL":
                 msg = (
-                    f"🔴 **EMA 9-89 CROSS SELL**: {res['pair']}\n"
+                    f"🔴 **REVERSAL SELL (EMA {EMA_FAST}-{EMA_MEDIUM}-{EMA_SLOW})**: {res['pair']}\n"
+                    f"Logic: {EMA_MEDIUM} EMA crossed below {EMA_SLOW} EMA\n"
                     f"RSI: {res['rsi']}\n"
                     f"Entry: {res['entry']:.6f}\n"
                     f"Stop Loss: {res['sl']:.6f}\n"
@@ -180,28 +168,29 @@ def main():
                     f"🎯 T4: {res['t4']:.6f}"
                 )
                 alerts.append(msg)
-
             elif res["type"] in ["KEEP", "ADD"]:
                 new_watchlist.append(res["pair"])
 
     if alerts:
         Send_Momentum_Telegram_Message("\n\n".join(alerts))
-
-    # Remove signaled pairs
+    
+    # Signaled coins ko remove karne ke liye logic
     signaled_pairs = []
     for a in alerts:
         try:
-            p_name = a.split("**")[1].split(":")[1].strip()
+            # Extracting pair name safely
+            p_name = a.split("**")[1].split(":")[1].strip() if ":" in a.split("**")[1] else a.split("**")[1].split(" ")[-1].strip()
             signaled_pairs.append(p_name)
-        except:
+        except: 
             pass
 
+    # Final filter: New list minus those that gave a signal
     final_list = sorted(list(set([p for p in new_watchlist if p not in signaled_pairs])))
 
     with open(FILE_NAME, "w") as f:
         json.dump(final_list, f, indent=2)
-
-    print(f"Scan complete. Signals: {len(alerts)}, Watchlist: {len(final_list)}")
+    
+    print(f"Scan complete. Signals: {len(alerts)}, New Watchlist: {len(final_list)}")
 
 if __name__ == "__main__":
     main()
