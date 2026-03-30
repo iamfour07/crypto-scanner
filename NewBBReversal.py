@@ -15,7 +15,7 @@ LIMIT_HOURS = 500
 MAX_WORKERS = 25            
 FILE_NAME = "ReversalSellWatchlist.json"
 
-# EMA Periods (Global Variables)
+# EMA Periods
 EMA_FAST = 5
 EMA_MEDIUM = 10
 EMA_SLOW = 100
@@ -28,19 +28,55 @@ RSI_PERIOD = 14
 RISK_PER_TRADE = 100        
 LEVERAGE = 5                
 
+# ================= MARKET STATUS MODULE =================
+def get_market_sentiment(stats):
+    """
+    Calculates the net difference between gainer and loser coins 
+    to determine overall market direction.
+    """
+    total_coins = len(stats)
+    if total_coins == 0:
+        return "⚠️ Market Status: No data available."
+
+    gainers = [s for s in stats if s['change'] > 0]
+    losers = [s for s in stats if s['change'] < 0]
+    
+    num_gainers = len(gainers)
+    num_losers = len(losers)
+    
+    # Decision Logic based on Difference
+    diff = num_gainers - num_losers
+    
+    if diff > 0:
+        status = "🟢 BULLISH (Buy Side)"
+        advice = "Buyers are dominating the market."
+    elif diff < 0:
+        status = "🔴 BEARISH (Sell Side)"
+        advice = "Sellers are dominating the market."
+    else:
+        status = "⚪ NEUTRAL"
+        advice = "Market is perfectly balanced."
+
+    msg = (
+        f"📊 **MARKET STATUS REPORT**\n"
+        f"Status: **{status}**\n\n"
+        f"✅ Buy Side (Gainers): {num_gainers}\n"
+        f"❌ Sell Side (Losers): {num_losers}\n"
+        f"⚖️ Net Difference: {diff:+}\n\n"
+        f"Note: {advice}"
+    )
+    return msg
+
 # ================= INDICATOR CALCULATIONS =================
 def calculate_indicators(df):
-    # 1. Bollinger Bands (Discovery ke liye same rakha hai)
     mid = df["close"].rolling(BB_LENGTH).mean()
     std = df["close"].rolling(BB_LENGTH).std()
     df["BB_upper"] = mid + BB_MULT * std
 
-    # 2. EMA Setup (Using Global Variables)
     df['ema_fast'] = df['close'].ewm(span=EMA_FAST, adjust=False).mean()
     df['ema_med'] = df['close'].ewm(span=EMA_MEDIUM, adjust=False).mean()
     df['ema_slow'] = df['close'].ewm(span=EMA_SLOW, adjust=False).mean()
 
-    # 3. RSI
     delta = df['close'].diff()
     gain = (delta.where(delta > 0, 0))
     loss = (-delta.where(delta < 0, 0))
@@ -48,7 +84,6 @@ def calculate_indicators(df):
     avg_loss = loss.ewm(alpha=1/RSI_PERIOD, min_periods=RSI_PERIOD, adjust=False).mean()
     rs = avg_gain / (avg_loss + 1e-9)
     df['rsi'] = 100 - (100 / (1 + rs))
-
     return df
 
 # ================= DATA FETCHING =================
@@ -81,15 +116,12 @@ def process_logic(pair, watch_list):
     prev = df.iloc[-2]
     last_rsi = round(last['rsi'], 2)
 
-    # --- CASE 1: Check for Sell Signal (Using EMA Strategy) ---
     if pair in watch_list:
-        # CONDITION: Fast EMA < Medium EMA AND Medium EMA Just Cross Below Slow EMA
         momentum_bearish = last['ema_fast'] < last['ema_med']
         ema_crossover = (prev['ema_med'] >= prev['ema_slow']) and (last['ema_med'] < last['ema_slow'])
 
         if momentum_bearish and ema_crossover:
             entry = last["close"]
-            # Stop Loss: Slow EMA ya Candle High (jo bhi bada ho)
             sl = max(last["ema_slow"], last["high"])
             risk_per_coin = sl - entry
             
@@ -105,16 +137,10 @@ def process_logic(pair, watch_list):
                 "t3": entry - (risk_per_coin * 3), 
                 "t4": entry - (risk_per_coin * 4)
             }
-        
-        # Signal nahi mila toh list mein hi rakho
         return {"type": "KEEP", "pair": pair}
-
-    # --- CASE 2: Discovery (Adding using BB Upper Breakout) ---
     else:
-        # Agar price Bollinger Upper Band ke upar hai, toh watchlist mein dalo
         if last["close"] > last["BB_upper"]:
             return {"type": "ADD", "pair": pair}
-
     return None
 
 # ================= MAIN EXECUTION =================
@@ -138,17 +164,22 @@ def main():
             return {"pair": p, "change": float(pc)}
         except: return None
 
-    print("Fetching market stats...")
+    print("Fetching market stats for Market Status...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         stats = [r for r in ex.map(get_stats, all_pairs) if r]
     
-    # Discovery ke liye Top 15 Gainers check karenge
+    # --- 1. SEND MARKET STATUS ALERT ---
+    market_msg = get_market_sentiment(stats)
+    print(market_msg)
+    Send_Momentum_Telegram_Message(market_msg)
+    
+    # --- 2. PREPARE DISCOVERY ---
     top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:15]]
     scan_pool = list(set(watch_list + top_gainers))
 
     alerts, new_watchlist = [], []
 
-    print(f"Scanning {len(scan_pool)} coins (Discovery: BB | Alert: EMA)...")
+    print(f"Scanning {len(scan_pool)} coins for signals...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = [executor.submit(process_logic, p, watch_list) for p in scan_pool]
         for f in as_completed(tasks):
@@ -157,15 +188,13 @@ def main():
             
             if res["type"] == "SIGNAL":
                 msg = (
-                    f"🔴 **REVERSAL SELL (EMA {EMA_FAST}-{EMA_MEDIUM}-{EMA_SLOW})**: {res['pair']}\n"
-                    f"Logic: {EMA_MEDIUM} EMA crossed below {EMA_SLOW} EMA\n"
+                    f"🔴 **REVERSAL SELL**: {res['pair']}\n"
+                    f"Logic: EMA Cross + Bearish Momentum\n"
                     f"RSI: {res['rsi']}\n"
                     f"Entry: {res['entry']:.6f}\n"
                     f"Stop Loss: {res['sl']:.6f}\n"
                     f"Capital: ₹{res['margin']:.2f} (5x)\n\n"
-                    f"🎯 T2: {res['t2']:.6f}\n"
-                    f"🎯 T3: {res['t3']:.6f}\n"
-                    f"🎯 T4: {res['t4']:.6f}"
+                    f"🎯 T2: {res['t2']:.6f} | T3: {res['t3']:.6f} | T4: {res['t4']:.6f}"
                 )
                 alerts.append(msg)
             elif res["type"] in ["KEEP", "ADD"]:
@@ -174,23 +203,20 @@ def main():
     if alerts:
         Send_Momentum_Telegram_Message("\n\n".join(alerts))
     
-    # Signaled coins ko remove karne ke liye logic
+    # Cleanup Watchlist
     signaled_pairs = []
     for a in alerts:
         try:
-            # Extracting pair name safely
             p_name = a.split("**")[1].split(":")[1].strip() if ":" in a.split("**")[1] else a.split("**")[1].split(" ")[-1].strip()
             signaled_pairs.append(p_name)
-        except: 
-            pass
+        except: pass
 
-    # Final filter: New list minus those that gave a signal
     final_list = sorted(list(set([p for p in new_watchlist if p not in signaled_pairs])))
 
     with open(FILE_NAME, "w") as f:
         json.dump(final_list, f, indent=2)
     
-    print(f"Scan complete. Signals: {len(alerts)}, New Watchlist: {len(final_list)}")
+    print(f"Scan complete. Signals: {len(alerts)}, Watchlist: {len(final_list)}")
 
 if __name__ == "__main__":
     main()
