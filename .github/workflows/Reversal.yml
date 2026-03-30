@@ -2,8 +2,6 @@ name: Master Reversal Scanner
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 * * * *' # Optional: Run every hour
 
 concurrency:
   group: scanner-lock
@@ -16,6 +14,7 @@ jobs:
   run-trading-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -26,7 +25,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip' # <--- This enables the cache
 
       - name: Install Dependencies
         run: |
@@ -46,11 +44,11 @@ jobs:
           
           git add ReversalSellWatchlist.json || true
           
-          # Only commit if there are changes
-          if ! git diff --cached --quiet; then
-            git commit -m "Update reversal watchlist [skip ci]"
-            git pull --rebase origin main
-            git push origin main
-          else
-            echo "No changes to watchlist."
-          fi
+          # PEHLE COMMIT (Order changed here)
+          git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
+          
+          # FIR PULL REBASE
+          git pull --rebase origin main
+          
+          # FIR PUSH
+          git push origin main
