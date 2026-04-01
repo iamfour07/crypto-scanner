@@ -3,8 +3,7 @@
   "B-ARC_USDT",
   "B-BANK_USDT",
   "B-BLUR_USDT",
-  "B-EUL_USDT",
-  "B-ILV_USDT",
+  "B-JUP_USDT",
   "B-MOVR_USDT",
   "B-NOM_USDT",
   "B-OG_USDT",
@@ -12,5 +11,7 @@
   "B-ONT_USDT",
   "B-SOLV_USDT",
   "B-STO_USDT",
-  "B-WET_USDT"
+  "B-S_USDT",
+  "B-WET_USDT",
+  "B-XPL_USDT"
 ]
