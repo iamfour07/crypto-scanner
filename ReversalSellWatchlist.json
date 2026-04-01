@@ -1,5 +1,7 @@
 [
   "B-ALGO_USDT",
+  "B-ARC_USDT",
+  "B-BANK_USDT",
   "B-BLUR_USDT",
   "B-EUL_USDT",
   "B-ILV_USDT",
@@ -10,6 +12,5 @@
   "B-ONT_USDT",
   "B-SOLV_USDT",
   "B-STO_USDT",
-  "B-VVV_USDT",
   "B-WET_USDT"
 ]
