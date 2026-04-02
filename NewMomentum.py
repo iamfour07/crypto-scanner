@@ -15,7 +15,7 @@ CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
 BB_PERIOD, BB_STD = 20, 2
 RSI_PERIOD = 14
 RISK_INR = 50      # Your fixed risk per trade
-LEVERAGE = 10      # Change this to your preferred leverage
+LEVERAGE = 5       # UPDATED TO 5X MARGIN AS REQUESTED
 
 def fetch_market_data(pair):
     now = int(datetime.now(timezone.utc).timestamp())
@@ -58,7 +58,6 @@ def fetch_market_data(pair):
     except: return None
 
 def main():
-    # print("🚀 Scanning Market Sentiment and First-Touch Breakouts...")
     try:
         all_pairs = [p for p in requests.get(ACTIVE_INST_URL).json() if isinstance(p, str)]
     except: return
@@ -74,25 +73,15 @@ def main():
     total_pairs = len(df_all)
     net_diff = ((num_gainers - (total_pairs - num_gainers)) / total_pairs) * 100
     
-    market_report = f"📊 **MARKET STATUS REPORT**\nNet Difference: **{net_diff:.1f}%**\n"
-    
     mode = "NONE"
     if net_diff >= 50:
         mode = "BUY"
-        market_report += "Status: 🟢 **BULLISH** (Scanning Buys)"
         scan_list = df_all.sort_values("change", ascending=False).iloc[3:15]
     elif net_diff <= -50:
         mode = "SELL"
-        market_report += "Status: 🔴 **BEARISH** (Scanning Sells)"
         scan_list = df_all.sort_values("change", ascending=True).iloc[3:15]
     else:
-        market_report += "Status: ⚪ **NEUTRAL** (No Signals)"
-        # print(market_report)
         return
-
-    # print(market_report)
-    # Optional: Uncomment the next line if you want the market report on Telegram every run
-    # Send_EMA_Telegram_Message(market_report)
 
     # 2. Strict Signal Logic
     signals = []
@@ -126,23 +115,17 @@ def main():
         for s in signals:
             r = s['risk_dist']
             side_mult = 1 if s['side'] == "BUY" else -1
-            t1_2 = s['entry'] + (side_mult * r * 2)
-            t1_3 = s['entry'] + (side_mult * r * 3)
-            t1_4 = s['entry'] + (side_mult * r * 4)
-
-            # Console Output
-            # print(f"🔥 {s['side']} SIGNAL: {s['pair']}")
             
             # Telegram Message Construction
             emoji = "🟢" if s['side'] == "BUY" else "🔴"
             tele_msg = (
                 f"{emoji} **BREAKOUT {s['side']}**\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
-                f"⚖️ **Market Status:** `{net_diff:.1f}%`\n"  # Added this line
+                f"⚖️ **Market Status:** `{net_diff:.1f}%`\n"
                 f"🪙 **Pair:** `{s['pair']}`\n"
                 f"⚡ **Entry:** `{s['entry']:.6f}`\n"
                 f"🛡️ **SL:** `{s['sl']:.6f}`\n"
-                f"💰 **Margin:** `₹{s['capital']:.2f}`\n"
+                f"💰 **Margin (5x):** `₹{s['capital']:.2f}`\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
                 f"🎯 **T1 (1:2):** `{s['entry'] + (side_mult * r * 2):.6f}`\n"
                 f"🎯 **T2 (1:3):** `{s['entry'] + (side_mult * r * 3):.6f}`\n"
