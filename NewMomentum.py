@@ -79,7 +79,7 @@ def main():
         scan_list = df_all.sort_values("change", ascending=False).iloc[3:25]
     elif net_diff <= -50:
         mode = "SELL"
-        scan_list = df_all.sort_values("change", ascending=True).iloc[3:15]
+        scan_list = df_all.sort_values("change", ascending=True).iloc[3:25]
     else:
         return
 
