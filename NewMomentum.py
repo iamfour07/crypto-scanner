@@ -6,7 +6,7 @@ from Telegram_EMA import Send_EMA_Telegram_Message
 
 # ================= CONFIGURATION =================
 MAX_WORKERS = 25   
-RESOLUTION = "60"  # 1 Hour
+RESOLUTION = "60"  # 1 Hour candles
 LIMIT_HOURS = 100  
 ACTIVE_INST_URL = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
 CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
@@ -14,8 +14,8 @@ CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
 # INDICATORS & RISK
 BB_PERIOD, BB_STD = 20, 2
 RSI_PERIOD = 14
-RISK_INR = 50      # Your fixed risk per trade
-LEVERAGE = 5       # UPDATED TO 5X MARGIN AS REQUESTED
+RISK_INR = 50      # Risk per trade
+LEVERAGE = 5       # 5x Margin calculation
 
 def fetch_market_data(pair):
     now = int(datetime.now(timezone.utc).timestamp())
@@ -28,21 +28,20 @@ def fetch_market_data(pair):
         
         if len(df) < 30: return None
 
-        # BB (ddof=0 for exact chart matching)
+        # Bollinger Bands
         sma = df["close"].rolling(window=BB_PERIOD).mean()
         std = df["close"].rolling(window=BB_PERIOD).std(ddof=0)
         df["bb_up"] = sma + (BB_STD * std)
         df["bb_low"] = sma - (BB_STD * std)
 
-        # RSI
+        # RSI calculation
         delta = df['close'].diff()
         gain = (delta.where(delta > 0, 0)).ewm(alpha=1/RSI_PERIOD, adjust=False).mean()
         loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/RSI_PERIOD, adjust=False).mean()
         df['rsi'] = 100 - (100 / (1 + (gain / (loss + 1e-9))))
 
-        # CANDLE DEFINITIONS
-        curr = df.iloc[-2]  # The Alert Candle (Last Closed)
-        prev = df.iloc[-3]  # The Previous Candle
+        curr = df.iloc[-2]  # Last Closed Candle
+        prev = df.iloc[-3]  # Previous Candle
         
         # 24h Change for Ranking
         open_24h = df.iloc[-26]["open"] if len(df) >= 26 else df.iloc[0]["open"]
@@ -68,22 +67,26 @@ def main():
     if not all_stats: return
     df_all = pd.DataFrame(all_stats)
     
-    # 1. Market Status Logic
+    # 1. Market Sentiment Calculation
     num_gainers = len(df_all[df_all['change'] > 0])
     total_pairs = len(df_all)
     net_diff = ((num_gainers - (total_pairs - num_gainers)) / total_pairs) * 100
     
     mode = "NONE"
-    if net_diff >= 50:
+    # SWEET SPOT: 33% for Quality + Quantity
+    if net_diff >= 33:
         mode = "BUY"
-        scan_list = df_all.sort_values("change", ascending=False).iloc[3:25]
-    elif net_diff <= -50:
+        # SKIP TOP 3 (iloc[3:18]), SCAN NEXT 15
+        scan_list = df_all.sort_values("change", ascending=False).iloc[3:15]
+    elif net_diff <= -33:
         mode = "SELL"
-        scan_list = df_all.sort_values("change", ascending=True).iloc[3:25]
+        # SKIP TOP 3 (iloc[3:18]), SCAN NEXT 15
+        scan_list = df_all.sort_values("change", ascending=True).iloc[3:15]
     else:
+        print(f"Neutral Market ({net_diff:.1f}%). Waiting for clear 33% trend.")
         return
 
-    # 2. Strict Signal Logic
+    # 2. Breakout Signal Logic
     signals = []
     for _, row in scan_list.iterrows():
         if mode == "BUY":
@@ -95,7 +98,7 @@ def main():
                     capital_inr = (qty * entry) / LEVERAGE
                     signals.append({
                         "pair": row['pair'], "side": "BUY", "entry": entry, "sl": sl, 
-                        "capital": capital_inr, "risk_dist": point_risk, "rsi": row['rsi']
+                        "capital": capital_inr, "risk_dist": point_risk
                     })
         
         elif mode == "SELL":
@@ -107,21 +110,20 @@ def main():
                     capital_inr = (qty * entry) / LEVERAGE
                     signals.append({
                         "pair": row['pair'], "side": "SELL", "entry": entry, "sl": sl, 
-                        "capital": capital_inr, "risk_dist": point_risk, "rsi": row['rsi']
+                        "capital": capital_inr, "risk_dist": point_risk
                     })
 
-    # 3. Output Trade Details & Telegram Alerts
+    # 3. Telegram Alerts
     if signals:
         for s in signals:
             r = s['risk_dist']
             side_mult = 1 if s['side'] == "BUY" else -1
-            
-            # Telegram Message Construction
             emoji = "🟢" if s['side'] == "BUY" else "🔴"
+            
             tele_msg = (
                 f"{emoji} **BREAKOUT {s['side']}**\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
-                f"⚖️ **Market Status:** `{net_diff:.1f}%`\n"
+                f"🏛️ **Sentiment:** `{net_diff:.1f}%`\n"
                 f"🪙 **Pair:** `{s['pair']}`\n"
                 f"⚡ **Entry:** `{s['entry']:.6f}`\n"
                 f"🛡️ **SL:** `{s['sl']:.6f}`\n"
@@ -133,7 +135,7 @@ def main():
             )
             Send_EMA_Telegram_Message(tele_msg)
     else:
-         print("\nNo 'First-Touch' breakout signals detected.")
+         print(f"Market {mode} ({net_diff:.1f}%), but no fresh breakouts found in Rank 4-18.")
 
 if __name__ == "__main__":
     main()
