@@ -76,11 +76,11 @@ def main():
     # SWEET SPOT: 33% for Quality + Quantity
     if net_diff >= 33:
         mode = "BUY"
-        # SKIP TOP 3 (iloc[3:18]), SCAN NEXT 15
+        # SKIP TOP 3 (iloc[3:21]), SCAN NEXT 15
         scan_list = df_all.sort_values("change", ascending=False).iloc[3:20]
     elif net_diff <= -33:
         mode = "SELL"
-        # SKIP TOP 3 (iloc[3:18]), SCAN NEXT 15
+        # SKIP TOP 3 (iloc[3:21]), SCAN NEXT 15
         scan_list = df_all.sort_values("change", ascending=True).iloc[3:20]
     else:
         print(f"Neutral Market ({net_diff:.1f}%). Waiting for clear 33% trend.")
