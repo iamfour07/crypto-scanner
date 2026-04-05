@@ -35,14 +35,14 @@ def fetch_candle_data(pair):
     try:
         r = requests.get(CANDLE_URL, params=params, timeout=10).json()
         if not r.get("data"): return None
-        
+
         # Sort and take data till last CLOSED candle
         df = pd.DataFrame(r["data"]).sort_values("time")
         # iloc[:-1] ensure karta hai ki current running candle ignore ho
         df = df.iloc[:-1] 
-        
+
         for col in ["open", "high", "low", "close"]: df[col] = pd.to_numeric(df[col])
-        
+
         if len(df) < 50: return None
 
         # 1. Bollinger Bands Calculation
@@ -58,11 +58,11 @@ def fetch_candle_data(pair):
 
         curr = df.iloc[-1]   # Last Closed Candle
         prev = df.iloc[-2]   # Previous Closed Candle
-        
+
         # --- STRATEGY CONDITIONS ---
         # Cond 1: BB Breakout (Current Close > Upper BB, Prev Close <= Upper BB)
         bb_breakout = (curr['close'] > curr['bb_up']) and (prev['close'] <= prev['bb_up'])
-        
+
         # Cond 2: RSI Cross 60 (Current RSI > 60, Prev RSI <= 60)
         rsi_breakout = (curr['rsi'] > 60) and (prev['rsi'] <= 60)
 
@@ -70,12 +70,12 @@ def fetch_candle_data(pair):
             entry = curr['high']
             sl = curr['low']
             dist = entry - sl
-            
+
             if dist > 0:
                 # Quantity and Margin based on ₹50 Risk
                 qty = RISK_INR / dist
                 margin = (qty * entry) / LEVERAGE
-                
+
                 return {
                     "pair": pair, "entry": entry, "sl": sl, "r": dist, 
                     "margin": margin, "rsi_now": curr['rsi'], "rsi_prev": prev['rsi']
@@ -86,13 +86,13 @@ def fetch_candle_data(pair):
 # ================= MAIN LOGIC =================
 
 def main():
-    print(f"\n🚀 Scanning Top 20 Gainers | RSI + BB Strategy | Time: {datetime.now().strftime('%H:%M:%S')}")
-    
+    print(f"\n🚀 Scanning Rank 11-30 Gainers | RSI + BB Strategy | Time: {datetime.now().strftime('%H:%M:%S')}")
+
     try:
         all_pairs = requests.get(ACTIVE_INST_URL).json()
     except: return
 
-    # Step 1: Filter Top 20 Gainers
+    # Step 1: Get Stats for all pairs
     stats_list = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in all_pairs if isinstance(p, str)]
@@ -101,9 +101,18 @@ def main():
             if res: stats_list.append(res)
 
     if not stats_list: return
-    
+
     df_stats = pd.DataFrame(stats_list)
-    candidates = df_stats.sort_values("change", ascending=False).head(20)["pair"].tolist()
+    
+    # --- CHANGE HERE: Skipping Top 10, picking next 20 ---
+    # .iloc[10:30] means start from index 10 (11th coin) and take up to index 30
+    candidates = df_stats.sort_values("change", ascending=False).iloc[10:20]["pair"].tolist()
+
+    if not candidates:
+        print("ℹ️ No candidates found in the specified rank range.")
+        return
+
+    print(f"🔎 Scanning {len(candidates)} candidates (Rank 11 to 30)...")
 
     # Step 2: Technical Scan on Candidates
     signals = []
@@ -132,7 +141,7 @@ def main():
             Send_EMA_Telegram_Message(msg)
             print(f"✅ Alert Sent for {s['pair']}")
     else:
-        print("ℹ️ Scan Complete: No coins met both RSI and BB breakout conditions.")
+        print("ℹ️ Scan Complete: No coins in Rank 11-30 met conditions.")
 
 if __name__ == "__main__":
     main()
