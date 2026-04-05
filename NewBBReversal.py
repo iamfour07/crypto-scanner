@@ -47,8 +47,6 @@ def calculate_indicators(df):
     rs = avg_gain / (avg_loss + 1e-9)
     df['rsi'] = 100 - (100 / (1 + rs))
     
-    return df
-
     # ... baaki Heikin-Ashi wala code bilkul sahi hai ...
 
     # 2. HEIKIN-ASHI Calculation
