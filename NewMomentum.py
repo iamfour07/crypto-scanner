@@ -106,7 +106,7 @@ def main():
     
     # --- CHANGE HERE: Skipping Top 10, picking next 20 ---
     # .iloc[10:30] means start from index 10 (11th coin) and take up to index 30
-    candidates = df_stats.sort_values("change", ascending=False).iloc[10:20]["pair"].tolist()
+    candidates = df_stats.sort_values("change", ascending=False).iloc[5:30]["pair"].tolist()
 
     if not candidates:
         print("ℹ️ No candidates found in the specified rank range.")
