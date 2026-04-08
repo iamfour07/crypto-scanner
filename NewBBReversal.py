@@ -18,7 +18,7 @@ FILE_NAME = "ReversalSellWatchlist.json"
 RSI_PERIOD = 14
 RSI_THRESHOLD = 60
 
-RISK_PER_TRADE = 100        
+RISK_PER_TRADE = 250       
 LEVERAGE = 5                
 
 # ================= INDICATOR CALCULATIONS =================
