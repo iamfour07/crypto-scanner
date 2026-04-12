@@ -8,7 +8,7 @@ from Telegram_EMA import Send_EMA_Telegram_Message
 # ================= CONFIGURATION =================
 MAX_WORKERS = 20
 RESOLUTION = "60" 
-LIMIT_HOURS = 400           
+LIMIT_HOURS = 1000           
 CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
 ACTIVE_INST_URL = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
 
@@ -108,7 +108,7 @@ def main():
 
     # Sort by Losers (Ascending order of price change)
     df_stats = pd.DataFrame(stats_list).sort_values("change", ascending=True)
-    candidates = df_stats.head(20)["pair"].tolist()
+    candidates = df_stats.head(25)["pair"].tolist()
 
     signals = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
