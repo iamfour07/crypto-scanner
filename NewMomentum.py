@@ -8,15 +8,30 @@ from Telegram_EMA import Send_EMA_Telegram_Message
 # ================= CONFIGURATION =================
 MAX_WORKERS = 20
 RESOLUTION = "60" 
-LIMIT_HOURS = 400           # Stability ke liye data depth 400 hours
+LIMIT_HOURS = 400           
 CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
 ACTIVE_INST_URL = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
 
 # INDICATORS & RISK
 BB_PERIOD, BB_STD = 20, 2
-RSI_PERIOD = 14
-RISK_INR = 50               # Per trade fixed loss
+RISK_INR = 100               # New Risk: ₹100
 LEVERAGE = 5
+
+# ================= HEIKIN-ASHI CONVERSION =================
+
+def convert_to_heikin_ashi(df):
+    ha_df = df.copy()
+    ha_df['ha_close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
+    
+    ha_open = np.zeros(len(df))
+    ha_open[0] = (df['open'].iloc[0] + df['close'].iloc[0]) / 2
+    for i in range(1, len(df)):
+        ha_open[i] = (ha_open[i-1] + ha_df['ha_close'].iloc[i-1]) / 2
+    ha_df['ha_open'] = ha_open
+    
+    ha_df['ha_high'] = ha_df[['high', 'ha_open', 'ha_close']].max(axis=1)
+    ha_df['ha_low'] = ha_df[['low', 'ha_open', 'ha_close']].min(axis=1)
+    return ha_df
 
 # ================= API FUNCTIONS =================
 
@@ -25,8 +40,7 @@ def fetch_pair_stats(pair):
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
         r = requests.get(url, timeout=10)
         pc = r.json().get("price_change_percent", {}).get("1D")
-        if pc is None: return None
-        return {"pair": pair, "change": float(pc)}
+        return {"pair": pair, "change": float(pc)} if pc else None
     except: return None
 
 def fetch_candle_data(pair):
@@ -34,51 +48,43 @@ def fetch_candle_data(pair):
     params = {"pair": pair, "from": now - (LIMIT_HOURS * 3600), "to": now, "resolution": RESOLUTION, "pcode": "f"}
     try:
         r = requests.get(CANDLE_URL, params=params, timeout=10).json()
-        if not r.get("data"): return None
+        if not r.get("data") or len(r["data"]) < 50: return None
 
-        # Sort and take data till last CLOSED candle
         df = pd.DataFrame(r["data"]).sort_values("time")
-        # iloc[:-1] ensure karta hai ki current running candle ignore ho
-        df = df.iloc[:-1] 
-
+        df = df.iloc[:-1] # Last closed candle tak data
         for col in ["open", "high", "low", "close"]: df[col] = pd.to_numeric(df[col])
 
-        if len(df) < 50: return None
+        # 1. HA Conversion
+        ha_df = convert_to_heikin_ashi(df)
 
-        # 1. Bollinger Bands Calculation
-        sma = df["close"].rolling(window=BB_PERIOD).mean()
-        std = df["close"].rolling(window=BB_PERIOD).std(ddof=0)
-        df["bb_up"] = sma + (BB_STD * std)
+        # 2. Indicators (Based on HA Close)
+        sma = ha_df["ha_close"].rolling(window=BB_PERIOD).mean()
+        std = ha_df["ha_close"].rolling(window=BB_PERIOD).std(ddof=0)
+        ha_df["bb_up"] = sma + (BB_STD * std)
+        ha_df["bb_low"] = sma - (BB_STD * std)
 
-        # 2. RSI Calculation (Wilder's Smoothing/RMA)
-        delta = df['close'].diff()
-        gain = (delta.where(delta > 0, 0)).ewm(alpha=1/RSI_PERIOD, adjust=False).mean()
-        loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/RSI_PERIOD, adjust=False).mean()
-        df['rsi'] = 100 - (100 / (1 + (gain / (loss + 1e-9))))
+        curr = ha_df.iloc[-1]   # Last Closed Candle
+        prev = ha_df.iloc[-2]   # Prev Candle (Jo touch karni chahiye)
 
-        curr = df.iloc[-1]   # Last Closed Candle
-        prev = df.iloc[-2]   # Previous Closed Candle
+        # --- LOGIC ---
+        # Prev high touches or crosses Upper BB
+        prev_touches = prev['ha_high'] >= prev['bb_up']
+        # Current high does NOT touch Upper BB
+        curr_cools = curr['ha_high'] < curr['bb_up']
 
-        # --- STRATEGY CONDITIONS ---
-        # Cond 1: BB Breakout (Current Close > Upper BB, Prev Close <= Upper BB)
-        bb_breakout = (curr['close'] > curr['bb_up']) and (prev['close'] <= prev['bb_up'])
+        if prev_touches and curr_cools:
+            entry = curr['ha_low']
+            sl = prev['ha_high']
+            target = curr['bb_low']
+            risk_per_unit = sl - entry
 
-        # Cond 2: RSI Cross 60 (Current RSI > 60, Prev RSI <= 60)
-        rsi_breakout = (curr['rsi'] > 60) and (prev['rsi'] <= 60)
-
-        if bb_breakout and rsi_breakout:
-            entry = curr['high']
-            sl = curr['low']
-            dist = entry - sl
-
-            if dist > 0:
-                # Quantity and Margin based on ₹50 Risk
-                qty = RISK_INR / dist
+            if risk_per_unit > 0:
+                qty = RISK_INR / risk_per_unit
                 margin = (qty * entry) / LEVERAGE
-
+                
                 return {
-                    "pair": pair, "entry": entry, "sl": sl, "r": dist, 
-                    "margin": margin, "rsi_now": curr['rsi'], "rsi_prev": prev['rsi']
+                    "pair": pair, "entry": entry, "sl": sl, "target": target,
+                    "margin": margin, "change": None # Added in main
                 }
         return None
     except: return None
@@ -86,13 +92,11 @@ def fetch_candle_data(pair):
 # ================= MAIN LOGIC =================
 
 def main():
-    print(f"\n🚀 Scanning Rank 11-30 Gainers | RSI + BB Strategy | Time: {datetime.now().strftime('%H:%M:%S')}")
-
+    print(f"📉 Scanning Top Losers | Time: {datetime.now().strftime('%H:%M:%S')}")
     try:
         all_pairs = requests.get(ACTIVE_INST_URL).json()
     except: return
 
-    # Step 1: Get Stats for all pairs
     stats_list = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in all_pairs if isinstance(p, str)]
@@ -102,19 +106,10 @@ def main():
 
     if not stats_list: return
 
-    df_stats = pd.DataFrame(stats_list)
-    
-    # --- CHANGE HERE: Skipping Top 10, picking next 20 ---
-    # .iloc[10:30] means start from index 10 (11th coin) and take up to index 30
-    candidates = df_stats.sort_values("change", ascending=False).iloc[5:30]["pair"].tolist()
+    # Sort by Losers (Ascending order of price change)
+    df_stats = pd.DataFrame(stats_list).sort_values("change", ascending=True)
+    candidates = df_stats.head(20)["pair"].tolist()
 
-    if not candidates:
-        print("ℹ️ No candidates found in the specified rank range.")
-        return
-
-    print(f"🔎 Scanning {len(candidates)} candidates (Rank 11 to 30)...")
-
-    # Step 2: Technical Scan on Candidates
     signals = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         results = [executor.submit(fetch_candle_data, p) for p in candidates]
@@ -122,26 +117,23 @@ def main():
             sig = f.result()
             if sig: signals.append(sig)
 
-    # Step 3: Alerts Generation
     if signals:
         for s in signals:
             msg = (
-                f"🔥 **BB + RSI BREAKOUT (BUY)**\n"
+                f"❄️ **HA COOLDOWN SHORT**\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
                 f"🪙 **Pair:** `{s['pair']}`\n"
-                f"📈 **RSI:** `{s['rsi_prev']:.1f}` ➔ `{s['rsi_now']:.1f}`\n"
-                f"⚡ **Entry (High):** `{s['entry']:.6f}`\n"
-                f"🛡️ **SL (Low):** `{s['sl']:.6f}`\n"
+                f"📉 **Entry (Curr Low):** `{s['entry']:.6f}`\n"
+                f"🛡️ **SL (Prev High):** `{s['sl']:.6f}`\n"
+                f"🎯 **Target (Lower BB):** `{s['target']:.6f}`\n"
                 f"💰 **Margin (5x):** `₹{s['margin']:.2f}`\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
-                f"🎯 **T1 (1:2):** `{s['entry'] + (s['r'] * 2):.6f}`\n"
-                f"🎯 **T2 (1:3):** `{s['entry'] + (s['r'] * 3):.6f}`\n"
-                f"🎯 **T3 (1:4):** `{s['entry'] + (s['r'] * 4):.6f}`"
+                f"⚠️ Risk: ₹100 per trade"
             )
             Send_EMA_Telegram_Message(msg)
             print(f"✅ Alert Sent for {s['pair']}")
     else:
-        print("ℹ️ Scan Complete: No coins in Rank 11-30 met conditions.")
+        print("ℹ️ Scan Complete: No setups found.")
 
 if __name__ == "__main__":
     main()
