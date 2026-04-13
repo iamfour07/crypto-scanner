@@ -109,8 +109,8 @@ def main():
     df_stats = pd.DataFrame(stats)
 
     # Candidates: Top 20 Gainers + Top 20 Losers
-    top_gainers = df_stats.sort_values("change", ascending=False).head(20)
-    top_losers = df_stats.sort_values("change", ascending=True).head(20)
+    top_gainers = df_stats.sort_values("change", ascending=False).head(30)
+    top_losers = df_stats.sort_values("change", ascending=True).head(30)
     candidates = pd.concat([top_gainers, top_losers])
 
     signals = []
