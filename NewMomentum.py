@@ -8,7 +8,7 @@ from Telegram_EMA import Send_EMA_Telegram_Message
 # ================= CONFIGURATION =================
 MAX_WORKERS = 25            # Candidates badh gaye hain, isliye workers badha diye
 RESOLUTION = "60" 
-LIMIT_HOURS = 400           
+LIMIT_HOURS = 1000        
 CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
 ACTIVE_INST_URL = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
 
