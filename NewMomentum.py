@@ -6,15 +6,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from Telegram_EMA import Send_EMA_Telegram_Message
 
 # ================= CONFIGURATION =================
-MAX_WORKERS = 20
+MAX_WORKERS = 25            # Candidates badh gaye hain, isliye workers badha diye
 RESOLUTION = "60" 
-LIMIT_HOURS = 1000           
+LIMIT_HOURS = 400           
 CANDLE_URL = "https://public.coindcx.com/market_data/candlesticks"
 ACTIVE_INST_URL = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
 
 # INDICATORS & RISK
 BB_PERIOD, BB_STD = 20, 2
-RISK_INR = 100               # New Risk: ₹100
+RISK_INR = 100               # Fixed Loss per trade
 LEVERAGE = 5
 
 # ================= HEIKIN-ASHI CONVERSION =================
@@ -40,10 +40,10 @@ def fetch_pair_stats(pair):
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
         r = requests.get(url, timeout=10)
         pc = r.json().get("price_change_percent", {}).get("1D")
-        return {"pair": pair, "change": float(pc)} if pc else None
+        return {"pair": pair, "change": float(pc)} if pc is not None else None
     except: return None
 
-def fetch_candle_data(pair):
+def scan_strategy(pair, change_pct):
     now = int(datetime.now(timezone.utc).timestamp())
     params = {"pair": pair, "from": now - (LIMIT_HOURS * 3600), "to": now, "resolution": RESOLUTION, "pcode": "f"}
     try:
@@ -51,87 +51,91 @@ def fetch_candle_data(pair):
         if not r.get("data") or len(r["data"]) < 50: return None
 
         df = pd.DataFrame(r["data"]).sort_values("time")
-        df = df.iloc[:-1] # Last closed candle tak data
+        df = df.iloc[:-1] # Only closed candles
         for col in ["open", "high", "low", "close"]: df[col] = pd.to_numeric(df[col])
 
-        # 1. HA Conversion
+        # 1. HA Conversion & Indicators
         ha_df = convert_to_heikin_ashi(df)
-
-        # 2. Indicators (Based on HA Close)
         sma = ha_df["ha_close"].rolling(window=BB_PERIOD).mean()
         std = ha_df["ha_close"].rolling(window=BB_PERIOD).std(ddof=0)
         ha_df["bb_up"] = sma + (BB_STD * std)
         ha_df["bb_low"] = sma - (BB_STD * std)
 
-        curr = ha_df.iloc[-1]   # Last Closed Candle
-        prev = ha_df.iloc[-2]   # Prev Candle (Jo touch karni chahiye)
+        curr = ha_df.iloc[-1]   
+        prev = ha_df.iloc[-2]   
 
-        # --- LOGIC ---
-        # Prev high touches or crosses Upper BB
-        prev_touches = prev['ha_high'] >= prev['bb_up']
-        # Current high does NOT touch Upper BB
-        curr_cools = curr['ha_high'] < curr['bb_up']
+        # --- LOGIC 1: SHORT (Momentum Cooldown in Losers) ---
+        if change_pct < 0:
+            prev_touches_up = prev['ha_high'] >= prev['bb_up']
+            curr_cools_up = curr['ha_high'] < curr['bb_up']
+            
+            if prev_touches_up and curr_cools_up:
+                entry, sl, target = curr['ha_low'], prev['ha_high'], curr['bb_low']
+                risk = sl - entry
+                if risk > 0:
+                    return {"side": "SHORT", "pair": pair, "entry": entry, "sl": sl, "target": target, "m": (RISK_INR/risk * entry)/LEVERAGE, "ch": change_pct}
 
-        if prev_touches and curr_cools:
-            entry = curr['ha_low']
-            sl = prev['ha_high']
-            target = curr['bb_low']
-            risk_per_unit = sl - entry
-
-            if risk_per_unit > 0:
-                qty = RISK_INR / risk_per_unit
-                margin = (qty * entry) / LEVERAGE
-                
-                return {
-                    "pair": pair, "entry": entry, "sl": sl, "target": target,
-                    "margin": margin, "change": None # Added in main
-                }
+        # --- LOGIC 2: LONG (Bullish Pullback in Gainers) ---
+        else:
+            prev_is_red = prev['ha_close'] < prev['ha_open']
+            prev_touches_low = prev['ha_low'] <= prev['bb_low']
+            curr_cools_low = curr['ha_low'] > curr['bb_low']
+            
+            if prev_is_red and prev_touches_low and curr_cools_low:
+                entry, sl, target = curr['ha_high'], prev['ha_low'], curr['bb_up']
+                risk = entry - sl
+                if risk > 0:
+                    return {"side": "LONG", "pair": pair, "entry": entry, "sl": sl, "target": target, "m": (RISK_INR/risk * entry)/LEVERAGE, "ch": change_pct}
+        
         return None
     except: return None
 
 # ================= MAIN LOGIC =================
 
 def main():
-    print(f"📉 Scanning Top Losers | Time: {datetime.now().strftime('%H:%M:%S')}")
+    print(f"🔄 Scanning Market (Dual Logic) | {datetime.now().strftime('%H:%M:%S')}")
     try:
         all_pairs = requests.get(ACTIVE_INST_URL).json()
     except: return
 
-    stats_list = []
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = [executor.submit(fetch_pair_stats, p) for p in all_pairs if isinstance(p, str)]
-        for f in as_completed(futures):
-            res = f.result()
-            if res: stats_list.append(res)
+    stats = []
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+        futs = [ex.submit(fetch_pair_stats, p) for p in all_pairs if isinstance(p, str)]
+        for f in as_completed(futs):
+            r = f.result()
+            if r: stats.append(r)
 
-    if not stats_list: return
+    if not stats: return
+    df_stats = pd.DataFrame(stats)
 
-    # Sort by Losers (Ascending order of price change)
-    df_stats = pd.DataFrame(stats_list).sort_values("change", ascending=True)
-    candidates = df_stats.head(25)["pair"].tolist()
+    # Candidates: Top 20 Gainers + Top 20 Losers
+    top_gainers = df_stats.sort_values("change", ascending=False).head(20)
+    top_losers = df_stats.sort_values("change", ascending=True).head(20)
+    candidates = pd.concat([top_gainers, top_losers])
 
     signals = []
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        results = [executor.submit(fetch_candle_data, p) for p in candidates]
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+        results = [ex.submit(scan_strategy, row['pair'], row['change']) for _, row in candidates.iterrows()]
         for f in as_completed(results):
             sig = f.result()
             if sig: signals.append(sig)
 
     if signals:
         for s in signals:
+            icon = "🔥" if s['side'] == "LONG" else "❄️"
             msg = (
-                f"❄️ **HA COOLDOWN SHORT**\n"
+                f"{icon} **HA {s['side']} ALERT**\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
-                f"🪙 **Pair:** `{s['pair']}`\n"
-                f"📉 **Entry (Curr Low):** `{s['entry']:.6f}`\n"
-                f"🛡️ **SL (Prev High):** `{s['sl']:.6f}`\n"
-                f"🎯 **Target (Lower BB):** `{s['target']:.6f}`\n"
-                f"💰 **Margin (5x):** `₹{s['margin']:.2f}`\n"
+                f"🪙 **Pair:** `{s['pair']}` ({s['ch']}%)\n"
+                f"⚡ **Entry:** `{s['entry']:.6f}`\n"
+                f"🛡️ **SL:** `{s['sl']:.6f}`\n"
+                f"🎯 **Target:** `{s['target']:.6f}`\n"
+                f"💰 **Margin (5x):** `₹{s['m']:.2f}`\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
-                f"⚠️ Risk: ₹100 per trade"
+                f"⚠️ Risk: ₹100 | Leverage: 5x"
             )
             Send_EMA_Telegram_Message(msg)
-            print(f"✅ Alert Sent for {s['pair']}")
+            print(f"✅ {s['side']} Signal Sent for {s['pair']}")
     else:
         print("ℹ️ Scan Complete: No setups found.")
 
