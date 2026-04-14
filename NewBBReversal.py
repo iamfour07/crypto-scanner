@@ -152,7 +152,7 @@ def process_logic(pair, watch_list):
 
     # Logic 2: Alert when ST flips GREEN → RED (prev green, current red)
     if prev_dir == 1 and last_dir == -1:
-        entry = last["HA_Close"]
+        entry = last["HA_Low"]
         sl = last["st_upper"]
         risk = sl - entry
 
