@@ -1,7 +1,6 @@
 [
   "B-AT_USDT",
   "B-AVAAI_USDT",
-  "B-BAN_USDT",
   "B-BSB_USDT",
   "B-ENJ_USDT",
   "B-EUL_USDT",
@@ -17,5 +16,6 @@
   "B-RIVER_USDT",
   "B-TREE_USDT",
   "B-TUT_USDT",
-  "B-VVV_USDT"
+  "B-VVV_USDT",
+  "B-XAN_USDT"
 ]
