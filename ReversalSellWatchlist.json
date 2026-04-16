@@ -1,7 +1,6 @@
 [
   "B-1000RATS_USDT",
   "B-1000SATS_USDT",
-  "B-ALCH_USDT",
   "B-AT_USDT",
   "B-AVAAI_USDT",
   "B-BASED_USDT",
@@ -18,6 +17,7 @@
   "B-MBOX_USDT",
   "B-MERL_USDT",
   "B-ORDI_USDT",
+  "B-PNUT_USDT",
   "B-TRIA_USDT",
   "B-ZBT_USDT"
 ]
