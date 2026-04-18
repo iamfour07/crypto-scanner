@@ -1,4 +1,5 @@
 [
+  "B-ACE_USDT",
   "B-AI_USDT",
   "B-ALICE_USDT",
   "B-AVAAI_USDT",
@@ -8,6 +9,7 @@
   "B-EUL_USDT",
   "B-FHE_USDT",
   "B-GIGGLE_USDT",
+  "B-GTC_USDT",
   "B-HIGH_USDT",
   "B-H_USDT",
   "B-ICNT_USDT",
@@ -19,6 +21,7 @@
   "B-SOLV_USDT",
   "B-SWARMS_USDT",
   "B-THETA_USDT",
+  "B-TLM_USDT",
   "B-YB_USDT",
   "B-ZEREBRO_USDT"
 ]
