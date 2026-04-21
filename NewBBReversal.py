@@ -19,8 +19,8 @@ FILE_NAME = "ReversalSellWatchlist.json"
 ST_PERIOD = 20
 ST_MULTIPLIER = 2
 
-RISK_PER_TRADE = 250       
-LEVERAGE = 5                
+RISK_PER_TRADE = 1000       
+LEVERAGE = 10               
 
 # ================= INDICATOR CALCULATIONS =================
 def calculate_indicators(df):
