@@ -52,16 +52,16 @@ def calculate_indicators(df):
     final_upper = [0.0] * len(df)
     final_lower = [0.0] * len(df)
     direction = [1] * len(df)
+    flip_level = [np.nan] * len(df)  # <-- NEW: store flip SL
 
-    # ✅ Find first valid index (ATR needs ST_PERIOD candles to warm up)
     first_valid = df['upper_basic'].first_valid_index()
     if first_valid is None:
         df['st_dir'] = direction
         df['st_upper'] = final_upper
         df['st_lower'] = final_lower
+        df['flip_level'] = flip_level
         return df
 
-    # ✅ Initialize at first valid index, then loop from there
     final_upper[first_valid] = df['upper_basic'].iloc[first_valid]
     final_lower[first_valid] = df['lower_basic'].iloc[first_valid]
 
@@ -78,16 +78,25 @@ def calculate_indicators(df):
         else:
             final_lower[i] = final_lower[i-1]
 
-        # Direction flip
+        # Direction flip with flip_level tracking
         if direction[i-1] == 1:
-            direction[i] = 1 if df['HA_Close'].iloc[i] > final_lower[i] else -1
+            if df['HA_Close'].iloc[i] < final_lower[i]:
+                direction[i] = -1
+                flip_level[i] = final_lower[i]  # <-- STORE exact flip SL
+            else:
+                direction[i] = 1
         else:
-            direction[i] = -1 if df['HA_Close'].iloc[i] < final_upper[i] else 1
+            if df['HA_Close'].iloc[i] > final_upper[i]:
+                direction[i] = 1
+                flip_level[i] = final_upper[i]
+            else:
+                direction[i] = -1
 
     df['st_dir'] = direction
     df['st_upper'] = final_upper
     df['st_lower'] = final_lower
-    
+    df['flip_level'] = flip_level  # <-- NEW column
+
     return df
 
 # ================= DATA FETCHING =================
@@ -138,11 +147,9 @@ def process_logic(pair, watch_list):
     last_dir = int(last['st_dir'])
     prev_dir = int(prev['st_dir'])
 
-    # Print status for watchlist coins
     if pair in watch_list:
         st_val = last['st_lower'] if last_dir == 1 else last['st_upper']
         trend_label = "🟢 GREEN" if last_dir == 1 else "🔴 RED"
-        # print(f"👀 WATCHING: {pair.ljust(15)} | Trend: {trend_label} | ST: {st_val:.6f} | HA Close: {last['HA_Close']:.6f}")
 
     # Logic 1: Add to watchlist if last closed HA candle ST is GREEN
     if pair not in watch_list:
@@ -150,10 +157,10 @@ def process_logic(pair, watch_list):
             return {"type": "ADD", "pair": pair}
         return None
 
-    # Logic 2: Alert when ST flips GREEN → RED (prev green, current red)
+    # Logic 2: Alert when ST flips GREEN → RED
     if prev_dir == 1 and last_dir == -1:
         entry = last["HA_Close"]
-        sl = last["st_upper"]
+        sl = last["flip_level"] if not np.isnan(last["flip_level"]) else prev["st_lower"]  # <-- FIXED
         risk = sl - entry
 
         if risk <= 0:
