@@ -214,7 +214,7 @@ def main():
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         stats = [r for r in ex.map(get_stats, all_pairs) if r]
 
-    top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:10]]
+    top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:5]]
     scan_pool = list(set(watch_list + top_gainers))
 
     alerts, new_watchlist, signaled_pairs = [], [], []
