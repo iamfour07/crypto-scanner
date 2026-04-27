@@ -19,12 +19,12 @@ FILE_NAME = "ReversalSellWatchlist.json"
 ST_PERIOD = 20
 ST_MULTIPLIER = 2
 
-RISK_PER_TRADE = 1000      
-LEVERAGE = 10               
+RISK_PER_TRADE = 500      
+LEVERAGE = 10  
+MAX_CAPITAL = 5000               
 
 # ================= INDICATOR CALCULATIONS =================
 def calculate_indicators(df):
-    # 1. HEIKIN-ASHI (RESTORED)
     ha_close = (df['open'] + df['high'] + df['low'] + df['close']) / 4
     ha_open = np.zeros(len(df))
     ha_open[0] = (df['open'].iloc[0] + df['close'].iloc[0]) / 2
@@ -36,19 +36,16 @@ def calculate_indicators(df):
     df['HA_High'] = df[['high', 'HA_Open', 'HA_Close']].max(axis=1)
     df['HA_Low'] = df[['low', 'HA_Open', 'HA_Close']].min(axis=1)
 
-    # 2. ATR using RMA on HA candles
     tr1 = df['HA_High'] - df['HA_Low']
     tr2 = (df['HA_High'] - df['HA_Close'].shift(1)).abs()
     tr3 = (df['HA_Low'] - df['HA_Close'].shift(1)).abs()
     df['TR'] = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     df['ATR'] = df['TR'].ewm(alpha=1/ST_PERIOD, min_periods=ST_PERIOD, adjust=False).mean()
 
-    # 3. Basic Bands
     df['hl2'] = (df['HA_High'] + df['HA_Low']) / 2
     df['upper_basic'] = df['hl2'] + (ST_MULTIPLIER * df['ATR'])
     df['lower_basic'] = df['hl2'] - (ST_MULTIPLIER * df['ATR'])
 
-    # 4. Final Bands + Direction
     final_upper = [0.0] * len(df)
     final_lower = [0.0] * len(df)
     direction = [1] * len(df)
@@ -76,7 +73,7 @@ def calculate_indicators(df):
         if direction[i-1] == 1:
             if df['HA_Close'].iloc[i] < final_lower[i]:
                 direction[i] = -1
-                flip_level[i] = final_upper[i-1]  # SL is the Upper Level
+                flip_level[i] = final_upper[i-1]
             else:
                 direction[i] = 1        
         else:
@@ -127,13 +124,31 @@ def process_logic(pair, watch_list):
 
     # REVERSAL ALERT: Green to Red
     if prev_dir == 1 and last_dir == -1:
-        entry = last["low"]  # <-- CHANGE: Entry is the candle LOW
-        sl = last["flip_level"] # <-- CHANGE: SL is the Supertrend Upper level
+        
+        flip_candle = df.iloc[-1]
+
+        entry = flip_candle["low"]
+        sl = flip_candle["flip_level"]
         
         risk = sl - entry
         if risk <= 0: return {"type": "KEEP", "pair": pair}
 
-        qty = RISK_PER_TRADE / risk
+        # ✅ NEW: SL % filter
+        sl_pct = abs(risk) / entry * 100
+        if sl_pct < 1.0:
+            return {"type": "KEEP", "pair": pair}
+
+        # ✅ NEW: risk-based qty
+        qty_risk = RISK_PER_TRADE / risk
+
+        # ✅ NEW: margin cap
+        # change as per your capital
+
+        qty_margin_cap = (MAX_CAPITAL * LEVERAGE) / entry
+
+        # ✅ FINAL qty
+        qty = min(qty_risk, qty_margin_cap)
+
         margin = (qty * entry) / LEVERAGE
 
         return {
