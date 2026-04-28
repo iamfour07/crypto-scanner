@@ -6,5 +6,17 @@
   {
     "name": "B-ZKC_USDT",
     "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-TUT_USDT",
+    "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-MUBARAK_USDT",
+    "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-FARTCOIN_USDT",
+    "state": "WAIT_PULLBACK"
   }
 ]
