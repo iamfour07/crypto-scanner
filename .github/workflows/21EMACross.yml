@@ -35,10 +35,18 @@ jobs:
           TELEGRAM_BOT_TOKEN_21_EMA: ${{ secrets.TELEGRAM_BOT_TOKEN_21_EMA }}
           TELEGRAM_CHAT_ID_21_EMA: ${{ secrets.TELEGRAM_CHAT_ID_21_EMA }}
 
-    # - name: Commit Watchlist Updates
-    #   run: |
-    #       git config user.email "github-actions[bot]@users.noreply.github.com"
-    #       git config user.name "github-actions[bot]"
-    #       git add NewReversalSellWatchlist.json || true
-    #       git diff --cached --quiet || git commit -m "Update watchlists [skip ci]"
-    #       git push
+      - name: Commit Watchlist Updates
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          git add BuyMomentum.json SellMomentum.json || true
+
+          # PEHLE COMMIT (Order changed here)
+          git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
+
+          # FIR PULL REBASE
+          git pull --rebase origin main
+
+          # FIR PUSH
+          git push origin main
