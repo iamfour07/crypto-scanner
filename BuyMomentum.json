@@ -18,5 +18,9 @@
   {
     "name": "B-FARTCOIN_USDT",
     "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-GRIFFAIN_USDT",
+    "state": "WAIT_PULLBACK"
   }
 ]
