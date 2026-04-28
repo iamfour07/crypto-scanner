@@ -14,5 +14,9 @@
   {
     "name": "B-LDO_USDT",
     "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-SANTOS_USDT",
+    "state": "WAIT_PULLBACK"
   }
 ]
