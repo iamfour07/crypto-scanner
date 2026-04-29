@@ -1,7 +1,7 @@
 [
   {
     "name": "B-PROM_USDT",
-    "state": "WAIT_PULLBACK"
+    "state": "PULLBACK_DONE"
   },
   {
     "name": "B-TRIA_USDT",
@@ -21,6 +21,10 @@
   },
   {
     "name": "B-DEXE_USDT",
+    "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-SSV_USDT",
     "state": "WAIT_PULLBACK"
   }
 ]
