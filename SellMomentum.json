@@ -22,5 +22,13 @@
   {
     "name": "B-TURTLE_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BSB_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-1000RATS_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]

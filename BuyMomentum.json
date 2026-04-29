@@ -4,10 +4,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-1MBABYDOGE_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-LIT_USDT",
     "state": "WAIT_COOLDOWN"
   }
