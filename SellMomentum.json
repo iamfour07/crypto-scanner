@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "name": "B-BASED_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BICO_USDT",
+    "state": "WAIT_COOLDOWN"
+  }
+]
