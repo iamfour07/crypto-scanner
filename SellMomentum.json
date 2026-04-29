@@ -14,5 +14,9 @@
   {
     "name": "B-CETUS_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-TUT_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
