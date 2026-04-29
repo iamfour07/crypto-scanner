@@ -5,7 +5,7 @@
   },
   {
     "name": "B-BANK_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-1MBABYDOGE_USDT",
