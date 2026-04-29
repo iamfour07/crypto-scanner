@@ -5,11 +5,11 @@
   },
   {
     "name": "B-TRIA_USDT",
-    "state": "WAIT_PULLBACK"
+    "state": "PULLBACK_DONE"
   },
   {
     "name": "B-IRYS_USDT",
-    "state": "WAIT_PULLBACK"
+    "state": "PULLBACK_DONE"
   },
   {
     "name": "B-LDO_USDT",
