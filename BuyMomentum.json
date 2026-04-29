@@ -22,5 +22,9 @@
   {
     "name": "B-GRIFFAIN_USDT",
     "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-1000CAT_USDT",
+    "state": "WAIT_PULLBACK"
   }
 ]
