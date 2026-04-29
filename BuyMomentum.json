@@ -34,5 +34,9 @@
   {
     "name": "B-AIXBT_USDT",
     "state": "WAIT_PULLBACK"
+  },
+  {
+    "name": "B-EPIC_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
