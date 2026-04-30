@@ -28,10 +28,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-1000RATS_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-LQTY_USDT",
     "state": "WAIT_COOLDOWN"
   },
