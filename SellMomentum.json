@@ -1,7 +1,7 @@
 [
   {
     "name": "B-BASED_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-BICO_USDT",
@@ -49,7 +49,7 @@
   },
   {
     "name": "B-AVAAI_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ZKP_USDT",
@@ -65,6 +65,10 @@
   },
   {
     "name": "B-MEGA_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-A_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
