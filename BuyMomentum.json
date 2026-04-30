@@ -13,7 +13,7 @@
   },
   {
     "name": "B-RIVER_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-HMSTR_USDT",
@@ -21,6 +21,14 @@
   },
   {
     "name": "B-STO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ENSO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-HYPER_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

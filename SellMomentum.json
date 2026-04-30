@@ -5,7 +5,7 @@
   },
   {
     "name": "B-BICO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-DOLO_USDT",
@@ -53,6 +53,10 @@
   },
   {
     "name": "B-PENDLE_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-AVAAI_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
