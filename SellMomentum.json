@@ -17,7 +17,7 @@
   },
   {
     "name": "B-TUT_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-TURTLE_USDT",
