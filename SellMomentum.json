@@ -29,7 +29,7 @@
   },
   {
     "name": "B-LQTY_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-STABLE_USDT",
@@ -37,7 +37,7 @@
   },
   {
     "name": "B-PUMP_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-S_USDT",
@@ -61,6 +61,10 @@
   },
   {
     "name": "B-ZKP_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-NOM_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
