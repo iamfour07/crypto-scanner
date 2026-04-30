@@ -21,7 +21,7 @@
   },
   {
     "name": "B-TURTLE_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-BSB_USDT",
@@ -57,6 +57,10 @@
   },
   {
     "name": "B-AVAAI_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-DRIFT_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
