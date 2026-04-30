@@ -6,5 +6,9 @@
   {
     "name": "B-LIT_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-MAGMA_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
