@@ -65,7 +65,7 @@
   },
   {
     "name": "B-MEGA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-A_USDT",
@@ -82,9 +82,5 @@
   {
     "name": "B-INX_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-RIVER_USDT",
-    "state": "COOLDOWN_DONE"
   }
 ]

@@ -13,7 +13,7 @@
   },
   {
     "name": "B-HYPER_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-RED_USDT",
