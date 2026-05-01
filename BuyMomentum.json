@@ -17,11 +17,7 @@
   },
   {
     "name": "B-RED_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-ICNT_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-DRIFT_USDT",
@@ -65,7 +61,7 @@
   },
   {
     "name": "B-FLUID_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-TOWNS_USDT",
