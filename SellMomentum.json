@@ -73,7 +73,7 @@
   },
   {
     "name": "B-PRL_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-LIT_USDT",
