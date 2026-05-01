@@ -29,7 +29,7 @@
   },
   {
     "name": "B-FORM_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-NATGAS_USDT",
@@ -93,6 +93,14 @@
   },
   {
     "name": "B-MON_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-SQD_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BABY_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

@@ -29,7 +29,7 @@
   },
   {
     "name": "B-LQTY_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-STABLE_USDT",
