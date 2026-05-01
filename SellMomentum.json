@@ -1,7 +1,7 @@
 [
   {
     "name": "B-BASED_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-BICO_USDT",
@@ -25,11 +25,11 @@
   },
   {
     "name": "B-BSB_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-LQTY_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-STABLE_USDT",
@@ -57,11 +57,11 @@
   },
   {
     "name": "B-NOM_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-LUMIA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MEGA_USDT",
