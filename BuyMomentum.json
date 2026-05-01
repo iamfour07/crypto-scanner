@@ -4,10 +4,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-LIT_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-MAGMA_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -49,6 +45,10 @@
   },
   {
     "name": "B-NATGAS_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ZEC_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
