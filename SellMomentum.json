@@ -17,7 +17,7 @@
   },
   {
     "name": "B-TUT_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-TURTLE_USDT",
@@ -29,7 +29,7 @@
   },
   {
     "name": "B-LQTY_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-STABLE_USDT",
@@ -49,7 +49,7 @@
   },
   {
     "name": "B-AVAAI_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ZKP_USDT",
@@ -81,7 +81,7 @@
   },
   {
     "name": "B-INX_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-GRIFFAIN_USDT",
