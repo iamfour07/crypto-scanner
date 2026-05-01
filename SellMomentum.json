@@ -9,7 +9,7 @@
   },
   {
     "name": "B-DOLO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CETUS_USDT",
@@ -33,7 +33,7 @@
   },
   {
     "name": "B-STABLE_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-S_USDT",
@@ -65,11 +65,11 @@
   },
   {
     "name": "B-A_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-PRL_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-LIT_USDT",
@@ -81,7 +81,7 @@
   },
   {
     "name": "B-GRIFFAIN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-OPEN_USDT",
