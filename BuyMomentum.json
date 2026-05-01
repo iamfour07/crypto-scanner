@@ -49,7 +49,7 @@
   },
   {
     "name": "B-JOE_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ACU_USDT",
@@ -61,6 +61,10 @@
   },
   {
     "name": "B-LUMIA_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-VVV_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
