@@ -65,7 +65,7 @@
   },
   {
     "name": "B-ZEN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-CHILLGUY_USDT",
@@ -77,7 +77,7 @@
   },
   {
     "name": "B-MON_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-SQD_USDT",
@@ -89,7 +89,7 @@
   },
   {
     "name": "B-KNC_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-KAVA_USDT",
