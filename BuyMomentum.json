@@ -29,7 +29,7 @@
   },
   {
     "name": "B-JOE_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ACU_USDT",
@@ -37,10 +37,6 @@
   },
   {
     "name": "B-SKR_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-LUMIA_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
@@ -57,7 +53,7 @@
   },
   {
     "name": "B-DUSK_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ZEN_USDT",
@@ -69,7 +65,7 @@
   },
   {
     "name": "B-CTSI_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MON_USDT",
@@ -109,6 +105,10 @@
   },
   {
     "name": "B-SPK_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-GENIUS_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
