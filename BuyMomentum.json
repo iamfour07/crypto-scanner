@@ -9,7 +9,7 @@
   },
   {
     "name": "B-ENSO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DRIFT_USDT",
@@ -49,11 +49,11 @@
   },
   {
     "name": "B-NFP_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-DUSK_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ZEN_USDT",
@@ -97,7 +97,7 @@
   },
   {
     "name": "B-CELO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MANTRA_USDT",
