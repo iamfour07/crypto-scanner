@@ -45,7 +45,7 @@
   },
   {
     "name": "B-LUMIA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-VVV_USDT",
