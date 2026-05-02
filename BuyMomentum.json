@@ -1,11 +1,11 @@
 [
   {
     "name": "B-MOODENG_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MAGMA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ENSO_USDT",
@@ -17,7 +17,7 @@
   },
   {
     "name": "B-RED_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DRIFT_USDT",
@@ -33,7 +33,7 @@
   },
   {
     "name": "B-NATGAS_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ZEC_USDT",
@@ -41,7 +41,7 @@
   },
   {
     "name": "B-JOE_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ACU_USDT",
@@ -65,7 +65,7 @@
   },
   {
     "name": "B-TOWNS_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MAV_USDT",
@@ -73,7 +73,7 @@
   },
   {
     "name": "B-NFP_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DUSK_USDT",
