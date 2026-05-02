@@ -114,5 +114,9 @@
   {
     "name": "B-MANTRA_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-SPK_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
