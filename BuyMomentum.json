@@ -13,7 +13,7 @@
   },
   {
     "name": "B-DRIFT_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FORM_USDT",
@@ -33,7 +33,7 @@
   },
   {
     "name": "B-ACU_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-SKR_USDT",
@@ -89,7 +89,7 @@
   },
   {
     "name": "B-PIPPIN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ARKM_USDT",
@@ -101,7 +101,7 @@
   },
   {
     "name": "B-MANTRA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-SPK_USDT",
