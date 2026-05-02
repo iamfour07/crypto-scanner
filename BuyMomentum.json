@@ -5,7 +5,7 @@
   },
   {
     "name": "B-MAGMA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ENSO_USDT",
@@ -49,7 +49,7 @@
   },
   {
     "name": "B-NFP_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DUSK_USDT",
@@ -109,6 +109,10 @@
   },
   {
     "name": "B-GENIUS_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BSB_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
