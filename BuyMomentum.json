@@ -20,10 +20,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-ALLO_USDT",
-    "state": "WAIT_COOLDOWN"
-  },
-  {
     "name": "B-FORM_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -89,7 +85,7 @@
   },
   {
     "name": "B-SQD_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-BABY_USDT",
@@ -113,6 +109,10 @@
   },
   {
     "name": "B-CELO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-MANTRA_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
