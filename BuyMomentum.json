@@ -49,11 +49,11 @@
   },
   {
     "name": "B-SKR_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-LUMIA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-VVV_USDT",
@@ -65,10 +65,6 @@
   },
   {
     "name": "B-TOWNS_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-MAV_USDT",
     "state": "COOLDOWN_DONE"
   },
   {

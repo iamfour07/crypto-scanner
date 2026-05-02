@@ -41,7 +41,7 @@
   },
   {
     "name": "B-MANTRA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-AVAAI_USDT",
@@ -53,7 +53,7 @@
   },
   {
     "name": "B-NOM_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MEGA_USDT",
@@ -69,7 +69,7 @@
   },
   {
     "name": "B-GRIFFAIN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-OPEN_USDT",
@@ -82,5 +82,9 @@
   {
     "name": "B-RIF_USDT",
     "state": "COOLDOWN_DONE"
+  },
+  {
+    "name": "B-GMX_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
