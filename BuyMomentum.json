@@ -21,7 +21,7 @@
   },
   {
     "name": "B-ALLO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-FORM_USDT",
@@ -105,6 +105,14 @@
   },
   {
     "name": "B-PIPPIN_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ARKM_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-CELO_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
