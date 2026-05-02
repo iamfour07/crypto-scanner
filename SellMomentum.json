@@ -73,7 +73,7 @@
   },
   {
     "name": "B-GMX_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-AWE_USDT",
@@ -81,7 +81,7 @@
   },
   {
     "name": "B-BROCCOLI714_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FLUID_USDT",
@@ -93,6 +93,10 @@
   },
   {
     "name": "B-COMP_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-HYPER_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
