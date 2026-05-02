@@ -5,7 +5,7 @@
   },
   {
     "name": "B-MAGMA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ENSO_USDT",
@@ -14,10 +14,6 @@
   {
     "name": "B-HYPER_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-RED_USDT",
-    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DRIFT_USDT",
@@ -85,7 +81,7 @@
   },
   {
     "name": "B-CTSI_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MON_USDT",
@@ -101,6 +97,10 @@
   },
   {
     "name": "B-KNC_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-KAVA_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
