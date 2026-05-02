@@ -13,7 +13,7 @@
   },
   {
     "name": "B-HYPER_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DRIFT_USDT",
@@ -41,7 +41,7 @@
   },
   {
     "name": "B-SKR_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-LUMIA_USDT",
@@ -69,7 +69,7 @@
   },
   {
     "name": "B-CHILLGUY_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-CTSI_USDT",
