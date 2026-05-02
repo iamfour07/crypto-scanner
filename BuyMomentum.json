@@ -53,7 +53,7 @@
   },
   {
     "name": "B-NFP_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DUSK_USDT",
@@ -69,7 +69,7 @@
   },
   {
     "name": "B-CTSI_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MON_USDT",
@@ -101,7 +101,7 @@
   },
   {
     "name": "B-CELO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MANTRA_USDT",
