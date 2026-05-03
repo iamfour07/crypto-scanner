@@ -122,5 +122,9 @@
   {
     "name": "B-MERL_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ALGO_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
