@@ -41,7 +41,7 @@
   },
   {
     "name": "B-NOM_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MEGA_USDT",
@@ -57,7 +57,7 @@
   },
   {
     "name": "B-GRIFFAIN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-OPEN_USDT",
@@ -65,7 +65,7 @@
   },
   {
     "name": "B-ICNT_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-GMX_USDT",
@@ -81,11 +81,11 @@
   },
   {
     "name": "B-HIGH_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-COMP_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-HYPER_USDT",
@@ -97,6 +97,10 @@
   },
   {
     "name": "B-INX_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ARC_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
