@@ -13,11 +13,11 @@
   },
   {
     "name": "B-CETUS_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-TURTLE_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-LQTY_USDT",
@@ -25,7 +25,7 @@
   },
   {
     "name": "B-S_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-AVAAI_USDT",
@@ -49,11 +49,11 @@
   },
   {
     "name": "B-PRL_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-GRIFFAIN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-OPEN_USDT",
@@ -65,7 +65,7 @@
   },
   {
     "name": "B-GMX_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-AWE_USDT",
@@ -73,7 +73,7 @@
   },
   {
     "name": "B-FLUID_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-HIGH_USDT",
@@ -89,7 +89,7 @@
   },
   {
     "name": "B-LUMIA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-INX_USDT",
