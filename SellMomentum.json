@@ -9,15 +9,15 @@
   },
   {
     "name": "B-DOLO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CETUS_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-TURTLE_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-LQTY_USDT",
@@ -61,11 +61,11 @@
   },
   {
     "name": "B-ICNT_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-GMX_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-AWE_USDT",
@@ -89,10 +89,6 @@
   },
   {
     "name": "B-LUMIA_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-INX_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
