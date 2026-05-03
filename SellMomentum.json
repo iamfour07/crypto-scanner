@@ -16,10 +16,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-TURTLE_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-LQTY_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -53,7 +49,7 @@
   },
   {
     "name": "B-GRIFFAIN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-OPEN_USDT",
