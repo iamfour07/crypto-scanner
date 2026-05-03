@@ -9,7 +9,7 @@
   },
   {
     "name": "B-FORM_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-NATGAS_USDT",
@@ -21,7 +21,7 @@
   },
   {
     "name": "B-JOE_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-VVV_USDT",
@@ -65,7 +65,7 @@
   },
   {
     "name": "B-KAVA_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ARKM_USDT",
@@ -121,6 +121,10 @@
   },
   {
     "name": "B-DEEP_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ZEREBRO_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

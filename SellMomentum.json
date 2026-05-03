@@ -21,7 +21,7 @@
   },
   {
     "name": "B-S_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-AVAAI_USDT",
@@ -69,11 +69,11 @@
   },
   {
     "name": "B-FLUID_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-HIGH_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-COMP_USDT",
@@ -101,7 +101,7 @@
   },
   {
     "name": "B-PIPPIN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FLOW_USDT",
@@ -113,10 +113,6 @@
   },
   {
     "name": "B-SPK_USDT",
-    "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-ZEREBRO_USDT",
     "state": "COOLDOWN_DONE"
   }
 ]
