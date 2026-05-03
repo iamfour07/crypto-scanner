@@ -1,7 +1,7 @@
 [
   {
     "name": "B-MAGMA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ENSO_USDT",
@@ -97,7 +97,7 @@
   },
   {
     "name": "B-FOGO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MERL_USDT",
@@ -117,6 +117,10 @@
   },
   {
     "name": "B-TURTLE_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BAT_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
