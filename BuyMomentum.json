@@ -41,7 +41,7 @@
   },
   {
     "name": "B-CHILLGUY_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-CTSI_USDT",
@@ -89,11 +89,11 @@
   },
   {
     "name": "B-OPN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-FOGO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MERL_USDT",
