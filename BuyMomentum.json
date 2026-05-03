@@ -4,10 +4,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-ENSO_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-DRIFT_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -49,7 +45,7 @@
   },
   {
     "name": "B-CTSI_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MON_USDT",
@@ -85,7 +81,7 @@
   },
   {
     "name": "B-BSB_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ROBO_USDT",
@@ -101,7 +97,7 @@
   },
   {
     "name": "B-MERL_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ALGO_USDT",
@@ -121,6 +117,10 @@
   },
   {
     "name": "B-BAT_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-DEEP_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
