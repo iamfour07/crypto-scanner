@@ -1,11 +1,11 @@
 [
   {
     "name": "B-BASED_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-BICO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-DOLO_USDT",
@@ -21,7 +21,7 @@
   },
   {
     "name": "B-LQTY_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-S_USDT",
@@ -61,7 +61,7 @@
   },
   {
     "name": "B-ICNT_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-GMX_USDT",
