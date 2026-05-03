@@ -9,14 +9,10 @@
   },
   {
     "name": "B-DOLO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-CETUS_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-TUT_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
@@ -61,7 +57,7 @@
   },
   {
     "name": "B-OPEN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ICNT_USDT",
@@ -81,7 +77,7 @@
   },
   {
     "name": "B-HIGH_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-COMP_USDT",
@@ -97,10 +93,14 @@
   },
   {
     "name": "B-INX_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ARC_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-JST_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
