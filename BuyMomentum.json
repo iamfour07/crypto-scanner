@@ -45,7 +45,7 @@
   },
   {
     "name": "B-DUSK_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ZEN_USDT",
@@ -121,6 +121,10 @@
   },
   {
     "name": "B-ALGO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PARTI_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

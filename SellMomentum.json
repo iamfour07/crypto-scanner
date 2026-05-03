@@ -81,7 +81,7 @@
   },
   {
     "name": "B-COMP_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-HYPER_USDT",
@@ -109,6 +109,10 @@
   },
   {
     "name": "B-PIPPIN_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-FLOW_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
