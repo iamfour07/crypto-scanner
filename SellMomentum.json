@@ -29,7 +29,7 @@
   },
   {
     "name": "B-AVAAI_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ZKP_USDT",
@@ -73,7 +73,7 @@
   },
   {
     "name": "B-FLUID_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-HIGH_USDT",
@@ -113,6 +113,10 @@
   },
   {
     "name": "B-NFP_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-SPK_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

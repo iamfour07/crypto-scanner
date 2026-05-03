@@ -9,7 +9,7 @@
   },
   {
     "name": "B-DRIFT_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-FORM_USDT",
@@ -80,12 +80,8 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-SPK_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-GENIUS_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-BSB_USDT",
