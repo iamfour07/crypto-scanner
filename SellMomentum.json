@@ -29,7 +29,7 @@
   },
   {
     "name": "B-AVAAI_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ZKP_USDT",
@@ -101,6 +101,10 @@
   },
   {
     "name": "B-JST_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-SOLV_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

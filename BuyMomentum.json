@@ -113,7 +113,7 @@
   },
   {
     "name": "B-OPN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FOGO_USDT",
