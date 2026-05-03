@@ -41,7 +41,7 @@
   },
   {
     "name": "B-A_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-PRL_USDT",
@@ -69,7 +69,7 @@
   },
   {
     "name": "B-FLUID_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-HIGH_USDT",
@@ -113,6 +113,10 @@
   },
   {
     "name": "B-SPK_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-RIVER_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
