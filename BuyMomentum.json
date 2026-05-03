@@ -9,11 +9,11 @@
   },
   {
     "name": "B-FORM_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-NATGAS_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-ZEC_USDT",
@@ -45,7 +45,7 @@
   },
   {
     "name": "B-CTSI_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MON_USDT",
@@ -93,7 +93,7 @@
   },
   {
     "name": "B-FOGO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MERL_USDT",
@@ -109,7 +109,7 @@
   },
   {
     "name": "B-RECALL_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-TURTLE_USDT",
