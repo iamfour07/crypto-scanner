@@ -41,7 +41,7 @@
   },
   {
     "name": "B-CHILLGUY_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-CTSI_USDT",

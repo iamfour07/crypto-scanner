@@ -106,5 +106,13 @@
   {
     "name": "B-RIVER_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-SAFE_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-KMNO_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
