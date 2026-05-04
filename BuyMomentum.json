@@ -1,7 +1,7 @@
 [
   {
     "name": "B-MAGMA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-DRIFT_USDT",
@@ -17,7 +17,7 @@
   },
   {
     "name": "B-ZEC_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-JOE_USDT",
@@ -33,11 +33,11 @@
   },
   {
     "name": "B-DUSK_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ZEN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CHILLGUY_USDT",
@@ -69,7 +69,7 @@
   },
   {
     "name": "B-ARKM_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CELO_USDT",
@@ -101,11 +101,11 @@
   },
   {
     "name": "B-ALGO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-PARTI_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-RECALL_USDT",
