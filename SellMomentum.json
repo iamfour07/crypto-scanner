@@ -41,7 +41,7 @@
   },
   {
     "name": "B-GRIFFAIN_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-OPEN_USDT",
