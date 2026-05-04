@@ -25,7 +25,7 @@
   },
   {
     "name": "B-VVV_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-TOWNS_USDT",
@@ -69,7 +69,7 @@
   },
   {
     "name": "B-ARKM_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CELO_USDT",
@@ -97,7 +97,7 @@
   },
   {
     "name": "B-MERL_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ALGO_USDT",
