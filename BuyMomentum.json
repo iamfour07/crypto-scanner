@@ -21,7 +21,7 @@
   },
   {
     "name": "B-JOE_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-VVV_USDT",
@@ -29,7 +29,7 @@
   },
   {
     "name": "B-TOWNS_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-DUSK_USDT",
@@ -45,11 +45,11 @@
   },
   {
     "name": "B-CTSI_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MON_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-SQD_USDT",
@@ -121,6 +121,10 @@
   },
   {
     "name": "B-DEEP_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PENGU_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
