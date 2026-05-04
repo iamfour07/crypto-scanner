@@ -5,7 +5,7 @@
   },
   {
     "name": "B-BICO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-AVAAI_USDT",
@@ -17,7 +17,7 @@
   },
   {
     "name": "B-NOM_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-MEGA_USDT",
@@ -25,7 +25,7 @@
   },
   {
     "name": "B-A_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-PRL_USDT",
@@ -85,7 +85,7 @@
   },
   {
     "name": "B-NFP_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-SPK_USDT",
@@ -101,6 +101,10 @@
   },
   {
     "name": "B-SAFE_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-1000RATS_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
