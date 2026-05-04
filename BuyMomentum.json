@@ -73,7 +73,7 @@
   },
   {
     "name": "B-CELO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-GENIUS_USDT",
@@ -101,7 +101,7 @@
   },
   {
     "name": "B-ALGO_USDT",
-    "state": "COOLDOWN_DONE"
+    "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-PARTI_USDT",
