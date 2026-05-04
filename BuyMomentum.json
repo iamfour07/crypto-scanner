@@ -1,1 +1,6 @@
-[]
+[
+  {
+    "name": "B-CGPT_USDT",
+    "state": "WAIT_COOLDOWN"
+  }
+]
