@@ -1,10 +1,6 @@
 [
   {
-    "name": "B-CHR_USDT",
-    "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-APE_USDT",
+    "name": "B-AT_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
