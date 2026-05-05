@@ -267,7 +267,7 @@ def main():
             # Cooldown complete when RSI crosses above 60
             if prev["rsi"] <= 60 and last["rsi"] > 60:
                 coin["state"] = "COOLDOWN_DONE"
-            updated_buy.append(coin)
+            updated_sell.append(coin)
 
         elif state == "COOLDOWN_DONE":
             # Alert when RSI crosses below 40
