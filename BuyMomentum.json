@@ -10,5 +10,13 @@
   {
     "name": "B-ZRO_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-MAVIA_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-HAEDAL_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
