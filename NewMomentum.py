@@ -167,8 +167,8 @@ def main():
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         stats = [r for r in executor.map(get_pair_stats, pairs) if r]
 
-    top_gainers = sorted(stats, key=lambda x: x["change"], reverse=True)[:20]
-    top_losers = sorted(stats, key=lambda x: x["change"])[:20]
+    top_gainers = sorted(stats, key=lambda x: x["change"], reverse=True)[:30]
+    top_losers = sorted(stats, key=lambda x: x["change"])[:30]
 
     # ===== Add Crossovers =====
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:

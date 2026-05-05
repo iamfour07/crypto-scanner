@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "name": "B-RAVE_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PRL_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ZRO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-HYPER_USDT",
+    "state": "WAIT_COOLDOWN"
+  }
+]
