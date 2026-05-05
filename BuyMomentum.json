@@ -8,7 +8,15 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-ORCA_USDT",
+    "name": "B-FIGHT_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ALLO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-NIL_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
