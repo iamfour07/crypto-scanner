@@ -18,6 +18,11 @@ RISK_PER_TRADE = 200
 MAX_CAPITAL = 5000
 LEVERAGE = 10
 
+# ✅ RSI CONFIG (NEW)
+RSI_LENGTH = 10
+RSI_UPPER = 55
+RSI_LOWER = 45
+
 
 # ================= LOAD / SAVE =================
 def load_list(file):
@@ -59,7 +64,7 @@ def fetch_candles(pair):
         for col in ["open", "high", "low", "close"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        df = df.iloc[:-1]  # remove running candle
+        df = df.iloc[:-1]
 
         if len(df) < 120:
             return None
@@ -76,7 +81,7 @@ def add_indicators(df):
     df["ema100"] = df["close"].ewm(span=100, adjust=False).mean()
     df["diff"] = df["ema30"] - df["ema100"]
 
-    # RSI — Wilder's Smoothing (matches TradingView exactly)
+    # ===== RSI (DYNAMIC) =====
     delta = df["close"].diff()
     gain = delta.where(delta > 0, 0.0)
     loss = -delta.where(delta < 0, 0.0)
@@ -84,17 +89,15 @@ def add_indicators(df):
     avg_gain = gain.copy()
     avg_loss = loss.copy()
 
-    # SMA seed on bar 14 (TradingView style)
-    avg_gain.iloc[14] = gain.iloc[1:15].mean()
-    avg_loss.iloc[14] = loss.iloc[1:15].mean()
+    avg_gain.iloc[RSI_LENGTH] = gain.iloc[1:RSI_LENGTH+1].mean()
+    avg_loss.iloc[RSI_LENGTH] = loss.iloc[1:RSI_LENGTH+1].mean()
 
-    # Wilder's smoothing: (prev * 13 + current) / 14
-    for i in range(15, len(df)):
-        avg_gain.iloc[i] = (avg_gain.iloc[i - 1] * 13 + gain.iloc[i]) / 14
-        avg_loss.iloc[i] = (avg_loss.iloc[i - 1] * 13 + loss.iloc[i]) / 14
+    for i in range(RSI_LENGTH + 1, len(df)):
+        avg_gain.iloc[i] = (avg_gain.iloc[i - 1] * (RSI_LENGTH - 1) + gain.iloc[i]) / RSI_LENGTH
+        avg_loss.iloc[i] = (avg_loss.iloc[i - 1] * (RSI_LENGTH - 1) + loss.iloc[i]) / RSI_LENGTH
 
-    avg_gain.iloc[:14] = float("nan")
-    avg_loss.iloc[:14] = float("nan")
+    avg_gain.iloc[:RSI_LENGTH] = float("nan")
+    avg_loss.iloc[:RSI_LENGTH] = float("nan")
 
     rs = avg_gain / (avg_loss + 1e-9)
     df["rsi"] = 100 - (100 / (1 + rs))
@@ -170,7 +173,7 @@ def main():
     top_gainers = sorted(stats, key=lambda x: x["change"], reverse=True)[:30]
     top_losers = sorted(stats, key=lambda x: x["change"])[:30]
 
-    # ===== Add Crossovers =====
+    # ===== ADD CROSSOVER =====
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         gainers_data = list(executor.map(fetch_candles, [g["pair"] for g in top_gainers]))
 
@@ -205,24 +208,20 @@ def main():
         prev = df.iloc[-2]
         last = df.iloc[-1]
 
-        # ❌ Remove if trend fails (30 EMA dropped below 100 EMA)
         if last["ema30"] <= last["ema100"]:
-            continue  # drop coin from list
+            continue
 
         state = coin.get("state", "WAIT_COOLDOWN")
 
         if state == "WAIT_COOLDOWN":
-            # Cooldown complete when RSI crosses below 40
-            if prev["rsi"] >= 40 and last["rsi"] < 40:
+            if prev["rsi"] >= RSI_LOWER and last["rsi"] < RSI_LOWER:
                 coin["state"] = "COOLDOWN_DONE"
             updated_buy.append(coin)
 
         elif state == "COOLDOWN_DONE":
-            # Alert when RSI crosses above 60
-            if prev["rsi"] <= 60 and last["rsi"] > 60:
+            if prev["rsi"] <= RSI_UPPER and last["rsi"] > RSI_UPPER:
 
                 entry = last["high"]
-
                 pivot = find_pivot_low(df)
                 sl_base = pivot if pivot else fallback_swing_low(df)
                 sl = sl_base * 0.998
@@ -236,13 +235,10 @@ def main():
                 margin = round((qty * entry) / LEVERAGE, 2)
 
                 Send_EMA_Telegram_Message(
-                f"Status: Buy\nPair: {pair}\nEntry: {entry:.6f}\nStop Loss: {sl:.6f}\nMargin Used: ₹{margin}"
-                )   
-
-                # ✅ Signal fired — remove coin from list (do NOT append)
+                    f"Status: Buy\nPair: {pair}\nEntry: {entry:.6f}\nStop Loss: {sl:.6f}\nMargin Used: ₹{margin}"
+                )
 
             else:
-                # RSI hasn't crossed 60 yet, keep watching
                 updated_buy.append(coin)
 
 
@@ -257,24 +253,20 @@ def main():
         prev = df.iloc[-2]
         last = df.iloc[-1]
 
-        # ❌ Remove if trend fails (30 EMA rose above 100 EMA)
         if last["ema30"] >= last["ema100"]:
-            continue  # drop coin from list
+            continue
 
         state = coin.get("state", "WAIT_COOLDOWN")
 
         if state == "WAIT_COOLDOWN":
-            # Cooldown complete when RSI crosses above 60
-            if prev["rsi"] <= 60 and last["rsi"] > 60:
+            if prev["rsi"] <= RSI_UPPER and last["rsi"] > RSI_UPPER:
                 coin["state"] = "COOLDOWN_DONE"
             updated_sell.append(coin)
 
         elif state == "COOLDOWN_DONE":
-            # Alert when RSI crosses below 40
-            if prev["rsi"] >= 40 and last["rsi"] < 40:
+            if prev["rsi"] >= RSI_LOWER and last["rsi"] < RSI_LOWER:
 
                 entry = last["low"]
-
                 pivot = find_pivot_high(df)
                 sl_base = pivot if pivot else fallback_swing_high(df)
                 sl = sl_base * 1.002
@@ -288,13 +280,10 @@ def main():
                 margin = round((qty * entry) / LEVERAGE, 2)
 
                 Send_EMA_Telegram_Message(
-                f"Status: Sell\nPair: {pair}\nEntry: {entry:.6f}\nStop Loss: {sl:.6f}\nMargin Used: ₹{margin}"
+                    f"Status: Sell\nPair: {pair}\nEntry: {entry:.6f}\nStop Loss: {sl:.6f}\nMargin Used: ₹{margin}"
                 )
 
-                # ✅ Signal fired — remove coin from list (do NOT append)
-
             else:
-                # RSI hasn't crossed 40 yet, keep watching
                 updated_sell.append(coin)
 
 
