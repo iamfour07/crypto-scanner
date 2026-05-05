@@ -1,314 +1,208 @@
-
-
-"""
-===========================================================
-📊 COINDCX HEIKIN-ASHI REVERSAL SCANNER (1-Hour Timeframe)
-===========================================================
-"""
-
 import requests
 import pandas as pd
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone, timedelta
-from Telegram_Momentum import send_telegram_message
+from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+from Telegram_Swing import Send_Swing_Telegram_Message
 
-# ======================
-# CONFIG
-# ======================
-MAX_WORKERS = 15
-resolution = "60"
-limit_hours = 1000
+# ================= CONFIG =================
+TOP_COINS = 25
+MAX_WORKERS = 20
+RESOLUTION = "60"
+LIMIT_HOURS = 300
 
-EMA_9 = 9
-EMA_30 = 30
-EMA_100 = 100
+BB_LENGTH = 20
+BB_MULT = 2
 
-MAX_RISK = 100
-MARGIN_PER_TRADE = 500
-LEVERAGE = 5
-POSITION_SIZE = MARGIN_PER_TRADE * LEVERAGE
+RISK_RS = 100
+LEVERAGE = 10
+MAX_CAPITAL = 5000
 
-IST_OFFSET = timedelta(hours=5, minutes=30)
 
-# ======================
-# API FUNCTIONS
-# ======================
-
-def get_active_usdt_coins():
+# ================= FETCH PAIRS =================
+def get_all_pairs():
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
-    r = requests.get(url, timeout=30)
-    r.raise_for_status()
-    return r.json()
+    try:
+        data = requests.get(url).json()
+        return [p for p in data if isinstance(p, str)]
+    except:
+        return []
 
-def fetch_pair_stats(pair):
+
+# ================= FETCH STATS =================
+def get_pair_stats(pair):
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        pc = r.json().get("price_change_percent", {}).get("1D")
-        return {"pair": pair, "change": float(pc)} if pc else None
+        data = requests.get(url, timeout=5).json()
+        change = data.get("price_change_percent", {}).get("1D", 0)
+        return {"pair": pair, "change": float(change)}
     except:
         return None
 
-def fetch_pair_stats(pair):
-    try:
-        url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        pc = r.json().get("price_change_percent", {}).get("1D")
 
-        if pc is None:
+# ================= FETCH CANDLES =================
+def fetch_candles(pair):
+    url = "https://public.coindcx.com/market_data/candlesticks"
+    now = int(datetime.now(timezone.utc).timestamp())
+
+    params = {
+        "pair": pair,
+        "from": now - LIMIT_HOURS * 3600,
+        "to": now,
+        "resolution": RESOLUTION,
+        "pcode": "f"
+    }
+
+    try:
+        data = requests.get(url, params=params, timeout=10).json()
+
+        if "data" not in data:
             return None
 
-        return {"pair": pair, "change": float(pc)}
-    except:
-        return None
-    
+        df = pd.DataFrame(data["data"]).sort_values("time").reset_index(drop=True)
 
-def get_top_movers(pairs):
+        for col in ["open", "high", "low", "close"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    gainers = []
-    losers = []
+        df = df.iloc[:-1]
 
-    with ThreadPoolExecutor(max_workers=15) as executor:
-        futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
-
-        for f in as_completed(futures):
-            res = f.result()
-            if not res:
-                continue
-
-            if res["change"] > 0:
-                gainers.append(res)
-            elif res["change"] < 0:
-                losers.append(res)
-
-    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:10]
-    losers = sorted(losers, key=lambda x: x["change"])[:10]
-
-    selected_pairs = [x["pair"] for x in gainers + losers]
-
-    print("\nTop Gainers:")
-    for g in gainers:
-        print(g["pair"], f"{g['change']:.2f}%")
-
-    print("\nTop Losers:")
-    for l in losers:
-        print(l["pair"], f"{l['change']:.2f}%")
-
-    return selected_pairs
-
-def fetch_last_n_candles(pair, n=1000):
-    try:
-        now = int(datetime.now(timezone.utc).timestamp())
-        from_time = now - limit_hours * 3600
-
-        url = "https://public.coindcx.com/market_data/candlesticks"
-        params = {
-            "pair": pair,
-            "from": from_time,
-            "to": now,
-            "resolution": resolution,
-            "pcode": "f"
-        }
-
-        r = requests.get(url, params=params, timeout=10)
-        r.raise_for_status()
-        data = r.json().get("data", [])
-        if not data or len(data) < 60: 
+        if len(df) < 210:
             return None
 
-        df = pd.DataFrame(data)
-        df = df.astype({"open": float, "high": float, "low": float, "close": float})
-        df = df.tail(n).copy()
-
-        # HEIKIN ASHI CALCULATIONS
-        ha = pd.DataFrame(index=df.index)
-        ha["HA_Close"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-        ha["HA_Open"] = (df["open"] + df["close"]) / 2
-        for i in range(1, len(df)):
-            ha.loc[i, "HA_Open"] = (ha.loc[i-1, "HA_Open"] + ha.loc[i-1, "HA_Close"]) / 2
-
-        ha["HA_High"] = df[["high", "open", "close"]].max(axis=1)
-        ha["HA_Low"]  = df[["low",  "open", "close"]].min(axis=1)
-
-        df = pd.concat([df.reset_index(drop=True), ha.reset_index(drop=True)], axis=1)
-
-        # EMAS
-        df["EMA9"]   = df["HA_Close"].ewm(span=EMA_9,   adjust=False).mean()
-        df["EMA30"]  = df["HA_Close"].ewm(span=EMA_30,  adjust=False).mean()
-        df["EMA100"] = df["HA_Close"].ewm(span=EMA_100, adjust=False).mean()
-
-        return df.dropna().reset_index(drop=True)
+        return df
 
     except:
         return None
 
 
-# ==========================================================
-# MAIN
-# ==========================================================
+# ================= INDICATORS =================
+def add_indicators(df):
+    df["close"] = df["close"].astype("float64")
 
+    # EMA 200
+    df["ema200"] = df["close"].ewm(span=200, adjust=False, min_periods=200).mean()
+
+    # BB (20,2) → TradingView match
+    mid = df["close"].rolling(BB_LENGTH).mean()
+    std = df["close"].rolling(BB_LENGTH).std(ddof=0)
+
+    df["bb_upper"] = mid + BB_MULT * std
+    df["bb_lower"] = mid - BB_MULT * std
+
+    return df.dropna()
+
+
+# ================= SIGNAL LOGIC =================
+def check_signal(df):
+    prev = df.iloc[-2]
+    last = df.iloc[-1]
+
+    # BUY
+    if (
+        prev["close"] < prev["ema200"] and
+        last["close"] > last["ema200"] and
+        last["close"] > last["bb_upper"]
+    ):
+        return "BUY", last["high"], last["low"]
+
+    # SELL
+    if (
+        prev["close"] > prev["ema200"] and
+        last["close"] < last["ema200"] and
+        last["close"] < last["bb_lower"]
+    ):
+        return "SELL", last["low"], last["high"]
+
+    return None
+
+
+# ================= RISK MANAGEMENT =================
+def calculate_trade(entry, sl, side):
+    risk_per_unit = abs(entry - sl)
+
+    if risk_per_unit == 0:
+        return None
+
+    qty = min(
+        RISK_RS / risk_per_unit,
+        (MAX_CAPITAL * LEVERAGE) / entry
+    )
+
+    position_value = qty * entry
+    capital = position_value / LEVERAGE
+
+    if side == "BUY":
+        t1 = entry + risk_per_unit
+        t2 = entry + 2 * risk_per_unit
+        t3 = entry + 3 * risk_per_unit
+    else:
+        t1 = entry - risk_per_unit
+        t2 = entry - 2 * risk_per_unit
+        t3 = entry - 3 * risk_per_unit
+
+    return qty, capital, t1, t2, t3
+
+
+# ================= MAIN =================
+# ================= MAIN =================
 def main():
-    print("Fetching active USDT pairs...")
-    all_pairs = get_active_usdt_coins()
-    pairs = get_top_movers(all_pairs)
+    print("🚀 Fetching pairs...")
+    pairs = get_all_pairs()
 
-    # Fetch 1D change %
-    changes = []
-    with ThreadPoolExecutor(MAX_WORKERS) as exe:
-        futures = [exe.submit(fetch_pair_stats, p) for p in pairs]
-        for f in as_completed(futures):
-            if f.result(): 
-                changes.append(f.result())
+    print("📊 Fetching stats...")
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        stats = [r for r in executor.map(get_pair_stats, pairs) if r]
 
-    df = pd.DataFrame(changes).dropna()
-    if df.empty: 
-        return
+    gainers = sorted(stats, key=lambda x: x["change"], reverse=True)[:TOP_COINS]
+    losers = sorted(stats, key=lambda x: x["change"])[:TOP_COINS]
 
-    # top 40 for more signals
-    # BULLISH RANGE:  +5% to +15%
-    bullish_candidates = df[(df["change"] >= 8) & (df["change"] <= 15)]["pair"].tolist()
+    selected = [x["pair"] for x in gainers + losers]
 
-    # BEARISH RANGE: -5% to -15%
-    bearish_candidates = df[(df["change"] <= -8) & (df["change"] >= -15)]["pair"].tolist()
+    print("📈 Fetching candles...")
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        dfs = list(executor.map(fetch_candles, selected))
 
+    alerts = []  # ✅ IMPORTANT
 
+    print("\n📊 SIGNALS\n")
 
-    # ===================================================
-    # ALERT BUILDER
-    # ===================================================
-    def build_alert(pairs, bullish=True):
-        messages = []
+    for pair, df in zip(selected, dfs):
+        if df is None:
+            continue
 
-        for pair in pairs:
+        df = add_indicators(df)
+        signal = check_signal(df)
 
-            df_c = fetch_last_n_candles(pair)
-            if df_c is None or len(df_c) < 3:
-                continue
+        if not signal:
+            continue
 
-            prev2 = df_c.iloc[-3]   # -3 candle (SL)
-            prev1 = df_c.iloc[-2]   # -2 candle (ENTRY)
+        side, entry, sl = signal
+        trade = calculate_trade(entry, sl, side)
 
-            # HA COLORS
-            c2 = "GREEN" if prev2["HA_Close"] > prev2["HA_Open"] else "RED"
-            c1 = "GREEN" if prev1["HA_Close"] > prev1["HA_Open"] else "RED"
+        if not trade:
+            continue
 
-            bullish_signal = (c2 == "RED"   and c1 == "GREEN")
-            bearish_signal = (c2 == "GREEN" and c1 == "RED")
+        capital, t2, t3 = trade  # ✅ FIXED
 
-            EMA9   = prev1["EMA9"]
-            EMA30  = prev1["EMA30"]
-            EMA100 = prev1["EMA100"]
+        msg = (
+            f"{'🟢 BUY' if side=='BUY' else '🔴 SELL'} | {pair}\n"
+            f"Entry : {round(entry,5)}\n"
+            f"SL    : {round(sl,5)}\n\n"
+            f"Risk  : ₹{RISK_RS}\n"
+            f"Capital Used : ₹{round(capital,2)}\n\n"
+            f"Targets:\n"
+            f"2R → {round(t2,5)}\n"
+            f"3R → {round(t3,5)}\n"
+            f"----------------------------------"
+        )
 
-            # -----------------------------------------
-            # 🔥 FINAL BULLISH LOGIC
-            # -----------------------------------------
-            if bullish and bullish_signal:
+        print(msg)
+        alerts.append(msg)  # ✅ collect alerts
 
-                # 1. Trend — 9 > 30 > 100
-                if not (EMA9 > EMA30 > EMA100):
-                    continue
-
-                # 2. HA(-3) and HA(-2) between EMA9 and EMA100
-                if prev2["HA_Close"] <= EMA100:
-                    continue
-                if prev1["HA_Close"] <= EMA100:
-                    continue
-
-                entry = prev1["HA_High"]
-                sl    = prev2["HA_Low"]
-
-
-            # -----------------------------------------
-            # 🔥 FINAL BEARISH LOGIC
-            # -----------------------------------------
-            elif not bullish and bearish_signal:
-
-                # 1. Trend — 9 < 30 < 100
-                if not (EMA9 < EMA30 < EMA100):
-                    continue
-
-                # 2. HA(-3) and HA(-2) between EMA9 and EMA100
-                if prev2["HA_Close"] >= EMA100:
-                    continue
-                if prev1["HA_Close"] >= EMA100:
-                    continue
-
-                
-
-                entry = prev1["HA_Low"]
-                sl    = prev2["HA_High"]
-
-            else:
-                continue
-
-            # -----------------------------------------
-            # RISK + QUANTITY
-            # -----------------------------------------
-            risk = abs(entry - sl)
-            if risk <= 0: 
-                continue
-
-            qty_risk   = MAX_RISK / risk
-            qty_margin = POSITION_SIZE / entry
-            qty = int(min(qty_risk, qty_margin))
-            if qty <= 0: 
-                continue
-
-            margin_used = (entry * qty) / LEVERAGE
-
-            # TARGETS
-            if bullish:
-                t2 = entry + 2*risk
-                t3 = entry + 3*risk
-                t4 = entry + 4*risk
-            else:
-                t2 = entry - 2*risk
-                t3 = entry - 3*risk
-                t4 = entry - 4*risk
-
-            # TIME
-            ts = float(prev1["time"])
-            if ts > 1e12: ts /= 1000
-            time_str = (datetime.utcfromtimestamp(ts) + IST_OFFSET).strftime("%Y-%m-%d %I:%M %p IST")
-
-            # MESSAGE
-            msg = (
-                f"Name: {pair}\n"
-                f"HA(-3): {round(prev2['HA_Close'],4)} ({c2})\n"
-                f"HA(-2): {round(prev1['HA_Close'],4)} ({c1})\n\n"
-                f"Entry: {entry:.4f}\n"
-                f"Stop Loss: {sl:.4f}\n"
-                f"Margin Used: ₹{margin_used:.2f}\n\n"
-                f"🎯 Targets:\n"
-                f"• 1:2 → {t2:.4f}\n"
-                f"• 1:3 → {t3:.4f}\n"
-                f"• 1:4 → {t4:.4f}\n"
-                f"-----------------------\n"
-            )
-
-            messages.append(msg)
-
-        return messages
-
-
-    # ==========================================================
-    # RUN SCANNER
-    # ==========================================================
-
-    bullish_msgs = build_alert(bullish_candidates, bullish=True)
-    bearish_msgs = build_alert(bearish_candidates, bullish=False)
-
-
-    if bullish_msgs:
-        # print("🟢 *Bullish HA Reversals*\n\n" + "\n".join(bullish_msgs))
-        send_telegram_message("🟢 *Bullish HA Reversals*\n\n" + "\n\n".join(bullish_msgs))
-
-    if bearish_msgs:
-        # print("🔴 *Bearish HA Reversals*\n\n" + "\n".join(bearish_msgs))
-        send_telegram_message("🔴 *Bearish HA Reversals*\n\n" + "\n\n".join(bearish_msgs))
-
+    # ✅ SEND ONCE
+    if alerts:
+        Send_Swing_Telegram_Message("\n\n".join(alerts))
+    else:
+        print("No signals found.")
 
 if __name__ == "__main__":
     main()
