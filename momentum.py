@@ -8,7 +8,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 TOP_COINS = 25
 MAX_WORKERS = 20
 RESOLUTION = "60"
-LIMIT_HOURS = 300
+LIMIT_HOURS = 600
 
 BB_LENGTH = 20
 BB_MULT = 2
