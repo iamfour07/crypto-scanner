@@ -14,5 +14,9 @@
   {
     "name": "B-EIGEN_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-WET_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
