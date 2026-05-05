@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from Telegram_Swing import Send_Swing_Telegram_Message
 
 # ================= CONFIG =================
-TOP_COINS = 25
+TOP_COINS = 30
 MAX_WORKERS = 20
 RESOLUTION = "60"
 LIMIT_HOURS = 600
