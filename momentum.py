@@ -81,7 +81,7 @@ def add_indicators(df):
     # EMA 200
     df["ema200"] = df["close"].ewm(span=200, adjust=False, min_periods=200).mean()
 
-    # BB (20,2) → TradingView match
+    # BB (20,2)
     mid = df["close"].rolling(BB_LENGTH).mean()
     std = df["close"].rolling(BB_LENGTH).std(ddof=0)
 
@@ -96,20 +96,27 @@ def check_signal(df):
     prev = df.iloc[-2]
     last = df.iloc[-1]
 
-    # BUY
-    if (
-        prev["close"] < prev["ema200"] and
-        last["close"] > last["ema200"] and
-        last["close"] > last["bb_upper"]
-    ):
+    # Body strength filter (avoid fake breakouts)
+    body_size = abs(last["close"] - last["open"])
+    range_size = last["high"] - last["low"]
+
+    if range_size == 0:
+        return None
+
+    strong_body = body_size > 0.6 * range_size
+
+    # ===== BUY CONDITIONS =====
+    cross_up = prev["close"] < prev["ema200"] and last["close"] > last["ema200"]
+    strong_above = last["low"] > last["ema200"]
+
+    if (cross_up or strong_above) and last["close"] > last["bb_upper"] and strong_body:
         return "BUY", last["high"], last["low"]
 
-    # SELL
-    if (
-        prev["close"] > prev["ema200"] and
-        last["close"] < last["ema200"] and
-        last["close"] < last["bb_lower"]
-    ):
+    # ===== SELL CONDITIONS =====
+    cross_down = prev["close"] > prev["ema200"] and last["close"] < last["ema200"]
+    strong_below = last["high"] < last["ema200"]
+
+    if (cross_down or strong_below) and last["close"] < last["bb_lower"] and strong_body:
         return "SELL", last["low"], last["high"]
 
     return None
@@ -143,7 +150,6 @@ def calculate_trade(entry, sl, side):
 
 
 # ================= MAIN =================
-# ================= MAIN =================
 def main():
     print("🚀 Fetching pairs...")
     pairs = get_all_pairs()
@@ -161,7 +167,7 @@ def main():
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         dfs = list(executor.map(fetch_candles, selected))
 
-    alerts = []  # ✅ IMPORTANT
+    alerts = []
 
     print("\n📊 SIGNALS\n")
 
@@ -181,7 +187,8 @@ def main():
         if not trade:
             continue
 
-        capital, t2, t3 = trade  # ✅ FIXED
+        # ✅ FIXED unpacking
+        qty, capital, t1, t2, t3 = trade
 
         msg = (
             f"{'🟢 BUY' if side=='BUY' else '🔴 SELL'} | {pair}\n"
@@ -190,19 +197,20 @@ def main():
             f"Risk  : ₹{RISK_RS}\n"
             f"Capital Used : ₹{round(capital,2)}\n\n"
             f"Targets:\n"
+            f"1R → {round(t1,5)}\n"
             f"2R → {round(t2,5)}\n"
             f"3R → {round(t3,5)}\n"
             f"----------------------------------"
         )
 
         print(msg)
-        alerts.append(msg)  # ✅ collect alerts
+        alerts.append(msg)
 
-    # ✅ SEND ONCE
     if alerts:
         Send_Swing_Telegram_Message("\n\n".join(alerts))
     else:
         print("No signals found.")
+
 
 if __name__ == "__main__":
     main()
