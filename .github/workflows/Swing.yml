@@ -32,7 +32,7 @@ jobs:
           pip install pandas requests
 
       - name: Run Scanner
-        run: python EMARsiSwing.py
+        run: python Momentum.py
         env:
           TELEGRAM_BOT_TOKEN_SWING: ${{ secrets.TELEGRAM_BOT_TOKEN_SWING }}
           TELEGRAM_CHAT_ID_SWING: ${{ secrets.TELEGRAM_CHAT_ID_SWING }}
