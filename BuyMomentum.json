@@ -4,7 +4,11 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-ALCH_USDT",
+    "name": "B-PRL_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ORCA_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
