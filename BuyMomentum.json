@@ -14,9 +14,5 @@
   {
     "name": "B-EIGEN_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-GENIUS_USDT",
-    "state": "WAIT_COOLDOWN"
   }
 ]
