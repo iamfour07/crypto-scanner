@@ -22,5 +22,9 @@
   {
     "name": "B-RAVE_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-HIGH_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
