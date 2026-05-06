@@ -38,5 +38,9 @@
   {
     "name": "B-FORM_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PRL_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
