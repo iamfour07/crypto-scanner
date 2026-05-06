@@ -30,5 +30,9 @@
   {
     "name": "B-BIO_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BAN_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
