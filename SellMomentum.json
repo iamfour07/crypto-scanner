@@ -10,5 +10,17 @@
   {
     "name": "B-COW_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ONT_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PORTAL_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-RAVE_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]

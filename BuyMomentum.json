@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-RAVE_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-PRL_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -21,10 +17,14 @@
   },
   {
     "name": "B-HIGH_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-STRK_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-GLM_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
