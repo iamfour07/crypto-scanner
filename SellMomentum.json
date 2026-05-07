@@ -28,10 +28,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-BIO_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-BAN_USDT",
     "state": "COOLDOWN_DONE"
   },
