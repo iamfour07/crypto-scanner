@@ -24,10 +24,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-BAN_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-FORM_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -41,7 +37,7 @@
   },
   {
     "name": "B-ALICE_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FIGHT_USDT",
