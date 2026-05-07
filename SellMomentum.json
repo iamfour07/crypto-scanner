@@ -13,7 +13,7 @@
   },
   {
     "name": "B-PORTAL_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-RAVE_USDT",
@@ -61,6 +61,10 @@
   },
   {
     "name": "B-FIGHT_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BLUR_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
