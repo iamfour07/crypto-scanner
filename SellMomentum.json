@@ -62,5 +62,9 @@
   {
     "name": "B-DOGE_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-1000LUNC_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
