@@ -1,7 +1,7 @@
 [
   {
     "name": "B-EIGEN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MAVIA_USDT",

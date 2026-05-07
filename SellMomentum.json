@@ -41,7 +41,7 @@
   },
   {
     "name": "B-PRL_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-SWARMS_USDT",
@@ -53,6 +53,10 @@
   },
   {
     "name": "B-ALICE_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-MERL_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
