@@ -29,7 +29,7 @@
   },
   {
     "name": "B-BIO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-BAN_USDT",
@@ -73,6 +73,10 @@
   },
   {
     "name": "B-USTC_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-AERO_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
