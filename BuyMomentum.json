@@ -8,14 +8,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-STRK_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-GLM_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-GENIUS_USDT",
     "state": "WAIT_COOLDOWN"
   }
