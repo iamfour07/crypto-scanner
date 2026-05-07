@@ -9,7 +9,7 @@
   },
   {
     "name": "B-ONT_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-PORTAL_USDT",
@@ -25,7 +25,7 @@
   },
   {
     "name": "B-ONG_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-BIO_USDT",
@@ -33,7 +33,7 @@
   },
   {
     "name": "B-BAN_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FORM_USDT",
@@ -77,6 +77,6 @@
   },
   {
     "name": "B-AERO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   }
 ]
