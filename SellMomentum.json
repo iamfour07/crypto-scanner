@@ -4,10 +4,6 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-COW_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-ONT_USDT",
     "state": "COOLDOWN_DONE"
   },
