@@ -5,7 +5,7 @@
   },
   {
     "name": "B-COW_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ONT_USDT",
@@ -57,7 +57,7 @@
   },
   {
     "name": "B-MERL_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-FIGHT_USDT",
@@ -73,6 +73,10 @@
   },
   {
     "name": "B-BROCCOLI714_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-USTC_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
