@@ -66,5 +66,13 @@
   {
     "name": "B-1000LUNC_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PENGU_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-GPS_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
