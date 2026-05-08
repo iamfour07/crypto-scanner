@@ -18,5 +18,9 @@
   {
     "name": "B-MOVR_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-HOME_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
