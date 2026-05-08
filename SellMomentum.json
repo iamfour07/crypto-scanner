@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-RAVE_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-ONG_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -65,6 +61,10 @@
   },
   {
     "name": "B-H_USDT",
+    "state": "COOLDOWN_DONE"
+  },
+  {
+    "name": "B-ACU_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
