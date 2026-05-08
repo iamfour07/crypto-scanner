@@ -60,11 +60,11 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-H_USDT",
-    "state": "COOLDOWN_DONE"
+    "name": "B-ACU_USDT",
+    "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-ACU_USDT",
+    "name": "B-EDGE_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
