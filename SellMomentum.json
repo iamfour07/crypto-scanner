@@ -16,10 +16,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-ALICE_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-BLUR_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -52,10 +48,6 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-TRIA_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-MAGMA_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -69,7 +61,7 @@
   },
   {
     "name": "B-XMR_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-H_USDT",
