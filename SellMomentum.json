@@ -25,7 +25,7 @@
   },
   {
     "name": "B-DOGE_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-1000LUNC_USDT",
@@ -65,10 +65,18 @@
   },
   {
     "name": "B-SAGA_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ICNT_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-PROM_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-GENIUS_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
