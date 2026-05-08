@@ -13,7 +13,7 @@
   },
   {
     "name": "B-BLUR_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-LUNA2_USDT",
@@ -37,7 +37,7 @@
   },
   {
     "name": "B-BCH_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-MAGMA_USDT",
@@ -49,7 +49,7 @@
   },
   {
     "name": "B-MORPHO_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-XMR_USDT",
