@@ -64,10 +64,6 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-SAGA_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-ICNT_USDT",
     "state": "WAIT_COOLDOWN"
   },
