@@ -21,7 +21,7 @@
   },
   {
     "name": "B-HOME_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CHIP_USDT",
