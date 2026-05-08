@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-NOM_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-EDU_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -16,16 +12,12 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-HOME_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-CHIP_USDT",
     "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-BSB_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-CETUS_USDT",
