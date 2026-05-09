@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-ONG_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-AXL_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -13,10 +9,6 @@
   },
   {
     "name": "B-LUNA2_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-USTC_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
