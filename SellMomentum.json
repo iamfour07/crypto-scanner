@@ -8,10 +8,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-GPS_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-CHILLGUY_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -25,10 +21,6 @@
   },
   {
     "name": "B-ACU_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-EDGE_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
