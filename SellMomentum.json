@@ -16,15 +16,15 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-XMR_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-ACU_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ICNT_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BSB_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

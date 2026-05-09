@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-EDU_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-HIGH_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -13,10 +9,6 @@
   },
   {
     "name": "B-CHIP_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-BSB_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
