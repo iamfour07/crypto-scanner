@@ -1,19 +1,11 @@
 [
   {
-    "name": "B-DOGE_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-CHILLGUY_USDT",
     "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ICNT_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-BSB_USDT",
-    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-IRYS_USDT",
