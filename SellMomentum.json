@@ -20,10 +20,6 @@
     "state": "COOLDOWN_DONE"
   },
   {
-    "name": "B-MAGMA_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-CHILLGUY_USDT",
     "state": "COOLDOWN_DONE"
   },
@@ -46,9 +42,5 @@
   {
     "name": "B-ICNT_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-PROM_USDT",
-    "state": "COOLDOWN_DONE"
   }
 ]
