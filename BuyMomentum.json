@@ -8,10 +8,6 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-BASED_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-H_USDT",
     "state": "WAIT_COOLDOWN"
   },
