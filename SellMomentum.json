@@ -1,14 +1,26 @@
 [
   {
-    "name": "B-ZBT_USDT",
+    "name": "B-ICNT_USDT",
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-CL_USDT",
+    "name": "B-OPEN_USDT",
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-COW_USDT",
+    "name": "B-TRIA_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-ALCH_USDT",
+    "state": "COOLDOWN_DONE"
+  },
+  {
+    "name": "B-HMSTR_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-WLFI_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
