@@ -4,10 +4,6 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-ORCA_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-BLUR_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -22,5 +18,9 @@
   {
     "name": "B-MAGMA_USDT",
     "state": "COOLDOWN_DONE"
+  },
+  {
+    "name": "B-ALCH_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]

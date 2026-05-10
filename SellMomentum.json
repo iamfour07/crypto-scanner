@@ -12,10 +12,6 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-ALCH_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-HMSTR_USDT",
     "state": "COOLDOWN_DONE"
   },
