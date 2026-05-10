@@ -18,7 +18,7 @@ RISK_PER_TRADE = 200
 MAX_CAPITAL = 5000
 LEVERAGE = 10
 
-# ✅ RSI CONFIG (NEW)
+# ✅ RSI CONFIG
 RSI_LENGTH = 10
 RSI_UPPER = 55
 RSI_LOWER = 45
@@ -34,6 +34,7 @@ def load_list(file):
             return []
     return []
 
+
 def save_list(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=2)
@@ -41,7 +42,9 @@ def save_list(file, data):
 
 # ================= FETCH CANDLES =================
 def fetch_candles(pair):
+
     url = "https://public.coindcx.com/market_data/candlesticks"
+
     now = int(datetime.now(timezone.utc).timestamp())
 
     params = {
@@ -54,16 +57,22 @@ def fetch_candles(pair):
 
     try:
         response = requests.get(url, params=params, timeout=10)
+
         data = response.json()
 
         if not isinstance(data, dict) or "data" not in data:
             return None
 
-        df = pd.DataFrame(data["data"]).sort_values("time").reset_index(drop=True)
+        df = (
+            pd.DataFrame(data["data"])
+            .sort_values("time")
+            .reset_index(drop=True)
+        )
 
         for col in ["open", "high", "low", "close"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
+        # remove incomplete candle
         df = df.iloc[:-1]
 
         if len(df) < 120:
@@ -77,29 +86,45 @@ def fetch_candles(pair):
 
 # ================= INDICATORS =================
 def add_indicators(df):
+
     df["ema30"] = df["close"].ewm(span=30, adjust=False).mean()
+
     df["ema100"] = df["close"].ewm(span=100, adjust=False).mean()
+
     df["diff"] = df["ema30"] - df["ema100"]
 
-    # ===== RSI (DYNAMIC) =====
+    # ===== RSI =====
     delta = df["close"].diff()
+
     gain = delta.where(delta > 0, 0.0)
+
     loss = -delta.where(delta < 0, 0.0)
 
     avg_gain = gain.copy()
+
     avg_loss = loss.copy()
 
-    avg_gain.iloc[RSI_LENGTH] = gain.iloc[1:RSI_LENGTH+1].mean()
-    avg_loss.iloc[RSI_LENGTH] = loss.iloc[1:RSI_LENGTH+1].mean()
+    avg_gain.iloc[RSI_LENGTH] = gain.iloc[1:RSI_LENGTH + 1].mean()
+
+    avg_loss.iloc[RSI_LENGTH] = loss.iloc[1:RSI_LENGTH + 1].mean()
 
     for i in range(RSI_LENGTH + 1, len(df)):
-        avg_gain.iloc[i] = (avg_gain.iloc[i - 1] * (RSI_LENGTH - 1) + gain.iloc[i]) / RSI_LENGTH
-        avg_loss.iloc[i] = (avg_loss.iloc[i - 1] * (RSI_LENGTH - 1) + loss.iloc[i]) / RSI_LENGTH
+
+        avg_gain.iloc[i] = (
+            (avg_gain.iloc[i - 1] * (RSI_LENGTH - 1) + gain.iloc[i])
+            / RSI_LENGTH
+        )
+
+        avg_loss.iloc[i] = (
+            (avg_loss.iloc[i - 1] * (RSI_LENGTH - 1) + loss.iloc[i])
+            / RSI_LENGTH
+        )
 
     avg_gain.iloc[:RSI_LENGTH] = float("nan")
     avg_loss.iloc[:RSI_LENGTH] = float("nan")
 
     rs = avg_gain / (avg_loss + 1e-9)
+
     df["rsi"] = 100 - (100 / (1 + rs))
 
     return df
@@ -107,105 +132,203 @@ def add_indicators(df):
 
 # ================= EMA CROSS =================
 def check_ema_cross(df):
+
     prev = df.iloc[-2]
+
     last = df.iloc[-1]
 
-    bullish = prev["diff"] <= 0 and last["diff"] > 0
-    bearish = prev["diff"] >= 0 and last["diff"] < 0
+    bullish = (
+        prev["diff"] <= 0
+        and last["diff"] > 0
+    )
+
+    bearish = (
+        prev["diff"] >= 0
+        and last["diff"] < 0
+    )
 
     return bullish, bearish
 
 
 # ================= PIVOT =================
-def find_pivot_low(df, left=3, right=3):
-    for i in range(len(df) - right - 1, left, -1):
-        if all(df["low"].iloc[i] < df["low"].iloc[i - j] for j in range(1, left + 1)) and \
-           all(df["low"].iloc[i] < df["low"].iloc[i + j] for j in range(1, right + 1)):
-            return df["low"].iloc[i]
+def find_pivot_low(df, left=2, right=2):
+
+    lows = df["low"].values
+
+    for i in range(len(lows) - right - 1, left, -1):
+
+        if (
+            lows[i] < lows[i - 1]
+            and lows[i] < lows[i - 2]
+            and lows[i] < lows[i + 1]
+            and lows[i] < lows[i + 2]
+        ):
+            return lows[i]
+
     return None
 
-def find_pivot_high(df, left=3, right=3):
-    for i in range(len(df) - right - 1, left, -1):
-        if all(df["high"].iloc[i] > df["high"].iloc[i - j] for j in range(1, left + 1)) and \
-           all(df["high"].iloc[i] > df["high"].iloc[i + j] for j in range(1, right + 1)):
-            return df["high"].iloc[i]
+
+def find_pivot_high(df, left=2, right=2):
+
+    highs = df["high"].values
+
+    for i in range(len(highs) - right - 1, left, -1):
+
+        if (
+            highs[i] > highs[i - 1]
+            and highs[i] > highs[i - 2]
+            and highs[i] > highs[i + 1]
+            and highs[i] > highs[i + 2]
+        ):
+            return highs[i]
+
     return None
 
 
 # ================= FALLBACK =================
 def fallback_swing_low(df):
-    return df["low"].iloc[-10:].min()
+    return min(df["low"].iloc[-5:-1])
+
 
 def fallback_swing_high(df):
-    return df["high"].iloc[-10:].max()
+    return max(df["high"].iloc[-5:-1])
 
 
 # ================= FETCH PAIRS =================
 def get_all_pairs():
+
     url = "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments?margin_currency_short_name[]=USDT"
+
     try:
-        return [p for p in requests.get(url).json() if isinstance(p, str)]
+        return [
+            p for p in requests.get(url).json()
+            if isinstance(p, str)
+        ]
+
     except:
         return []
 
 
 # ================= STATS =================
 def get_pair_stats(pair):
+
     try:
         url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
+
         data = requests.get(url, timeout=5).json()
+
         change = data.get("price_change_percent", {}).get("1D", 0)
-        return {"pair": pair, "change": float(change)}
+
+        return {
+            "pair": pair,
+            "change": float(change)
+        }
+
     except:
         return None
 
 
 # ================= MAIN =================
 def main():
+
     buy_list = load_list(BUY_FILE)
+
     sell_list = load_list(SELL_FILE)
 
     pairs = get_all_pairs()
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        stats = [r for r in executor.map(get_pair_stats, pairs) if r]
 
-    top_gainers = sorted(stats, key=lambda x: x["change"], reverse=True)[:30]
-    top_losers = sorted(stats, key=lambda x: x["change"])[:30]
+        stats = [
+            r for r in executor.map(get_pair_stats, pairs)
+            if r
+        ]
 
-    # ===== ADD CROSSOVER =====
+    top_gainers = sorted(
+        stats,
+        key=lambda x: x["change"],
+        reverse=True
+    )[:30]
+
+    top_losers = sorted(
+        stats,
+        key=lambda x: x["change"]
+    )[:30]
+
+    # ================= ADD BUY CROSSOVER =================
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        gainers_data = list(executor.map(fetch_candles, [g["pair"] for g in top_gainers]))
 
-    for pair, df in zip([g["pair"] for g in top_gainers], gainers_data):
-        if df is None: continue
+        gainers_data = list(
+            executor.map(
+                fetch_candles,
+                [g["pair"] for g in top_gainers]
+            )
+        )
+
+    for pair, df in zip(
+        [g["pair"] for g in top_gainers],
+        gainers_data
+    ):
+
+        if df is None:
+            continue
+
         df = add_indicators(df)
+
         bullish, _ = check_ema_cross(df)
 
         if bullish and not any(c["name"] == pair for c in buy_list):
-            buy_list.append({"name": pair, "state": "WAIT_COOLDOWN"})
 
+            buy_list.append({
+                "name": pair,
+                "state": "WAIT_COOLDOWN"
+            })
+
+    # ================= ADD SELL CROSSOVER =================
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        losers_data = list(executor.map(fetch_candles, [l["pair"] for l in top_losers]))
 
-    for pair, df in zip([l["pair"] for l in top_losers], losers_data):
-        if df is None: continue
+        losers_data = list(
+            executor.map(
+                fetch_candles,
+                [l["pair"] for l in top_losers]
+            )
+        )
+
+    for pair, df in zip(
+        [l["pair"] for l in top_losers],
+        losers_data
+    ):
+
+        if df is None:
+            continue
+
         df = add_indicators(df)
+
         _, bearish = check_ema_cross(df)
 
         if bearish and not any(c["name"] == pair for c in sell_list):
-            sell_list.append({"name": pair, "state": "WAIT_COOLDOWN"})
 
+            sell_list.append({
+                "name": pair,
+                "state": "WAIT_COOLDOWN"
+            })
 
-    # ===== BUY =====
+    # ================= BUY =================
     updated_buy = []
+
     for coin in buy_list:
+
         pair = coin["name"]
+
         df = fetch_candles(pair)
-        if df is None: continue
+
+        if df is None:
+            continue
 
         df = add_indicators(df)
+
         prev = df.iloc[-2]
+
         last = df.iloc[-1]
 
         if last["ema30"] <= last["ema100"]:
@@ -214,43 +337,91 @@ def main():
         state = coin.get("state", "WAIT_COOLDOWN")
 
         if state == "WAIT_COOLDOWN":
-            if prev["rsi"] >= RSI_LOWER and last["rsi"] < RSI_LOWER:
+
+            if (
+                prev["rsi"] >= RSI_LOWER
+                and last["rsi"] < RSI_LOWER
+            ):
+
                 coin["state"] = "COOLDOWN_DONE"
+
             updated_buy.append(coin)
 
         elif state == "COOLDOWN_DONE":
-            if prev["rsi"] <= RSI_UPPER and last["rsi"] > RSI_UPPER:
+
+            if (
+                prev["rsi"] <= RSI_UPPER
+                and last["rsi"] > RSI_UPPER
+            ):
 
                 entry = last["high"]
-                pivot = find_pivot_low(df)
-                sl_base = pivot if pivot else fallback_swing_low(df)
+
+                # ===== EXCLUDE CURRENT CANDLE =====
+                swing_df = df.iloc[:-1]
+
+                pivot = find_pivot_low(swing_df)
+
+                sl_base = (
+                    pivot
+                    if pivot
+                    else fallback_swing_low(swing_df)
+                )
+
                 sl = sl_base * 0.998
 
                 risk = entry - sl
+
                 if risk <= 0:
                     updated_buy.append(coin)
                     continue
 
-                qty = min(RISK_PER_TRADE / risk, (MAX_CAPITAL * LEVERAGE) / entry)
-                margin = round((qty * entry) / LEVERAGE, 2)
+                qty = min(
+                    RISK_PER_TRADE / risk,
+                    (MAX_CAPITAL * LEVERAGE) / entry
+                )
+
+                margin = round(
+                    (qty * entry) / LEVERAGE,
+                    2
+                )
+
+                # ===== TARGETS =====
+                t2 = entry + (risk * 2)
+                t3 = entry + (risk * 3)
+                t4 = entry + (risk * 4)
 
                 Send_EMA_Telegram_Message(
-                    f"Status: Buy\nPair: {pair}\nEntry: {entry:.6f}\nStop Loss: {sl:.6f}\nMargin Used: ₹{margin}"
+                    f"🟢 BUY\n\n"
+                    f"Pair: {pair}\n"
+                    f"Entry: {entry:.6f}\n"
+                    f"Stop Loss: {sl:.6f}\n\n"
+                    f"Risk Per Trade: ₹{RISK_PER_TRADE}\n"
+                    f"Margin Used: ₹{margin}\n\n"
+                    f"Targets:\n"
+                    f"1:2 → {t2:.6f}\n"
+                    f"1:3 → {t3:.6f}\n"
+                    f"1:4 → {t4:.6f}"
                 )
 
             else:
                 updated_buy.append(coin)
 
-
-    # ===== SELL =====
+    # ================= SELL =================
     updated_sell = []
+
     for coin in sell_list:
+
         pair = coin["name"]
+
         df = fetch_candles(pair)
-        if df is None: continue
+
+        if df is None:
+            continue
 
         df = add_indicators(df)
+
         prev = df.iloc[-2]
+
         last = df.iloc[-1]
 
         if last["ema30"] >= last["ema100"]:
@@ -259,35 +430,77 @@ def main():
         state = coin.get("state", "WAIT_COOLDOWN")
 
         if state == "WAIT_COOLDOWN":
-            if prev["rsi"] <= RSI_UPPER and last["rsi"] > RSI_UPPER:
+
+            if (
+                prev["rsi"] <= RSI_UPPER
+                and last["rsi"] > RSI_UPPER
+            ):
+
                 coin["state"] = "COOLDOWN_DONE"
+
             updated_sell.append(coin)
 
         elif state == "COOLDOWN_DONE":
-            if prev["rsi"] >= RSI_LOWER and last["rsi"] < RSI_LOWER:
+
+            if (
+                prev["rsi"] >= RSI_LOWER
+                and last["rsi"] < RSI_LOWER
+            ):
 
                 entry = last["low"]
-                pivot = find_pivot_high(df)
-                sl_base = pivot if pivot else fallback_swing_high(df)
+
+                # ===== EXCLUDE CURRENT CANDLE =====
+                swing_df = df.iloc[:-1]
+
+                pivot = find_pivot_high(swing_df)
+
+                sl_base = (
+                    pivot
+                    if pivot
+                    else fallback_swing_high(swing_df)
+                )
+
                 sl = sl_base * 1.002
 
                 risk = sl - entry
+
                 if risk <= 0:
                     updated_sell.append(coin)
                     continue
 
-                qty = min(RISK_PER_TRADE / risk, (MAX_CAPITAL * LEVERAGE) / entry)
-                margin = round((qty * entry) / LEVERAGE, 2)
+                qty = min(
+                    RISK_PER_TRADE / risk,
+                    (MAX_CAPITAL * LEVERAGE) / entry
+                )
+
+                margin = round(
+                    (qty * entry) / LEVERAGE,
+                    2
+                )
+
+                # ===== TARGETS =====
+                t2 = entry - (risk * 2)
+                t3 = entry - (risk * 3)
+                t4 = entry - (risk * 4)
 
                 Send_EMA_Telegram_Message(
-                    f"Status: Sell\nPair: {pair}\nEntry: {entry:.6f}\nStop Loss: {sl:.6f}\nMargin Used: ₹{margin}"
+                    f"🔴 SELL\n\n"
+                    f"Pair: {pair}\n"
+                    f"Entry: {entry:.6f}\n"
+                    f"Stop Loss: {sl:.6f}\n\n"
+                    f"Risk Per Trade: ₹{RISK_PER_TRADE}\n"
+                    f"Margin Used: ₹{margin}\n\n"
+                    f"Targets:\n"
+                    f"1:2 → {t2:.6f}\n"
+                    f"1:3 → {t3:.6f}\n"
+                    f"1:4 → {t4:.6f}"
                 )
 
             else:
                 updated_sell.append(coin)
 
-
     save_list(BUY_FILE, updated_buy)
+
     save_list(SELL_FILE, updated_sell)
 
     print("✅ Done")
