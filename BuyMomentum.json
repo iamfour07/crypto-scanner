@@ -1,7 +1,7 @@
 [
   {
     "name": "B-H_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-BLUR_USDT",
