@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-ICNT_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-DOGS_USDT",
     "state": "WAIT_COOLDOWN"
   },
@@ -17,7 +13,7 @@
   },
   {
     "name": "B-HIGH_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-NOT_USDT",
@@ -73,6 +69,10 @@
   },
   {
     "name": "B-GRASS_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-BIO_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]

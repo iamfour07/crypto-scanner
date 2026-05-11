@@ -8,7 +8,7 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-CL_USDT",
-    "state": "COOLDOWN_DONE"
+    "name": "B-ICNT_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
