@@ -1,9 +1,5 @@
 [
   {
-    "name": "B-BLUR_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
     "name": "B-FHE_USDT",
     "state": "COOLDOWN_DONE"
   },
