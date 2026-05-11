@@ -1,19 +1,11 @@
 [
   {
-    "name": "B-DOGS_USDT",
-    "state": "WAIT_COOLDOWN"
-  },
-  {
     "name": "B-DASH_USDT",
     "state": "WAIT_COOLDOWN"
   },
   {
     "name": "B-DUSK_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-HIGH_USDT",
-    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-NOT_USDT",
@@ -24,19 +16,7 @@
     "state": "WAIT_COOLDOWN"
   },
   {
-    "name": "B-LUMIA_USDT",
-    "state": "COOLDOWN_DONE"
-  },
-  {
-    "name": "B-ORDI_USDT",
-    "state": "WAIT_COOLDOWN"
-  },
-  {
     "name": "B-GENIUS_USDT",
-    "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-ZKP_USDT",
     "state": "WAIT_COOLDOWN"
   },
   {
@@ -54,10 +34,6 @@
   {
     "name": "B-NIL_USDT",
     "state": "WAIT_COOLDOWN"
-  },
-  {
-    "name": "B-PENDLE_USDT",
-    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-ALGO_USDT",
