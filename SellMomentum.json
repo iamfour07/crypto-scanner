@@ -69,10 +69,14 @@
   },
   {
     "name": "B-GRASS_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-BIO_USDT",
+    "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-FHE_USDT",
     "state": "WAIT_COOLDOWN"
   }
 ]
