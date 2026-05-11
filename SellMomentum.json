@@ -34,5 +34,9 @@
   {
     "name": "B-TA_USDT",
     "state": "WAIT_COOLDOWN"
+  },
+  {
+    "name": "B-FIGHT_USDT",
+    "state": "WAIT_COOLDOWN"
   }
 ]
