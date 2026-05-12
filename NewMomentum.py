@@ -523,11 +523,10 @@ def main():
 
     print("🚀 Script Started")
 
-    ist = ZoneInfo.timezone(
-        "Asia/Kolkata"
+ 
+    now = datetime.now(
+        ZoneInfo("Asia/Kolkata")
     )
-
-    now = datetime.now(ist)
 
     # # ================= TIME DEBUG =================
 
