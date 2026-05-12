@@ -13,7 +13,7 @@
   },
   {
     "name": "B-GENIUS_USDT",
-    "state": "WAIT_COOLDOWN"
+    "state": "COOLDOWN_DONE"
   },
   {
     "name": "B-RAVE_USDT",
