@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import json
 import os
-import pytz
+from zoneinfo import ZoneInfo
 
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
@@ -523,7 +523,7 @@ def main():
 
     print("🚀 Script Started")
 
-    ist = pytz.timezone(
+    ist = ZoneInfo.timezone(
         "Asia/Kolkata"
     )
 
