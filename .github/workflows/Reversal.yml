@@ -41,14 +41,14 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          
+
           git add ReversalSellWatchlist.json || true
-          
+
           # PEHLE COMMIT (Order changed here)
           git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
-          
+
           # FIR PULL REBASE
           git pull --rebase origin main
-          
+
           # FIR PUSH
           git push origin main
