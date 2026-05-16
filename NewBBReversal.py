@@ -19,8 +19,8 @@ FILE_NAME = "ReversalSellWatchlist.json"
 ST_PERIOD = 20
 ST_MULTIPLIER = 2
 
-RISK_PER_TRADE = 100      
-LEVERAGE = 5  
+RISK_PER_TRADE = 200      
+LEVERAGE = 10  
 MAX_CAPITAL = 5000               
 
 # ================= INDICATOR CALCULATIONS =================
