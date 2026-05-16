@@ -43,7 +43,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           
           # Sirf zaroori files add karein
-          git add TopGainerWatchlist.json TopLoserWatchlist.json
+          git add BuyWatchlist.json SellWatchlist.json
           
           # Kisi bhi extra temporary file change ko discard karein
           git checkout -- . || true
