@@ -13,5 +13,10 @@
     "pair": "B-BNB_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-17T11:00:39"
+  },
+  {
+    "pair": "B-XAN_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-17T14:00:36"
   }
 ]
