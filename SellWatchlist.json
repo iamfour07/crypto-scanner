@@ -23,5 +23,10 @@
     "pair": "B-GPS_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-17T21:00:34"
+  },
+  {
+    "pair": "B-HUMA_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-17T23:00:41"
   }
 ]
