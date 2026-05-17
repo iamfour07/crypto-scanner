@@ -15,7 +15,7 @@ RESOLUTION         = "60"
 BUY_FILE           = "BuyWatchlist.json"
 SELL_FILE          = "SellWatchlist.json"
 MAX_WORKERS        = 20
-USE_VOLUME_FILTER  = True         # False karo toh volume check skip hoga
+USE_VOLUME_FILTER  = False        # False karo toh volume check skip hoga
 MIN_VOLUME_USDT    = 10_000_000   # $10M minimum 24h volume (sirf tab kaam karta hai jab USE_VOLUME_FILTER = True)
 SWING_CANDLES      = 10           # SL ke liye last N candles
 RISK_PER_TRADE_INR = 150
