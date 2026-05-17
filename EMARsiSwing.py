@@ -17,7 +17,7 @@ SELL_FILE          = "SellWatchlist.json"
 MAX_WORKERS        = 20
 USE_VOLUME_FILTER  = False
 MIN_VOLUME_USDT    = 10_000_000
-RISK_PER_TRADE_INR = 150
+MAX_PRICE_EMA20_GAP = 3    # % mein — cross ke waqt price 20 EMA se kitni door ho sakti hai
 LEVERAGE           = 7
 INR_TO_USDT_RATE   = None
 
@@ -25,6 +25,7 @@ INR_TO_USDT_RATE   = None
 #  INDICATORS
 # ================================================================
 def calculate_indicators(df):
+    df['ema20']  = df['close'].ewm(span=20,  adjust=False).mean()
     df['ema50']  = df['close'].ewm(span=50,  adjust=False).mean()
     df['ema200'] = df['close'].ewm(span=200, adjust=False).mean()
     delta        = df['close'].diff()
@@ -132,17 +133,19 @@ def trade_levels(df, side):
 # ================================================================
 #  ALERT MESSAGE
 # ================================================================
-def build_msg(side, pair, entry, sl, t2, t3):
+def build_msg(side, pair, entry, sl, t2, t3, gap=None):
     pos   = calc_position(entry, sl)
     cap   = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
     qty   = pos['quantity'] if pos else "N/A"
     label = "BUY" if side == "buy" else "SELL"
+    gap_line = f"\nEMA20 Gap : {round(gap, 2)}%" if gap is not None else ""
     return (
         f"{label} — {pair}\n\n"
         f"Entry    : {entry}\n"
         f"SL       : {sl}\n"
         f"Capital  : {cap}\n"
-        f"Quantity : {qty}\n\n"
+        f"Quantity : {qty}\n"
+        f"{gap_line}\n"
         f"Targets:\n"
         f"1:2 → {t2}\n"
         f"1:3 → {t3}"
@@ -172,6 +175,11 @@ def scan_fresh_cross(pair, buy_pairs, sell_pairs):
 
     last = df.iloc[-1]   # last closed candle
     prev = df.iloc[-2]   # uske pehle wali candle
+
+    # Price aur 20 EMA ka gap check — price 20 EMA ke paas honi chahiye
+    price_ema20_gap = abs(last['close'] - last['ema20']) / last['ema20'] * 100
+    if price_ema20_gap > MAX_PRICE_EMA20_GAP:
+        return None   # Price bahut door hai 20 EMA se — skip
 
     # BUY: pehle 50 neeche tha, ab 50 upar aa gaya
     if prev['ema50'] <= prev['ema200'] and last['ema50'] > last['ema200']:
@@ -226,7 +234,8 @@ def check_state(entry, buy_pairs, sell_pairs):
         # dip_done: RSI > 55 aaya → ALERT
         if state == "dip_done" and rsi > 55:
             e, sl, t2, t3 = trade_levels(df, "buy")
-            return ("ALERT_BUY", entry, build_msg("buy", pair, e, sl, t2, t3))
+            gap = abs(last['close'] - last['ema20']) / last['ema20'] * 100
+            return ("ALERT_BUY", entry, build_msg("buy", pair, e, sl, t2, t3, gap))
 
     # ── SELL SIDE ──
     elif state in ("waiting_bounce", "bounce_done"):
@@ -249,7 +258,8 @@ def check_state(entry, buy_pairs, sell_pairs):
         # bounce_done: RSI < 45 aaya → ALERT
         if state == "bounce_done" and rsi < 45:
             e, sl, t2, t3 = trade_levels(df, "sell")
-            return ("ALERT_SELL", entry, build_msg("sell", pair, e, sl, t2, t3))
+            gap = abs(last['close'] - last['ema20']) / last['ema20'] * 100
+            return ("ALERT_SELL", entry, build_msg("sell", pair, e, sl, t2, t3, gap))
 
     return ("STAY", entry)
 
