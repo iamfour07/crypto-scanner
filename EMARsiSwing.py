@@ -15,25 +15,11 @@ RESOLUTION         = "60"
 BUY_FILE           = "BuyWatchlist.json"
 SELL_FILE          = "SellWatchlist.json"
 MAX_WORKERS        = 20
-USE_VOLUME_FILTER  = False        # False karo toh volume check skip hoga
-MIN_VOLUME_USDT    = 10_000_000   # $10M minimum 24h volume (sirf tab kaam karta hai jab USE_VOLUME_FILTER = True)
-SWING_CANDLES      = 10           # SL ke liye last N candles
+USE_VOLUME_FILTER  = False
+MIN_VOLUME_USDT    = 10_000_000
 RISK_PER_TRADE_INR = 150
 LEVERAGE           = 7
-INR_TO_USDT_RATE   = None         # None = live fetch, ya 84.0 fix karo
-
-# ================================================================
-#  WATCHLIST STRUCTURE
-#
-#  Buy entry:
-#  { "pair": "BTCUSDT", "state": "waiting_dip",  "added": "..." }
-#
-#  Sell entry:
-#  { "pair": "ETHUSDT", "state": "waiting_bounce","added": "..." }
-#
-#  BUY  states:  waiting_dip   → dip_done
-#  SELL states:  waiting_bounce → bounce_done
-# ================================================================
+INR_TO_USDT_RATE   = None
 
 # ================================================================
 #  INDICATORS
@@ -41,24 +27,24 @@ INR_TO_USDT_RATE   = None         # None = live fetch, ya 84.0 fix karo
 def calculate_indicators(df):
     df['ema50']  = df['close'].ewm(span=50,  adjust=False).mean()
     df['ema200'] = df['close'].ewm(span=200, adjust=False).mean()
-
-    delta    = df['close'].diff()
-    gain     = delta.where(delta > 0, 0)
-    loss     = -delta.where(delta < 0, 0)
-    avg_gain = gain.ewm(alpha=1/14, min_periods=14, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1/14, min_periods=14, adjust=False).mean()
-    rs       = avg_gain / (avg_loss + 1e-9)
-    df['rsi'] = 100 - (100 / (1 + rs))
+    delta        = df['close'].diff()
+    gain         = delta.where(delta > 0, 0)
+    loss         = -delta.where(delta < 0, 0)
+    avg_gain     = gain.ewm(alpha=1/14, min_periods=14, adjust=False).mean()
+    avg_loss     = loss.ewm(alpha=1/14, min_periods=14, adjust=False).mean()
+    rs           = avg_gain / (avg_loss + 1e-9)
+    df['rsi']    = 100 - (100 / (1 + rs))
     return df
 
 
 def fetch_data(pair):
     url    = "https://public.coindcx.com/market_data/candlesticks"
     now    = int(datetime.now(timezone.utc).timestamp())
-    params = {"pair": pair, "from": now - 500*3600, "to": now, "resolution": RESOLUTION, "pcode": "f"}
+    params = {"pair": pair, "from": now - 500*3600, "to": now,
+              "resolution": RESOLUTION, "pcode": "f"}
     try:
         r  = requests.get(url, params=params, timeout=10).json()
-        df = pd.DataFrame(r["data"]).sort_values("time").iloc[:-1]
+        df = pd.DataFrame(r["data"]).sort_values("time").iloc[:-1]  # running candle remove
         for col in ["open","high","low","close"]:
             df[col] = pd.to_numeric(df[col])
         return calculate_indicators(df).dropna()
@@ -71,12 +57,11 @@ def fetch_data(pair):
 # ================================================================
 def get_volume(pair):
     if not USE_VOLUME_FILTER:
-        return float('inf')  # Filter off hai toh hamesha pass
+        return float('inf')
     try:
         d = requests.get(
             f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}",
-            timeout=5
-        ).json()
+            timeout=5).json()
         return float(d.get("volume_24h", 0))
     except:
         return 0
@@ -116,35 +101,44 @@ def calc_position(entry, sl):
 
 # ================================================================
 #  TRADE LEVELS
+#  Buy:  Entry = last closed candle HIGH | SL = previous swing LOW
+#  Sell: Entry = last closed candle LOW  | SL = previous swing HIGH
+#
+#  Swing LOW  = last 10 candles ka lowest LOW
+#  Swing HIGH = last 10 candles ka highest HIGH
 # ================================================================
+SWING_CANDLES = 10   # Kitni candles mein swing dhundna hai
+
 def trade_levels(df, side):
-    last   = df.iloc[-1]
-    recent = df.iloc[-SWING_CANDLES:]
+    last   = df.iloc[-1]             # last closed candle — entry ke liye
+    swing  = df.iloc[-SWING_CANDLES:]  # last 10 candles — SL ke liye
+
     if side == "buy":
         entry = round(last['high'], 6)
-        sl    = round(recent['low'].min(), 6)
+        sl    = round(swing['low'].min(), 6)   # lowest LOW of last 10 candles
         risk  = entry - sl
         t2    = round(entry + 2 * risk, 6)
         t3    = round(entry + 3 * risk, 6)
     else:
-        entry = round(last['low'], 6)
-        sl    = round(recent['high'].max(), 6)
+        entry = round(last['low'],  6)
+        sl    = round(swing['high'].max(), 6)  # highest HIGH of last 10 candles
         risk  = sl - entry
         t2    = round(entry - 2 * risk, 6)
         t3    = round(entry - 3 * risk, 6)
+
     return entry, sl, t2, t3
 
 
 # ================================================================
-#  ALERT MESSAGES
+#  ALERT MESSAGE
 # ================================================================
 def build_msg(side, pair, entry, sl, t2, t3):
     pos   = calc_position(entry, sl)
     cap   = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
     qty   = pos['quantity'] if pos else "N/A"
-    emoji = "🚀 BUY" if side == "buy" else "📉 SELL"
+    label = "BUY" if side == "buy" else "SELL"
     return (
-        f"{emoji} — {pair}\n\n"
+        f"{label} — {pair}\n\n"
         f"Entry    : {entry}\n"
         f"SL       : {sl}\n"
         f"Capital  : {cap}\n"
@@ -156,36 +150,49 @@ def build_msg(side, pair, entry, sl, t2, t3):
 
 
 # ================================================================
-#  STEP 1 — FRESH EMA CROSS SCAN
+#  FRESH EMA CROSS CHECK
+#
+#  Sirf 2 candles compare:
+#    prev = df.iloc[-2]  (iske pehle wali closed candle)
+#    last = df.iloc[-1]  (last closed candle)
+#
+#  BUY cross:  prev mein 50 <= 200  AND  last mein 50 > 200
+#  SELL cross: prev mein 50 >= 200  AND  last mein 50 < 200
 # ================================================================
 def scan_fresh_cross(pair, buy_pairs, sell_pairs):
     if pair in buy_pairs or pair in sell_pairs:
         return None
 
-    vol = get_volume(pair)
-    if vol < MIN_VOLUME_USDT:
+    if get_volume(pair) < MIN_VOLUME_USDT:
         return None
 
     df = fetch_data(pair)
-    if df is None or len(df) < 3:
+    if df is None or len(df) < 2:
         return None
 
-    last = df.iloc[-1]
-    prev = df.iloc[-2]
+    last = df.iloc[-1]   # last closed candle
+    prev = df.iloc[-2]   # uske pehle wali candle
 
-    # Fresh BUY cross: pichli candle mein 50 < 200, ab 50 > 200
-    if (prev['ema50'] <= prev['ema200']) and (last['ema50'] > last['ema200']):
+    # BUY: pehle 50 neeche tha, ab 50 upar aa gaya
+    if prev['ema50'] <= prev['ema200'] and last['ema50'] > last['ema200']:
+        print(f"  ✅ BUY cross on last closed candle: {pair}")
         return ("ADD_BUY", pair)
 
-    # Fresh SELL cross: pichli candle mein 50 > 200, ab 50 < 200
-    if (prev['ema50'] >= prev['ema200']) and (last['ema50'] < last['ema200']):
+    # SELL: pehle 50 upar tha, ab 50 neeche aa gaya
+    if prev['ema50'] >= prev['ema200'] and last['ema50'] < last['ema200']:
+        print(f"  🔴 SELL cross on last closed candle: {pair}")
         return ("ADD_SELL", pair)
 
     return None
 
 
 # ================================================================
-#  STEP 2 — STATE MACHINE CHECK
+#  STATE MACHINE
+#
+#  BUY  flow: waiting_dip  → (RSI < 45) → dip_done  → (RSI > 55) → ALERT
+#  SELL flow: waiting_bounce → (RSI > 55) → bounce_done → (RSI < 45) → ALERT
+#
+#  Sab kuch last closed candle ki RSI pe check hota hai
 # ================================================================
 def check_state(entry, buy_pairs, sell_pairs):
     pair  = entry["pair"]
@@ -195,57 +202,51 @@ def check_state(entry, buy_pairs, sell_pairs):
     if df is None or df.empty:
         return ("STAY", entry)
 
-    last = df.iloc[-1]
+    last = df.iloc[-1]   # last closed candle
     rsi  = last['rsi']
 
-    # ──────────────────────────────
-    #  BUY SIDE
-    # ──────────────────────────────
+    # ── BUY SIDE ──
     if state in ("waiting_dip", "dip_done"):
 
-        # Trend break — bearish ho gaya, remove
+        # Trend break → remove
         if last['ema50'] < last['ema200']:
             print(f"  ❌ BUY Remove (trend break): {pair}")
             return ("REMOVE_BUY", entry)
 
-        # Volume drop — remove
+        # Volume drop → remove
         if get_volume(pair) < MIN_VOLUME_USDT:
             print(f"  ❌ BUY Remove (low volume): {pair}")
             return ("REMOVE_BUY", entry)
 
-        # waiting_dip → RSI 45 ke neeche aaya → dip_done
+        # waiting_dip: RSI < 45 aaya → dip_done
         if state == "waiting_dip" and rsi < 45:
-            updated = {**entry, "state": "dip_done"}
             print(f"  🔄 BUY dip_done: {pair} | RSI: {round(rsi,1)}")
-            return ("UPDATE", updated)
+            return ("UPDATE", {**entry, "state": "dip_done"})
 
-        # dip_done → RSI 55 ke upar aaya → ALERT
+        # dip_done: RSI > 55 aaya → ALERT
         if state == "dip_done" and rsi > 55:
             e, sl, t2, t3 = trade_levels(df, "buy")
             return ("ALERT_BUY", entry, build_msg("buy", pair, e, sl, t2, t3))
 
-    # ──────────────────────────────
-    #  SELL SIDE
-    # ──────────────────────────────
+    # ── SELL SIDE ──
     elif state in ("waiting_bounce", "bounce_done"):
 
-        # Trend break — bullish ho gaya, remove
+        # Trend break → remove
         if last['ema50'] > last['ema200']:
             print(f"  ❌ SELL Remove (trend break): {pair}")
             return ("REMOVE_SELL", entry)
 
-        # Volume drop — remove
+        # Volume drop → remove
         if get_volume(pair) < MIN_VOLUME_USDT:
             print(f"  ❌ SELL Remove (low volume): {pair}")
             return ("REMOVE_SELL", entry)
 
-        # waiting_bounce → RSI 55 ke upar gaya → bounce_done
+        # waiting_bounce: RSI > 55 aaya → bounce_done
         if state == "waiting_bounce" and rsi > 55:
-            updated = {**entry, "state": "bounce_done"}
             print(f"  🔄 SELL bounce_done: {pair} | RSI: {round(rsi,1)}")
-            return ("UPDATE", updated)
+            return ("UPDATE", {**entry, "state": "bounce_done"})
 
-        # bounce_done → RSI 45 ke neeche aaya → ALERT
+        # bounce_done: RSI < 45 aaya → ALERT
         if state == "bounce_done" and rsi < 45:
             e, sl, t2, t3 = trade_levels(df, "sell")
             return ("ALERT_SELL", entry, build_msg("sell", pair, e, sl, t2, t3))
@@ -267,15 +268,14 @@ def main():
     updated_sell = list(sell_list)
     alerts       = []
 
-    # ════════════════════════════════
-    #  1. State check — existing coins
-    # ════════════════════════════════
+    # ── 1. Existing coins ka state check ──
     all_watched = buy_list + sell_list
     if all_watched:
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-            futures = [ex.submit(check_state, e, buy_pairs, sell_pairs) for e in all_watched]
+            futures = [ex.submit(check_state, e, buy_pairs, sell_pairs)
+                       for e in all_watched]
             for f in as_completed(futures):
-                res  = f.result()
+                res = f.result()
                 if not res: continue
                 code = res[0]
 
@@ -283,13 +283,13 @@ def main():
                     _, entry, msg = res
                     alerts.append(msg)
                     updated_buy = [e for e in updated_buy if e["pair"] != entry["pair"]]
-                    print(f"  🚀 ALERT: {entry['pair']}")
+                    print(f"  🚀 ALERT BUY: {entry['pair']}")
 
                 elif code == "ALERT_SELL":
                     _, entry, msg = res
                     alerts.append(msg)
                     updated_sell = [e for e in updated_sell if e["pair"] != entry["pair"]]
-                    print(f"  📉 ALERT: {entry['pair']}")
+                    print(f"  📉 ALERT SELL: {entry['pair']}")
 
                 elif code == "UPDATE":
                     _, upd = res
@@ -301,7 +301,7 @@ def main():
 
                 elif code == "REMOVE_BUY":
                     _, entry = res
-                    updated_buy  = [e for e in updated_buy  if e["pair"] != entry["pair"]]
+                    updated_buy = [e for e in updated_buy if e["pair"] != entry["pair"]]
 
                 elif code == "REMOVE_SELL":
                     _, entry = res
@@ -310,9 +310,7 @@ def main():
     if alerts:
         Send_Swing_Telegram_Message("\n\n---\n\n".join(alerts))
 
-    # ════════════════════════════════
-    #  2. Fresh cross scan — all pairs
-    # ════════════════════════════════
+    # ── 2. Fresh cross scan — saare pairs ──
     try:
         raw = requests.get(
             "https://api.coindcx.com/exchange/v1/derivatives/futures/data/active_instruments"
@@ -327,11 +325,12 @@ def main():
     buy_pairs_now  = {e["pair"] for e in updated_buy}
     sell_pairs_now = {e["pair"] for e in updated_sell}
 
-    print(f"\nScanning {len(all_pairs)} pairs for fresh EMA cross...")
+    print(f"\nScanning {len(all_pairs)} pairs for fresh EMA cross on last closed candle...")
     new_buy = new_sell = 0
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futures = [ex.submit(scan_fresh_cross, p, buy_pairs_now, sell_pairs_now) for p in all_pairs]
+        futures = [ex.submit(scan_fresh_cross, p, buy_pairs_now, sell_pairs_now)
+                   for p in all_pairs]
         for f in as_completed(futures):
             res = f.result()
             if not res: continue
@@ -342,13 +341,11 @@ def main():
                 updated_buy.append({"pair": pair, "state": "waiting_dip", "added": now_str})
                 buy_pairs_now.add(pair)
                 new_buy += 1
-                print(f"  ✅ BUY add: {pair}")
 
             elif code == "ADD_SELL" and pair not in sell_pairs_now:
                 updated_sell.append({"pair": pair, "state": "waiting_bounce", "added": now_str})
                 sell_pairs_now.add(pair)
                 new_sell += 1
-                print(f"  🔴 SELL add: {pair}")
 
     with open(BUY_FILE,  "w") as f: json.dump(updated_buy,  f, indent=2)
     with open(SELL_FILE, "w") as f: json.dump(updated_sell, f, indent=2)
