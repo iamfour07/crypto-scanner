@@ -4,9 +4,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 try:
-    from Telegram_Momentum import Send_Momentum_Telegram_Message
+    from Telegram_EMA import Send_EMA_Telegram_Message
 except ImportError:
-    def Send_Momentum_Telegram_Message(msg):
+    def Send_EMA_Telegram_Message(msg):
         print(f"\n--- TELEGRAM ---\n{msg}\n---------------")
 
 # ================================================================
@@ -294,7 +294,7 @@ def main():
 
     if alerts:
         msg = "Momentum Alert\n\n" + "\n\n---\n\n".join(alerts)
-        Send_Momentum_Telegram_Message(msg)
+        Send_EMA_Telegram_Message(msg)
         print(f"\n{len(alerts)} alert(s) sent.")
     else:
         print("\nNo signals this scan.")
