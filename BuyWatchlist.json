@@ -1,7 +1,12 @@
 [
   {
     "pair": "B-AT_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-17T03:00:38"
+  },
+  {
+    "pair": "B-KAIA_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-17T11:00:45"
   }
 ]
