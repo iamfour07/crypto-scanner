@@ -17,7 +17,7 @@ SELL_FILE          = "SellWatchlist.json"
 MAX_WORKERS        = 20
 USE_VOLUME_FILTER  = False
 MIN_VOLUME_USDT    = 10_000_000
-MAX_PRICE_EMA20_GAP = 3    # % mein — cross ke waqt price 20 EMA se kitni door ho sakti hai
+MAX_PRICE_EMA20_GAP = 5    # % mein — cross ke waqt price 20 EMA se kitni door ho sakti hai
 LEVERAGE           = 7
 INR_TO_USDT_RATE   = None
 
