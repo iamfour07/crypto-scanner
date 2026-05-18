@@ -33,5 +33,10 @@
     "pair": "B-COOKIE_USDT",
     "state": "waiting_dip",
     "added": "2026-05-18T13:00:52"
+  },
+  {
+    "pair": "B-HYPER_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-18T15:00:51"
   }
 ]
