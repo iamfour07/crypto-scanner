@@ -16,12 +16,12 @@
   },
   {
     "pair": "B-BILL_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-18T02:00:34"
   },
   {
     "pair": "B-ROBO_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-18T02:00:35"
   }
 ]
