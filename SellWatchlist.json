@@ -11,7 +11,7 @@
   },
   {
     "pair": "B-XAN_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-17T14:00:36"
   },
   {
@@ -58,5 +58,10 @@
     "pair": "B-STABLE_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-18T20:00:36"
+  },
+  {
+    "pair": "B-STORJ_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T22:00:33"
   }
 ]
