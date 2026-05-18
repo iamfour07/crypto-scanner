@@ -21,7 +21,7 @@
   },
   {
     "pair": "B-GPS_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-17T21:00:34"
   },
   {

@@ -23,5 +23,10 @@
     "pair": "B-VVV_USDT",
     "state": "dip_done",
     "added": "2026-05-18T07:00:38"
+  },
+  {
+    "pair": "B-STABLE_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-18T12:00:46"
   }
 ]
