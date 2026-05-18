@@ -33,5 +33,10 @@
     "pair": "B-XVS_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-18T01:00:42"
+  },
+  {
+    "pair": "B-SAHARA_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T05:00:39"
   }
 ]
