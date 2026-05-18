@@ -20,7 +20,7 @@ MIN_VOLUME_USDT    = 10_000_000
 MAX_PRICE_EMA20_GAP = 5    # % mein — cross ke waqt price 20 EMA se kitni door ho sakti hai
 LEVERAGE           = 7
 INR_TO_USDT_RATE   = None
-
+RISK_PER_TRADE_INR = 200   
 # ================================================================
 #  INDICATORS
 # ================================================================
