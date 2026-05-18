@@ -53,5 +53,10 @@
     "pair": "B-TAC_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-18T11:00:46"
+  },
+  {
+    "pair": "B-TWT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T17:01:03"
   }
 ]
