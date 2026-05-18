@@ -28,5 +28,10 @@
     "pair": "B-STABLE_USDT",
     "state": "waiting_dip",
     "added": "2026-05-18T12:00:46"
+  },
+  {
+    "pair": "B-COOKIE_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-18T13:00:52"
   }
 ]
