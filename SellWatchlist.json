@@ -28,5 +28,10 @@
     "pair": "B-HUMA_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-17T23:00:41"
+  },
+  {
+    "pair": "B-XVS_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T01:00:42"
   }
 ]
