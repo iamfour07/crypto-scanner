@@ -53,5 +53,10 @@
     "pair": "B-NXPC_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-18T10:00:47"
+  },
+  {
+    "pair": "B-TAC_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T11:00:46"
   }
 ]
