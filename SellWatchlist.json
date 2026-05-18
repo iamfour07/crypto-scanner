@@ -63,5 +63,10 @@
     "pair": "B-STORJ_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-18T22:00:33"
+  },
+  {
+    "pair": "B-CGPT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T23:00:44"
   }
 ]
