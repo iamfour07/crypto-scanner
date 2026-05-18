@@ -20,19 +20,9 @@
     "added": "2026-05-17T19:00:46"
   },
   {
-    "pair": "B-GPS_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-17T21:00:34"
-  },
-  {
     "pair": "B-HUMA_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-17T23:00:41"
-  },
-  {
-    "pair": "B-XVS_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-18T01:00:42"
   },
   {
     "pair": "B-SAHARA_USDT",
@@ -58,5 +48,10 @@
     "pair": "B-TWT_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-18T17:01:03"
+  },
+  {
+    "pair": "B-MANTA_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-18T19:14:48"
   }
 ]

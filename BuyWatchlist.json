@@ -5,13 +5,8 @@
     "added": "2026-05-17T11:00:45"
   },
   {
-    "pair": "B-MANTA_USDT",
-    "state": "dip_done",
-    "added": "2026-05-17T21:00:39"
-  },
-  {
     "pair": "B-HOLO_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-18T01:00:37"
   },
   {
