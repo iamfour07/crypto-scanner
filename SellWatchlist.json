@@ -1,12 +1,12 @@
 [
   {
     "pair": "B-ARPA_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-EDEN_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
@@ -21,27 +21,27 @@
   },
   {
     "pair": "B-AKT_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-RONIN_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-HOME_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-STORJ_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-TA_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
@@ -53,5 +53,10 @@
     "pair": "B-LIT_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
+  },
+  {
+    "pair": "B-DYM_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-19T12:00:46"
   }
 ]
