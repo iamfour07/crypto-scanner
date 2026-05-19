@@ -11,7 +11,7 @@
   },
   {
     "pair": "B-BOME_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
@@ -56,7 +56,12 @@
   },
   {
     "pair": "B-DYM_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T12:00:46"
+  },
+  {
+    "pair": "B-NEAR_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-19T13:00:46"
   }
 ]
