@@ -1,77 +1,57 @@
 [
   {
-    "pair": "B-COS_USDT",
+    "pair": "B-ARPA_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-17T07:00:41"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-BNB_USDT",
+    "pair": "B-EDEN_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-17T11:00:39"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-AT_USDT",
+    "pair": "B-BOME_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-17T19:00:46"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-HUMA_USDT",
+    "pair": "B-ZEC_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-17T23:00:41"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-SAHARA_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-18T05:00:39"
-  },
-  {
-    "pair": "B-POLYX_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-18T10:00:44"
-  },
-  {
-    "pair": "B-NXPC_USDT",
+    "pair": "B-AKT_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-18T10:00:47"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-TAC_USDT",
+    "pair": "B-RONIN_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-18T11:00:46"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-TWT_USDT",
+    "pair": "B-HOME_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-18T17:01:03"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-MANTA_USDT",
+    "pair": "B-STORJ_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-18T19:14:48"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-STABLE_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-18T20:00:36"
-  },
-  {
-    "pair": "B-CGPT_USDT",
+    "pair": "B-TA_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-18T23:00:44"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-RECALL_USDT",
+    "pair": "B-INJ_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-19T00:00:38"
+    "added": "2026-05-19T17:28:24"
   },
   {
-    "pair": "B-ARC_USDT",
+    "pair": "B-LIT_USDT",
     "state": "waiting_bounce",
-    "added": "2026-05-19T02:00:41"
-  },
-  {
-    "pair": "B-KAITO_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-05-19T05:00:35"
+    "added": "2026-05-19T17:28:24"
   }
 ]
