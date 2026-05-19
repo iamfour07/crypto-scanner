@@ -93,5 +93,10 @@
     "pair": "B-HYPER_USDT",
     "state": "bounce_done",
     "added": "2026-05-19T20:00:48"
+  },
+  {
+    "pair": "B-FF_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-19T23:00:43"
   }
 ]
