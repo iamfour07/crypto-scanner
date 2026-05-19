@@ -63,5 +63,10 @@
     "pair": "B-NEAR_USDT",
     "state": "bounce_done",
     "added": "2026-05-19T13:00:46"
+  },
+  {
+    "pair": "B-HYPE_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-19T15:00:49"
   }
 ]
