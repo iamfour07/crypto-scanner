@@ -10,18 +10,13 @@
     "added": "2026-05-18T13:00:52"
   },
   {
-    "pair": "B-HYPER_USDT",
-    "state": "dip_done",
-    "added": "2026-05-18T15:00:51"
-  },
-  {
     "pair": "B-NEAR_USDT",
     "state": "waiting_dip",
     "added": "2026-05-19T00:00:40"
   },
   {
-    "pair": "B-KAITO_USDT",
+    "pair": "B-DYM_USDT",
     "state": "waiting_dip",
-    "added": "2026-05-19T03:00:45"
+    "added": "2026-05-19T05:00:37"
   }
 ]
