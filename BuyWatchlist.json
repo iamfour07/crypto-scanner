@@ -23,5 +23,20 @@
     "pair": "B-BOME_USDT",
     "state": "waiting_dip",
     "added": "2026-05-19T06:00:37"
+  },
+  {
+    "pair": "B-LIT_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-19T08:00:37"
+  },
+  {
+    "pair": "B-STORJ_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-19T08:00:41"
+  },
+  {
+    "pair": "B-AKT_USDT",
+    "state": "waiting_dip",
+    "added": "2026-05-19T08:00:44"
   }
 ]

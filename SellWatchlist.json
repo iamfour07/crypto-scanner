@@ -73,10 +73,5 @@
     "pair": "B-KAITO_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-19T05:00:35"
-  },
-  {
-    "pair": "B-STORJ_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-05-19T07:00:40"
   }
 ]
