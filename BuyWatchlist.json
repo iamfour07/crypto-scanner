@@ -23,10 +23,5 @@
     "pair": "B-BOME_USDT",
     "state": "waiting_dip",
     "added": "2026-05-19T06:00:37"
-  },
-  {
-    "pair": "B-STORJ_USDT",
-    "state": "waiting_dip",
-    "added": "2026-05-19T06:00:38"
   }
 ]
