@@ -133,5 +133,10 @@
     "pair": "B-DASH_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-20T18:00:49"
+  },
+  {
+    "pair": "B-BANANAS31_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-20T20:00:44"
   }
 ]
