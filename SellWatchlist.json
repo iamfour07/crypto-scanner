@@ -138,5 +138,10 @@
     "pair": "B-BANANAS31_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-20T20:00:44"
+  },
+  {
+    "pair": "B-2Z_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-20T23:00:47"
   }
 ]
