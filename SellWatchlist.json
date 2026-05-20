@@ -106,7 +106,7 @@
   },
   {
     "pair": "B-OPEN_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-20T03:00:47"
   },
   {
@@ -118,5 +118,10 @@
     "pair": "B-FLOCK_USDT",
     "state": "bounce_done",
     "added": "2026-05-20T04:00:43"
+  },
+  {
+    "pair": "B-EDGE_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-20T09:00:49"
   }
 ]
