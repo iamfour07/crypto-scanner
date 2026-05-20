@@ -123,5 +123,15 @@
     "pair": "B-EDGE_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-20T09:00:49"
+  },
+  {
+    "pair": "B-NIL_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-20T18:00:48"
+  },
+  {
+    "pair": "B-DASH_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-20T18:00:49"
   }
 ]
