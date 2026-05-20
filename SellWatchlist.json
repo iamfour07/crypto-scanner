@@ -116,7 +116,7 @@
   },
   {
     "pair": "B-FLOCK_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-20T04:00:43"
   }
 ]
