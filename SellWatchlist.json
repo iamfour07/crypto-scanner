@@ -1,97 +1,97 @@
 [
   {
     "pair": "B-ARPA_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-EDEN_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-BOME_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-ZEC_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-AKT_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-RONIN_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-HOME_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-STORJ_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-TA_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-INJ_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-LIT_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T17:28:24"
   },
   {
     "pair": "B-DYM_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T12:00:46"
   },
   {
     "pair": "B-NEAR_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T13:00:46"
   },
   {
     "pair": "B-HYPE_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T15:00:49"
   },
   {
     "pair": "B-BSB_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T16:00:47"
   },
   {
     "pair": "B-VVV_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T18:00:47"
   },
   {
     "pair": "B-KERNEL_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T19:00:55"
   },
   {
     "pair": "B-FIGHT_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T20:00:48"
   },
   {
     "pair": "B-HYPER_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-19T20:00:48"
   },
   {
@@ -101,22 +101,22 @@
   },
   {
     "pair": "B-KITE_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-20T02:00:44"
   },
   {
     "pair": "B-OPEN_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-20T03:00:47"
   },
   {
     "pair": "B-FIDA_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-20T03:00:47"
   },
   {
     "pair": "B-FLOCK_USDT",
-    "state": "bounce_done",
+    "state": "waiting_bounce",
     "added": "2026-05-20T04:00:43"
   },
   {

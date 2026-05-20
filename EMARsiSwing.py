@@ -29,7 +29,7 @@ LEVERAGE              = 7
 INR_TO_USDT_RATE      = None
 RISK_PER_TRADE_INR    = 200
 
-TOP_N                 = 20
+TOP_N                 = 7
 
 # RSI SETTINGS
 RSI_LENGTH            = 14
@@ -436,13 +436,18 @@ def check_state(entry, sell_pairs):
             return ("REMOVE_SELL", entry)
 
         # waiting_bounce -> bounce_done
+        # ONLY when trend breaks below EMA200
+        # AND RSI bounce is above upper level
+
         if (
             state == "waiting_bounce"
+            and last['ema50'] < last['ema200']
             and rsi > RSI_UPPER_LEVEL
         ):
 
             print(
-                f"🔄 SELL bounce_done: {pair} | RSI: {round(rsi, 1)}"
+                f"🔄 SELL bounce_done: {pair} | "
+                f"EMA50 < EMA200 | RSI: {round(rsi, 1)}"
             )
 
             return (
