@@ -173,5 +173,15 @@
     "pair": "B-YB_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-21T18:00:44"
+  },
+  {
+    "pair": "B-PLUME_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-21T20:00:42"
+  },
+  {
+    "pair": "B-XAN_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-21T20:00:42"
   }
 ]
