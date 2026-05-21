@@ -168,5 +168,10 @@
     "pair": "B-KAITO_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-21T17:00:46"
+  },
+  {
+    "pair": "B-YB_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-21T18:00:44"
   }
 ]
