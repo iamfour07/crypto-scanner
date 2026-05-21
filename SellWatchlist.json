@@ -163,5 +163,10 @@
     "pair": "B-GRASS_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-21T14:01:02"
+  },
+  {
+    "pair": "B-KAITO_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-21T17:00:46"
   }
 ]
