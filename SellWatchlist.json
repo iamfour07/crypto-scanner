@@ -153,5 +153,10 @@
     "pair": "B-PROVE_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-21T10:00:47"
+  },
+  {
+    "pair": "B-AVNT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-21T11:00:49"
   }
 ]
