@@ -198,5 +198,10 @@
     "pair": "B-GTC_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-22T07:00:41"
+  },
+  {
+    "pair": "B-ALT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-22T08:00:42"
   }
 ]
