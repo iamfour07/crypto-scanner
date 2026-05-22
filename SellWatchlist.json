@@ -193,5 +193,10 @@
     "pair": "B-VELODROME_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-22T05:00:45"
+  },
+  {
+    "pair": "B-GTC_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-22T07:00:41"
   }
 ]
