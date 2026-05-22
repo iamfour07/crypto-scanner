@@ -203,5 +203,10 @@
     "pair": "B-ALLO_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-22T13:00:49"
+  },
+  {
+    "pair": "B-GENIUS_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-22T14:00:42"
   }
 ]
