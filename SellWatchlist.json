@@ -213,5 +213,10 @@
     "pair": "B-ONDO_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-22T15:00:47"
+  },
+  {
+    "pair": "B-FHE_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-22T19:00:43"
   }
 ]
