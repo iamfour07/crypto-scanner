@@ -188,5 +188,10 @@
     "pair": "B-SAFE_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-22T03:00:41"
+  },
+  {
+    "pair": "B-VELODROME_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-22T05:00:45"
   }
 ]
