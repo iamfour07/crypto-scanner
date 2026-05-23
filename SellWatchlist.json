@@ -1,7 +1,7 @@
 [
   {
     "pair": "B-ARPA_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
@@ -11,7 +11,7 @@
   },
   {
     "pair": "B-BOME_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T17:28:24"
   },
   {
@@ -76,7 +76,7 @@
   },
   {
     "pair": "B-KERNEL_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T19:00:55"
   },
   {
