@@ -95,11 +95,6 @@
     "added": "2026-05-19T23:00:43"
   },
   {
-    "pair": "B-KITE_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-20T02:00:44"
-  },
-  {
     "pair": "B-OPEN_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-20T03:00:47"
