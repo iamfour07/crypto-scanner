@@ -228,5 +228,10 @@
     "pair": "B-BAN_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-22T23:00:44"
+  },
+  {
+    "pair": "B-NIGHT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-23T03:00:41"
   }
 ]
