@@ -238,5 +238,10 @@
     "pair": "B-MTL_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-23T05:00:42"
+  },
+  {
+    "pair": "B-BANK_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-23T09:00:43"
   }
 ]
