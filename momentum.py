@@ -46,8 +46,8 @@ INR_TO_USDT_RATE    = None          # None = fetch live
 RISK_PER_TRADE_INR  = 200
 
 # MOVER THRESHOLD
-MIN_GAINER_PCT      = 5.0           # Gainers: minimum +5% 1D change
-MIN_LOSER_PCT       = -5.0          # Losers:  maximum -5% 1D change
+MIN_GAINER_PCT      = 2.0           # Gainers: minimum +5% 1D change
+MIN_LOSER_PCT       = -2.0          # Losers:  maximum -5% 1D change
 
 # RSI SETTINGS
 RSI_LENGTH          = 14
@@ -298,8 +298,8 @@ def build_sell_msg(pair, entry, sl, t2, t3):
 # SCAN — ADD TO BUY WATCHLIST
 #
 # Condition:
-#   • Top 15 gainer
-#   • EMA20 > EMA50 > EMA200  (bullish trend)
+#   • Top 25 gainer
+#   • EMA50 > EMA200  (bullish trend)
 #   • RSI < RSI_LOWER_LEVEL   (dip happened)
 #   → Add with state "dip_done"
 # ================================================================
@@ -316,12 +316,16 @@ def scan_top_gainer_for_buy(pair, existing_buy_pairs):
 
     last = df.iloc[-1]
 
-    bullish_trend = (
-        last['ema20']  > last['ema50'] and
-        last['ema50']  > last['ema200']
-    )
+    # ✅ UPDATED: Only EMA50 > EMA200
+    bullish_trend = last['ema50'] > last['ema200']
 
     rsi_dipped = last['rsi'] < RSI_LOWER_LEVEL   # RSI < 45
+
+    log.info(
+        f"{pair} | RSI: {round(last['rsi'], 1)} | "
+        f"EMA50: {round(last['ema50'], 4)} | EMA200: {round(last['ema200'], 4)} | "
+        f"bullish={bullish_trend} | dipped={rsi_dipped}"
+    )
 
     if bullish_trend and rsi_dipped:
         log.info(f"🟢 BUY Watchlist ADD: {pair} | RSI: {round(last['rsi'], 1)}")
@@ -334,8 +338,8 @@ def scan_top_gainer_for_buy(pair, existing_buy_pairs):
 # SCAN — ADD TO SELL WATCHLIST
 #
 # Condition:
-#   • Top 15 loser
-#   • EMA20 < EMA50 < EMA200  (bearish trend)
+#   • Top 25 loser
+#   • EMA50 < EMA200  (bearish trend)
 #   • RSI > RSI_UPPER_LEVEL   (bounce happened)
 #   → Add with state "bounce_done"
 # ================================================================
@@ -352,12 +356,16 @@ def scan_top_loser_for_sell(pair, existing_sell_pairs):
 
     last = df.iloc[-1]
 
-    bearish_trend = (
-        last['ema20']  < last['ema50'] and
-        last['ema50']  < last['ema200']
-    )
+    # ✅ UPDATED: Only EMA50 < EMA200
+    bearish_trend = last['ema50'] < last['ema200']
 
     rsi_bounced = last['rsi'] > RSI_UPPER_LEVEL  # RSI > 55
+
+    log.info(
+        f"{pair} | RSI: {round(last['rsi'], 1)} | "
+        f"EMA50: {round(last['ema50'], 4)} | EMA200: {round(last['ema200'], 4)} | "
+        f"bearish={bearish_trend} | bounced={rsi_bounced}"
+    )
 
     if bearish_trend and rsi_bounced:
         log.info(f"🔴 SELL Watchlist ADD: {pair} | RSI: {round(last['rsi'], 1)}")
@@ -393,11 +401,8 @@ def check_state(entry):
             log.info(f"❌ BUY Remove (low volume): {pair}")
             return ("REMOVE", entry)
 
-        # Trend must still be bullish
-        trend_broken = not (
-            last['ema20'] > last['ema50'] and
-            last['ema50'] > last['ema200']
-        )
+        # ✅ UPDATED: Trend broken if EMA50 drops below EMA200
+        trend_broken = not (last['ema50'] > last['ema200'])
 
         if trend_broken:
             log.info(f"❌ BUY Remove (trend broken): {pair}")
@@ -420,11 +425,8 @@ def check_state(entry):
             log.info(f"❌ SELL Remove (low volume): {pair}")
             return ("REMOVE", entry)
 
-        # Trend must still be bearish
-        trend_broken = not (
-            last['ema20'] < last['ema50'] and
-            last['ema50'] < last['ema200']
-        )
+        # ✅ UPDATED: Trend broken if EMA50 rises above EMA200
+        trend_broken = not (last['ema50'] < last['ema200'])
 
         if trend_broken:
             log.info(f"❌ SELL Remove (trend broken): {pair}")
@@ -548,7 +550,7 @@ def main():
         return
 
     # ============================================================
-    # GET TOP 15 GAINERS & LOSERS
+    # GET TOP 25 GAINERS & LOSERS
     # ============================================================
     gainers, losers = get_top_movers(all_pairs)
 
@@ -568,7 +570,7 @@ def main():
 
     # ============================================================
     # SCAN TOP GAINERS → BUY WATCHLIST
-    # Condition: EMA20>EMA50>EMA200 AND RSI < 45
+    # Condition: EMA50 > EMA200 AND RSI < 45
     # ============================================================
     log.info(f"Scanning {len(gainer_pairs)} TOP GAINERS for BUY setup...")
     new_buy = 0
@@ -596,7 +598,7 @@ def main():
 
     # ============================================================
     # SCAN TOP LOSERS → SELL WATCHLIST
-    # Condition: EMA20<EMA50<EMA200 AND RSI > 55
+    # Condition: EMA50 < EMA200 AND RSI > 55
     # ============================================================
     log.info(f"Scanning {len(loser_pairs)} TOP LOSERS for SELL setup...")
     new_sell = 0
