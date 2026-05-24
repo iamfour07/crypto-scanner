@@ -32,7 +32,7 @@ jobs:
           pip install pandas requests
 
       - name: Run Scanner
-        run: python EMARsiSwing.py
+        run: python momentum.py
         env:
           TELEGRAM_BOT_TOKEN_SWING: ${{ secrets.TELEGRAM_BOT_TOKEN_SWING }}
           TELEGRAM_CHAT_ID_SWING: ${{ secrets.TELEGRAM_CHAT_ID_SWING }}
@@ -41,13 +41,13 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           # Sirf zaroori files add karein
-          git add BuyWatchlist.json SellWatchlist.json
-          
+          git add MomentumBuyWatchlist.json MomentumSellWatchlist.json
+
           # Kisi bhi extra temporary file change ko discard karein
           git checkout -- . || true
-          
+
           # Agar changes hain toh hi commit aur push karein
           if ! git diff --cached --quiet; then
             git commit -m "Update momentum watchlists [skip ci]"

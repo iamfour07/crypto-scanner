@@ -1,42 +1,22 @@
 [
   {
-    "pair": "B-KAIA_USDT",
-    "state": "dip_done",
-    "added": "2026-05-17T11:00:45"
-  },
-  {
-    "pair": "B-COOKIE_USDT",
-    "state": "dip_done",
-    "added": "2026-05-18T13:00:52"
-  },
-  {
     "pair": "B-NEAR_USDT",
     "state": "waiting_dip",
     "added": "2026-05-19T00:00:40"
   },
   {
     "pair": "B-DYM_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-19T05:00:37"
   },
   {
-    "pair": "B-BOME_USDT",
-    "state": "waiting_dip",
-    "added": "2026-05-19T06:00:37"
-  },
-  {
     "pair": "B-LIT_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-19T08:00:37"
   },
   {
-    "pair": "B-STORJ_USDT",
-    "state": "waiting_dip",
-    "added": "2026-05-19T08:00:41"
-  },
-  {
     "pair": "B-AKT_USDT",
-    "state": "waiting_dip",
+    "state": "dip_done",
     "added": "2026-05-19T08:00:44"
   }
 ]
