@@ -70,18 +70,13 @@
     "added": "2026-05-19T18:00:47"
   },
   {
-    "pair": "B-KERNEL_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-19T19:00:55"
-  },
-  {
     "pair": "B-FIGHT_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-19T20:00:48"
   },
   {
     "pair": "B-HYPER_USDT",
-    "state": "waiting_bounce",
+    "state": "bounce_done",
     "added": "2026-05-19T20:00:48"
   },
   {
