@@ -3,7 +3,7 @@ name: Master Swing Scanner
 on:
   workflow_dispatch:
 
-# Concurrency group ensures this waits if the Master Scanner is running
+# Concurrency group ensures this waits if the Master Scanneris running
 concurrency:
   group: scanner-lock
   cancel-in-progress: false
