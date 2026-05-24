@@ -243,5 +243,10 @@
     "pair": "B-COS_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-23T17:00:43"
+  },
+  {
+    "pair": "B-EIGEN_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-24T00:00:49"
   }
 ]
