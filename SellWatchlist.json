@@ -95,11 +95,6 @@
     "added": "2026-05-20T03:00:47"
   },
   {
-    "pair": "B-FLOCK_USDT",
-    "state": "bounce_done",
-    "added": "2026-05-20T04:00:43"
-  },
-  {
     "pair": "B-NIL_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-20T18:00:48"
@@ -243,5 +238,10 @@
     "pair": "B-BICO_USDT",
     "state": "waiting_bounce",
     "added": "2026-05-24T01:00:43"
+  },
+  {
+    "pair": "B-PHA_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-05-24T05:00:41"
   }
 ]
