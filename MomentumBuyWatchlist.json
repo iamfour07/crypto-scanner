@@ -3,5 +3,10 @@
     "pair": "B-PLUME_USDT",
     "state": "dip_done",
     "added": "2026-05-24T22:00:29"
+  },
+  {
+    "pair": "B-VVV_USDT",
+    "state": "dip_done",
+    "added": "2026-05-25T04:00:33"
   }
 ]
