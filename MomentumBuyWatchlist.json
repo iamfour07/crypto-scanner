@@ -8,5 +8,10 @@
     "pair": "B-SAGA_USDT",
     "state": "dip_done",
     "added": "2026-05-26T04:00:34"
+  },
+  {
+    "pair": "B-GENIUS_USDT",
+    "state": "dip_done",
+    "added": "2026-05-26T21:00:34"
   }
 ]
