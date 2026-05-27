@@ -13,5 +13,10 @@
     "pair": "B-ARKM_USDT",
     "state": "dip_done",
     "added": "2026-05-27T03:00:34"
+  },
+  {
+    "pair": "B-WLD_USDT",
+    "state": "dip_done",
+    "added": "2026-05-27T04:00:30"
   }
 ]
