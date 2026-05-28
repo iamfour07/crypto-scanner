@@ -18,5 +18,10 @@
     "pair": "B-ALT_USDT",
     "state": "dip_done",
     "added": "2026-05-28T02:00:36"
+  },
+  {
+    "pair": "B-AR_USDT",
+    "state": "dip_done",
+    "added": "2026-05-28T03:00:40"
   }
 ]
