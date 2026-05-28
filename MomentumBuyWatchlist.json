@@ -13,5 +13,10 @@
     "pair": "B-ICP_USDT",
     "state": "dip_done",
     "added": "2026-05-28T01:00:43"
+  },
+  {
+    "pair": "B-ALT_USDT",
+    "state": "dip_done",
+    "added": "2026-05-28T02:00:36"
   }
 ]
