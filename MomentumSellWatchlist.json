@@ -3,5 +3,10 @@
     "pair": "B-ICNT_USDT",
     "state": "bounce_done",
     "added": "2026-05-29T18:00:33"
+  },
+  {
+    "pair": "B-EPIC_USDT",
+    "state": "bounce_done",
+    "added": "2026-05-30T14:00:31"
   }
 ]
