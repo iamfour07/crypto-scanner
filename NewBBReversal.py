@@ -19,9 +19,9 @@ FILE_NAME = "ReversalSellWatchlist.json"
 ST_PERIOD = 20
 ST_MULTIPLIER = 2
 
-RISK_PER_TRADE = 200      
+RISK_PER_TRADE = 50      
 LEVERAGE = 10  
-MAX_CAPITAL = 5000               
+MAX_CAPITAL = 3000               
 
 # ================= INDICATOR CALCULATIONS =================
 def calculate_indicators(df):
@@ -188,7 +188,7 @@ def main():
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         stats = [r for r in ex.map(get_stats, all_pairs) if r]
 
-    top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:5]]
+    top_gainers = [x["pair"] for x in sorted(stats, key=lambda x: x["change"], reverse=True)[:4]]
     scan_pool = list(set(watch_list + top_gainers))
 
     alerts, new_watchlist, signaled_pairs = [], [], []
