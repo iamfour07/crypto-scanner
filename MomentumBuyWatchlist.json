@@ -3,5 +3,10 @@
     "pair": "B-PORTAL_USDT",
     "state": "dip_done",
     "added": "2026-06-01T15:00:45"
+  },
+  {
+    "pair": "B-VIC_USDT",
+    "state": "dip_done",
+    "added": "2026-06-02T04:00:35"
   }
 ]
