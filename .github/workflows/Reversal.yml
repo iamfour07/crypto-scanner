@@ -47,8 +47,5 @@ jobs:
           # PEHLE COMMIT (Order changed here)
           git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
 
-          # FIR PULL REBASE
-          git pull --rebase origin main
-
           # FIR PUSH
           git push origin main
