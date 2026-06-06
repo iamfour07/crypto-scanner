@@ -16,7 +16,7 @@ except ImportError:
 # ================================================================
 # CONFIG
 # ================================================================
-RESOLUTION            = "60"
+RESOLUTION            = "15"
 
 SELL_FILE             = "SellWatchlist.json"
 
@@ -25,11 +25,11 @@ MAX_WORKERS           = 20
 USE_VOLUME_FILTER     = False
 MIN_VOLUME_USDT       = 10_000_000
 
-LEVERAGE              = 7
+LEVERAGE              = 5
 INR_TO_USDT_RATE      = None
-RISK_PER_TRADE_INR    = 200
+RISK_PER_TRADE_INR    = 50
 
-TOP_N                 = 7
+TOP_N                 = 5
 
 # RSI SETTINGS
 RSI_LENGTH            = 14
@@ -435,35 +435,21 @@ def check_state(entry, sell_pairs):
 
             return ("REMOVE_SELL", entry)
 
-        # waiting_bounce -> bounce_done
-        # ONLY when trend breaks below EMA200
-        # AND RSI bounce is above upper level
+        # Previous candle
+        prev = df.iloc[-2]
 
-        if (
-            state == "waiting_bounce"
-            and last['ema50'] < last['ema200']
-            and rsi > RSI_UPPER_LEVEL
-        ):
+        # EMA50 CROSS BELOW EMA200
+        cross_down = (
+            prev['ema50'] >= prev['ema200']
+            and
+            last['ema50'] < last['ema200']
+        )
+
+        if cross_down:
 
             print(
-                f"🔄 SELL bounce_done: {pair} | "
-                f"EMA50 < EMA200 | RSI: {round(rsi, 1)}"
+                f"📉 EMA50 Crossed Below EMA200: {pair}"
             )
-
-            return (
-                "UPDATE",
-                {
-                    **entry,
-                    "state": "bounce_done"
-                }
-            )
-
-        # FINAL ALERT
-        if (
-            state == "bounce_done"
-            and rsi < RSI_LOWER_LEVEL
-            and last['ema50'] < last['ema200']
-        ):
 
             e, sl, t2, t3 = trade_levels(
                 df,
