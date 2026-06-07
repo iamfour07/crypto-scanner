@@ -28,5 +28,10 @@
     "pair": "B-PARTI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T00:30:39"
+  },
+  {
+    "pair": "B-ASR_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T00:45:31"
   }
 ]
