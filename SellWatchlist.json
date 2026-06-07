@@ -43,5 +43,10 @@
     "pair": "B-EDEN_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T05:30:37"
+  },
+  {
+    "pair": "B-HEI_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T06:00:44"
   }
 ]
