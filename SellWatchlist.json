@@ -63,5 +63,10 @@
     "pair": "B-ZEC_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T14:45:36"
+  },
+  {
+    "pair": "B-WLD_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T18:00:40"
   }
 ]
