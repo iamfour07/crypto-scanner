@@ -53,5 +53,10 @@
     "pair": "B-BSB_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T06:15:36"
+  },
+  {
+    "pair": "B-HOME_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T09:00:41"
   }
 ]
