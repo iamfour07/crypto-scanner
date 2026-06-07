@@ -53,5 +53,10 @@
     "pair": "B-JTO_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T10:45:30"
+  },
+  {
+    "pair": "B-PORTAL_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T13:45:38"
   }
 ]
