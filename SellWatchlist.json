@@ -63,5 +63,10 @@
     "pair": "B-CTSI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T10:00:44"
+  },
+  {
+    "pair": "B-JTO_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T10:45:30"
   }
 ]
