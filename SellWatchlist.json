@@ -58,5 +58,10 @@
     "pair": "B-WLD_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T18:00:40"
+  },
+  {
+    "pair": "B-PIPPIN_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T21:00:44"
   }
 ]
