@@ -33,5 +33,10 @@
     "pair": "B-ASR_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T00:45:31"
+  },
+  {
+    "pair": "B-H_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-07T03:30:41"
   }
 ]
