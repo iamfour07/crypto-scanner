@@ -88,5 +88,10 @@
     "pair": "B-STG_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-08T08:00:52"
+  },
+  {
+    "pair": "B-MOVE_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-08T10:45:38"
   }
 ]
