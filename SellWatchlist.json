@@ -88,5 +88,10 @@
     "pair": "B-POWER_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-08T12:15:39"
+  },
+  {
+    "pair": "B-LAYER_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-08T16:30:52"
   }
 ]
