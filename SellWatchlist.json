@@ -83,5 +83,10 @@
     "pair": "B-ALLO_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-08T04:15:58"
+  },
+  {
+    "pair": "B-FHE_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-08T05:15:40"
   }
 ]
