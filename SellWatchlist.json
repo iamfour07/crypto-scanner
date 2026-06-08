@@ -78,5 +78,10 @@
     "pair": "B-SAHARA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-08T03:30:41"
+  },
+  {
+    "pair": "B-ALLO_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-08T04:15:58"
   }
 ]
