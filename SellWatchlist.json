@@ -68,5 +68,10 @@
     "pair": "B-BAN_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-07T21:30:40"
+  },
+  {
+    "pair": "B-EPIC_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-08T01:45:36"
   }
 ]
