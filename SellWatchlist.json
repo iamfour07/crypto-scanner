@@ -70,11 +70,6 @@
     "added": "2026-06-07T21:30:40"
   },
   {
-    "pair": "B-EPIC_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-06-08T01:45:36"
-  },
-  {
     "pair": "B-SAHARA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-08T03:30:41"
@@ -88,5 +83,10 @@
     "pair": "B-FHE_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-08T05:15:40"
+  },
+  {
+    "pair": "B-STG_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-08T08:00:52"
   }
 ]
