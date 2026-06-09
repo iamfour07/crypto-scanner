@@ -23,5 +23,10 @@
     "pair": "B-GWEI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-09T17:08:43"
+  },
+  {
+    "pair": "B-PIPPIN_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-09T12:30:48"
   }
 ]
