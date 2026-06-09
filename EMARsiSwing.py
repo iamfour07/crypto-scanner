@@ -410,7 +410,7 @@ def check_state(entry, sell_pairs):
 
     pair = entry["pair"]
 
-    state = entry["state"]
+    # state = entry["state"]
 
     df = fetch_data(pair)
 
@@ -424,28 +424,27 @@ def check_state(entry, sell_pairs):
     # ============================================================
     # SELL SIDE
     # ============================================================
-    if state in ("waiting_bounce", "bounce_done"):
-
+    # if state in ("waiting_bounce", "bounce_done"):
         # volume remove
-        if get_volume(pair) < MIN_VOLUME_USDT:
+    if get_volume(pair) < MIN_VOLUME_USDT:
 
-            print(
+        print(
                 f"❌ SELL Remove (low volume): {pair}"
-            )
+        )
 
-            return ("REMOVE_SELL", entry)
+        return ("REMOVE_SELL", entry)
 
-        # Previous candle
-        prev = df.iloc[-2]
+    # Previous candle
+    prev = df.iloc[-2]
 
         # EMA50 CROSS BELOW EMA200
-        cross_down = (
+    cross_down = (
             prev['ema50'] >= prev['ema200']
             and
             last['ema50'] < last['ema200']
         )
 
-        if cross_down:
+    if cross_down:
 
             print(
                 f"📉 EMA50 Crossed Below EMA200: {pair}"

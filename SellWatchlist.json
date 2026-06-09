@@ -1,27 +1,27 @@
 [
   {
-    "pair": "B-ALLO_USDT",
+    "pair": "B-SLX_USDT",
     "state": "waiting_bounce",
-    "added": "2026-06-07T04:21:03"
+    "added": "2026-06-09T17:08:43"
   },
   {
-    "pair": "B-PORTAL_USDT",
+    "pair": "B-POWER_USDT",
     "state": "waiting_bounce",
-    "added": "2026-06-07T04:21:03"
+    "added": "2026-06-09T17:08:43"
   },
   {
-    "pair": "B-BANK_USDT",
+    "pair": "B-ZEREBRO_USDT",
     "state": "waiting_bounce",
-    "added": "2026-06-07T04:21:03"
+    "added": "2026-06-09T17:08:43"
+  },
+  {
+    "pair": "B-1000RATS_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-09T17:08:43"
   },
   {
     "pair": "B-GWEI_USDT",
     "state": "waiting_bounce",
-    "added": "2026-06-07T04:21:03"
-  },
-  {
-    "pair": "B-FIDA_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-06-07T04:21:04"
+    "added": "2026-06-09T17:08:43"
   }
 ]
