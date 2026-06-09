@@ -83,5 +83,10 @@
     "pair": "B-1000RATS_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-09T01:45:38"
+  },
+  {
+    "pair": "B-SLX_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-09T03:15:45"
   }
 ]
