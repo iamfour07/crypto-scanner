@@ -38,5 +38,10 @@
     "pair": "B-SENT_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-09T15:45:42"
+  },
+  {
+    "pair": "B-CHIP_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-09T17:00:49"
   }
 ]
