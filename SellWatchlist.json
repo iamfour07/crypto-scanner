@@ -83,5 +83,10 @@
     "pair": "B-BTW_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-10T11:45:39"
+  },
+  {
+    "pair": "B-SQD_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-10T14:00:50"
   }
 ]
