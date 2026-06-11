@@ -83,5 +83,10 @@
     "pair": "B-ASTR_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-11T04:15:35"
+  },
+  {
+    "pair": "B-ID_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-11T05:45:37"
   }
 ]
