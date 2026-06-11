@@ -98,5 +98,10 @@
     "pair": "B-LUMIA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-11T20:30:44"
+  },
+  {
+    "pair": "B-INX_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-11T20:45:38"
   }
 ]
