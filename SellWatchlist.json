@@ -5,11 +5,6 @@
     "added": "2026-06-09T17:08:43"
   },
   {
-    "pair": "B-1000RATS_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-06-09T17:08:43"
-  },
-  {
     "pair": "B-GWEI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-09T17:08:43"
@@ -83,5 +78,10 @@
     "pair": "B-ID_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-11T05:45:37"
+  },
+  {
+    "pair": "B-SXT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-11T09:15:43"
   }
 ]
