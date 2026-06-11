@@ -83,5 +83,10 @@
     "pair": "B-SKYAI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-11T10:30:42"
+  },
+  {
+    "pair": "B-EPIC_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-11T14:15:39"
   }
 ]
