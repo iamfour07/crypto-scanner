@@ -113,5 +113,10 @@
     "pair": "B-ZBT_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T15:45:35"
+  },
+  {
+    "pair": "B-ENJ_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T17:30:40"
   }
 ]
