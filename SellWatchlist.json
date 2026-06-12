@@ -103,5 +103,10 @@
     "pair": "B-TRUMP_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T10:30:46"
+  },
+  {
+    "pair": "B-ARC_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T14:00:44"
   }
 ]
