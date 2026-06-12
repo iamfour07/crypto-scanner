@@ -118,5 +118,10 @@
     "pair": "B-RIF_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T15:15:47"
+  },
+  {
+    "pair": "B-ZBT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T15:45:35"
   }
 ]
