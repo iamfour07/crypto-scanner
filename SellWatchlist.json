@@ -108,5 +108,10 @@
     "pair": "B-ORCA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T19:15:33"
+  },
+  {
+    "pair": "B-AT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T20:15:32"
   }
 ]
