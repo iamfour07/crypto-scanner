@@ -98,5 +98,15 @@
     "pair": "B-LAB_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T05:45:38"
+  },
+  {
+    "pair": "B-KMNO_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T10:30:45"
+  },
+  {
+    "pair": "B-TRUMP_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T10:30:46"
   }
 ]
