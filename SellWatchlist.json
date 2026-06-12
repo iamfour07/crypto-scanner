@@ -98,5 +98,10 @@
     "pair": "B-XPL_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T04:30:47"
+  },
+  {
+    "pair": "B-LAB_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-12T05:45:38"
   }
 ]
