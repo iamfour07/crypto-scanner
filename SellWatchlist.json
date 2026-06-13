@@ -108,5 +108,10 @@
     "pair": "B-GWEI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-13T08:30:45"
+  },
+  {
+    "pair": "B-MEGA_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-13T09:00:44"
   }
 ]
