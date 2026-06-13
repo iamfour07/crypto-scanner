@@ -113,5 +113,10 @@
     "pair": "B-MEGA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-13T09:00:44"
+  },
+  {
+    "pair": "B-ESP_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-13T10:00:52"
   }
 ]
