@@ -88,5 +88,10 @@
     "pair": "B-AXL_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-13T04:15:39"
+  },
+  {
+    "pair": "B-EDGE_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-13T05:45:32"
   }
 ]
