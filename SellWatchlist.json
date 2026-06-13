@@ -93,5 +93,10 @@
     "pair": "B-VVV_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-13T07:15:42"
+  },
+  {
+    "pair": "B-NOT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-13T07:30:45"
   }
 ]
