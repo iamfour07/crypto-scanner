@@ -103,5 +103,10 @@
     "pair": "B-BANANAS31_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-14T09:15:51"
+  },
+  {
+    "pair": "B-OPG_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-14T10:45:38"
   }
 ]
