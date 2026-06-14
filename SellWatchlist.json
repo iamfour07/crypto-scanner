@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-IO_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-06-09T12:45:35"
-  },
-  {
     "pair": "B-SQD_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-10T14:00:50"
