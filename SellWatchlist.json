@@ -45,11 +45,6 @@
     "added": "2026-06-12T15:15:47"
   },
   {
-    "pair": "B-ENJ_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-06-12T17:30:40"
-  },
-  {
     "pair": "B-ORCA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-12T19:15:33"
@@ -103,5 +98,10 @@
     "pair": "B-BTW_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-13T22:15:44"
+  },
+  {
+    "pair": "B-AKT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-14T03:15:33"
   }
 ]
