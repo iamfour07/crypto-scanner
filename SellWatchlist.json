@@ -103,5 +103,10 @@
     "pair": "B-EVAA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-14T12:30:46"
+  },
+  {
+    "pair": "B-FIGHT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-14T23:45:38"
   }
 ]
