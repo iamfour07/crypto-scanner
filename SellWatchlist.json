@@ -98,5 +98,10 @@
     "pair": "B-MITO_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-14T06:00:53"
+  },
+  {
+    "pair": "B-BANANAS31_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-14T09:15:51"
   }
 ]
