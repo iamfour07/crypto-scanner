@@ -123,5 +123,10 @@
     "pair": "B-GRASS_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T06:45:53"
+  },
+  {
+    "pair": "B-ZEC_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T07:15:45"
   }
 ]
