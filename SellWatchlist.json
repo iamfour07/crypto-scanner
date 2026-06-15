@@ -15,11 +15,6 @@
     "added": "2026-06-12T10:30:45"
   },
   {
-    "pair": "B-RIF_USDT",
-    "state": "waiting_bounce",
-    "added": "2026-06-12T15:15:47"
-  },
-  {
     "pair": "B-VVV_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-13T07:15:42"
@@ -148,5 +143,10 @@
     "pair": "B-USELESS_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T14:30:44"
+  },
+  {
+    "pair": "B-XLM_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T16:45:49"
   }
 ]
