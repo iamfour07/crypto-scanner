@@ -143,5 +143,10 @@
     "pair": "B-NIL_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T10:15:56"
+  },
+  {
+    "pair": "B-WLD_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T11:00:51"
   }
 ]
