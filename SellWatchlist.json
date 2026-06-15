@@ -148,5 +148,10 @@
     "pair": "B-BSB_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T12:30:48"
+  },
+  {
+    "pair": "B-BASED_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T12:45:38"
   }
 ]
