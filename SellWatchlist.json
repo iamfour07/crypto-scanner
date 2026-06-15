@@ -148,5 +148,10 @@
     "pair": "B-XLM_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T16:45:49"
+  },
+  {
+    "pair": "B-AERO_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T18:45:49"
   }
 ]
