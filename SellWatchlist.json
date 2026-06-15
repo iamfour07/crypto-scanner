@@ -148,5 +148,10 @@
     "pair": "B-WLD_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T11:00:51"
+  },
+  {
+    "pair": "B-ZRO_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T11:45:37"
   }
 ]
