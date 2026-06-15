@@ -143,5 +143,10 @@
     "pair": "B-FARTCOIN_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T20:15:52"
+  },
+  {
+    "pair": "B-HANA_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T23:45:36"
   }
 ]
