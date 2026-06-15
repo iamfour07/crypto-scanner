@@ -113,5 +113,10 @@
     "pair": "B-BABY_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-15T05:30:50"
+  },
+  {
+    "pair": "B-CHIP_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-15T06:00:48"
   }
 ]
