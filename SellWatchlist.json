@@ -148,5 +148,10 @@
     "pair": "B-SKYAI_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-16T11:15:39"
+  },
+  {
+    "pair": "B-LAB_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-16T11:45:46"
   }
 ]
