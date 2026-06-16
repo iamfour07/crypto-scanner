@@ -153,5 +153,10 @@
     "pair": "B-TRIA_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-16T14:45:44"
+  },
+  {
+    "pair": "B-SENT_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-16T17:15:40"
   }
 ]
