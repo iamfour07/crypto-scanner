@@ -143,5 +143,10 @@
     "pair": "B-VELVET_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-16T17:30:47"
+  },
+  {
+    "pair": "B-BLESS_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-16T22:45:33"
   }
 ]
