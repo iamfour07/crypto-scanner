@@ -128,5 +128,10 @@
     "pair": "B-ALCH_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-16T07:45:48"
+  },
+  {
+    "pair": "B-VELVET_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-16T09:45:46"
   }
 ]
