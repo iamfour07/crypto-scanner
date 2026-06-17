@@ -16,6 +16,7 @@ RESOLUTION = "30"
 
 COINS = [
     "B-XRP_USDT",
+    "B-ETH_USDT",
 ]
 
 LEVERAGE = 5
