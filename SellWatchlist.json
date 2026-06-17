@@ -153,5 +153,10 @@
     "pair": "B-ESPORTS_USDT",
     "state": "waiting_bounce",
     "added": "2026-06-17T01:45:34"
+  },
+  {
+    "pair": "B-H_USDT",
+    "state": "waiting_bounce",
+    "added": "2026-06-17T03:15:43"
   }
 ]
