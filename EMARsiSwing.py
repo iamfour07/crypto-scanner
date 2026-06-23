@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
-    from Telegram_Swing import Send_Swing_Telegram_Message
+    from Telegram_Reversal import Send_Reversal_Telegram_Message
 except ImportError:
-    def Send_Swing_Telegram_Message(msg):
+    def Send_Reversal_Telegram_Message(msg):
         print(msg)
 
 # ================================================================
@@ -18,7 +18,7 @@ COINS = [
     "B-XRP_USDT",
     "B-ETH_USDT",
 ]
-Send_Swing_Telegram_Message("msg")
+Send_Reversal_Telegram_Message("msg")
 LEVERAGE = 5
 RISK_PER_TRADE_INR = 100
 INR_TO_USDT_RATE = None
@@ -321,7 +321,7 @@ def main():
 
         msg = "\n\n-------------------\n\n".join(alerts)
 
-        Send_Swing_Telegram_Message(msg)
+        Send_Reversal_Telegram_Message(msg)
 
         print(msg)
 

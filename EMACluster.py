@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from Telegram_Momentum import Send_Momentum_Telegram_Message
+from Telegram_Reversal import Send_Momentum_Telegram_Message
 
 
 # ===================================================

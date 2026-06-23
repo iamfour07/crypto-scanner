@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ================= TELEGRAM CONFIG =================
 try:
-    from Telegram_Momentum import Send_Momentum_Telegram_Message
+    from Telegram_Reversal import Send_Momentum_Telegram_Message
 except ImportError:
     def Send_Momentum_Telegram_Message(msg): 
         print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
