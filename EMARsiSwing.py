@@ -18,7 +18,6 @@ COINS = [
     "B-XRP_USDT",
     "B-ETH_USDT",
 ]
-Send_Reversal_Telegram_Message("msg")
 LEVERAGE = 5
 RISK_PER_TRADE_INR = 100
 INR_TO_USDT_RATE = None
