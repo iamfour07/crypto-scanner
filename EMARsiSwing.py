@@ -4,13 +4,13 @@ CoinDCX Futures — Bollinger Band Breakout Scanner
 =====================================================================================
 
 Strategy   : Pure Bollinger Band breakout (NO Supertrend, NO third-party TA libs)
-Bollinger  : Length = 200, Multiplier = 2.5   (calculated manually with pandas)
+Bollinger  : Length = 20, Multiplier = 2   (calculated manually with pandas)
 Risk       : Fixed ₹100 risk per trade regardless of stop-loss distance
 Leverage   : 7x (fixed)
 
 Flow
 ----
-1. Daily Scanner (runs only between 17:30 - 17:35 IST):
+1. Daily Scanner (runs only between 05:30 - 05:35 IST):
    - Pulls EVERY active USDT-margined futures pair from CoinDCX
      (active_instruments endpoint — NOT top-movers / price_change).
    - On the 1D timeframe, flags fresh upper-band breakouts into
@@ -132,7 +132,7 @@ def fetch_candles(pair, resolution):
     resolution : "60"  -> hourly candles
                  "1D"  -> daily candles
 
-    Returns None if data is insufficient for a reliable BB(200) calculation.
+    Returns None if data is insufficient for a reliable BB calculation.
     """
     now = int(datetime.now(timezone.utc).timestamp())
 
@@ -463,10 +463,10 @@ def hourly_scan():
 # =====================================================================================
 
 def is_daily_scan_window():
-    """True if current IST time is between 17:30 and 17:35 (inclusive)."""
+    """True if current IST time is between 05:30 and 05:35 (inclusive)."""
     now_ist = datetime.now(IST)
-    window_start = now_ist.replace(hour=17, minute=30, second=0, microsecond=0)
-    window_end = now_ist.replace(hour=17, minute=35, second=0, microsecond=0)
+    window_start = now_ist.replace(hour=5, minute=30, second=0, microsecond=0)
+    window_end = now_ist.replace(hour=5, minute=35, second=0, microsecond=0)
     return window_start <= now_ist <= window_end
 
 
@@ -481,7 +481,7 @@ def main():
     if is_daily_scan_window():
         daily_scan()
     else:
-        print("[DAILY] Skipped — outside 17:30–17:35 IST window.")
+        print("[DAILY] Skipped — outside 05:30–05:35 IST window.")
 
     hourly_scan()
 

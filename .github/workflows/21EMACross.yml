@@ -41,10 +41,15 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-          git add GainerWatchlist.json LoserWatchlist.json
+          for file in GainerWatchlist.json LoserWatchlist.json; do
+            if [ -f "$file" ]; then
+              git add "$file"
+            fi
+          done
 
-          # PEHLE COMMIT (Order changed here)
-          git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
-
-          # FIR PUSH
-          git push origin main
+          if ! git diff --cached --quiet; then
+            git commit -m "Update EMA watchlists [skip ci]"
+            git push origin main
+          else
+            echo "No watchlist changes to commit"
+          fi
