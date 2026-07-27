@@ -1,10 +1,11 @@
 name: Hourly Scanner
 
 on:
-  # schedule:
-  #   - cron: '0,15,30,45 * * * *'  # every 15 minutes UTC
-
   workflow_dispatch:
+
+concurrency:
+  group: scanner-lock
+  cancel-in-progress: false
 
 permissions:
   contents: write # required for pushing changes
@@ -12,7 +13,7 @@ permissions:
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -30,7 +31,7 @@ jobs:
           pip install pandas requests
 
       - name: Run Scanner
-        run: python momentum.py
+        run: python EMARsiSwing.py
         env:
           TELEGRAM_BOT_TOKEN_21_EMA: ${{ secrets.TELEGRAM_BOT_TOKEN_21_EMA }}
           TELEGRAM_CHAT_ID_21_EMA: ${{ secrets.TELEGRAM_CHAT_ID_21_EMA }}
@@ -40,13 +41,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-          git add BuyMomentum.json SellMomentum.json || true
+          git add GainerWatchlist.json LoserWatchlist.json
 
           # PEHLE COMMIT (Order changed here)
           git diff --cached --quiet || git commit -m "Update reversal watchlist [skip ci]"
-
-          # FIR PULL REBASE
-          git pull --rebase origin main
 
           # FIR PUSH
           git push origin main
