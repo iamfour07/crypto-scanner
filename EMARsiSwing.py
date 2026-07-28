@@ -65,7 +65,7 @@ ENTRY_BUFFER = 2        # Points added/subtracted to breakout candle high/low
 # Only take a breakout if the bands were "tight" (squeezed) right before it fired.
 # Band width % = (BB_upper - BB_lower) / BB_mid * 100, measured on the candle
 # BEFORE the breakout candle (i.e. the squeeze state, not the expanding one).
-ENABLE_SQUEEZE_FILTER = True   # Set False to disable this filter entirely
+ENABLE_SQUEEZE_FILTER = False   # Set False to disable this filter entirely
 MAX_BB_WIDTH_PCT = 1.0          # Only fire if band width <= this % of price
 
 # ---- Threading ----
