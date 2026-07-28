@@ -59,14 +59,19 @@ BB_MULT = 2
 # ---- Risk management ----
 RISK_RS = 100          # Fixed ₹ risk per trade, regardless of SL distance
 LEVERAGE = 7            # Fixed leverage
-ENTRY_BUFFER = 2        # Points added/subtracted to breakout candle high/low
 
 # ---- Bollinger Squeeze filter (hourly signals only) ----
 # Only take a breakout if the bands were "tight" (squeezed) right before it fired.
 # Band width % = (BB_upper - BB_lower) / BB_mid * 100, measured on the candle
 # BEFORE the breakout candle (i.e. the squeeze state, not the expanding one).
-ENABLE_SQUEEZE_FILTER = False   # Set False to disable this filter entirely
+ENABLE_SQUEEZE_FILTER = True   # Set False to disable this filter entirely
 MAX_BB_WIDTH_PCT = 1.0          # Only fire if band width <= this % of price
+
+# ---- Debugging ----
+# When True, hourly_scan() prints WHY each watchlisted coin did or didn't
+# fire — close vs bands, band width vs MAX_BB_WIDTH_PCT, squeeze pass/fail.
+# Turn this on if signals aren't coming through and you want to see why.
+DEBUG_MODE = True
 
 # ---- Threading ----
 MAX_WORKERS = 10
@@ -365,18 +370,27 @@ def _hourly_check_buy(pair):
     """Evaluates a gainer-watchlist pair on the 1H timeframe for a BUY signal."""
     df = fetch_candles(pair, "60")
     if df is None or len(df) < 2:
+        if DEBUG_MODE:
+            print(f"[DEBUG][BUY] {pair}: skipped — no/insufficient candle data")
         return (pair, None, None)
 
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
-    if (
-        prev["close"] <= prev["BB_upper"]
-        and last["close"] > last["BB_upper"]
-        and _is_squeezed(prev)
-    ):
-        entry = float(last["high"]) + ENTRY_BUFFER
-        sl = float(last["low"]) - ENTRY_BUFFER
+    crossed = prev["close"] <= prev["BB_upper"] and last["close"] > last["BB_upper"]
+    squeezed = _is_squeezed(prev)
+
+    if DEBUG_MODE:
+        print(
+            f"[DEBUG][BUY] {pair}: prev_close={prev['close']:.6f} "
+            f"prev_upper={prev['BB_upper']:.6f} last_close={last['close']:.6f} "
+            f"last_upper={last['BB_upper']:.6f} width%={prev['BB_width_pct']:.3f} "
+            f"(max {MAX_BB_WIDTH_PCT}) crossed={crossed} squeezed={squeezed}"
+        )
+
+    if crossed and squeezed:
+        entry = float(last["high"])
+        sl = float(last["low"])
         levels = calculate_trade_levels(entry, sl, "BUY")
         if levels:
             return (pair, "BUY", levels)
@@ -388,18 +402,27 @@ def _hourly_check_sell(pair):
     """Evaluates a loser-watchlist pair on the 1H timeframe for a SELL signal."""
     df = fetch_candles(pair, "60")
     if df is None or len(df) < 2:
+        if DEBUG_MODE:
+            print(f"[DEBUG][SELL] {pair}: skipped — no/insufficient candle data")
         return (pair, None, None)
 
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
-    if (
-        prev["close"] >= prev["BB_lower"]
-        and last["close"] < last["BB_lower"]
-        and _is_squeezed(prev)
-    ):
-        entry = float(last["low"]) - ENTRY_BUFFER
-        sl = float(last["high"]) + ENTRY_BUFFER
+    crossed = prev["close"] >= prev["BB_lower"] and last["close"] < last["BB_lower"]
+    squeezed = _is_squeezed(prev)
+
+    if DEBUG_MODE:
+        print(
+            f"[DEBUG][SELL] {pair}: prev_close={prev['close']:.6f} "
+            f"prev_lower={prev['BB_lower']:.6f} last_close={last['close']:.6f} "
+            f"last_lower={last['BB_lower']:.6f} width%={prev['BB_width_pct']:.3f} "
+            f"(max {MAX_BB_WIDTH_PCT}) crossed={crossed} squeezed={squeezed}"
+        )
+
+    if crossed and squeezed:
+        entry = float(last["low"])
+        sl = float(last["high"])
         levels = calculate_trade_levels(entry, sl, "SELL")
         if levels:
             return (pair, "SELL", levels)
