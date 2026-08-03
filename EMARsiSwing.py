@@ -60,16 +60,9 @@ BB_MULT = 2
 RISK_RS = 100          # Fixed ₹ risk per trade, regardless of SL distance
 LEVERAGE = 7            # Fixed leverage
 
-# ---- Bollinger Squeeze filter (hourly signals only) ----
-# Only take a breakout if the bands were "tight" (squeezed) right before it fired.
-# Band width % = (BB_upper - BB_lower) / BB_mid * 100, measured on the candle
-# BEFORE the breakout candle (i.e. the squeeze state, not the expanding one).
-ENABLE_SQUEEZE_FILTER = True   # Set False to disable this filter entirely
-MAX_BB_WIDTH_PCT = 1.0          # Only fire if band width <= this % of price
-
 # ---- Debugging ----
 # When True, hourly_scan() prints WHY each watchlisted coin did or didn't
-# fire — close vs bands, band width vs MAX_BB_WIDTH_PCT, squeeze pass/fail.
+# fire — close vs Bollinger bands for the 1H check.
 # Turn this on if signals aren't coming through and you want to see why.
 DEBUG_MODE = True
 
@@ -169,8 +162,10 @@ def fetch_candles(pair, resolution):
     for col in ["open", "high", "low", "close"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # Drop the currently-forming (incomplete) candle — always the last row.
-    df = df.iloc[:-1].reset_index(drop=True)
+    # Drop the last candle only when it is still forming. Some API responses
+    # already contain only closed candles, and blindly removing the last row
+    # can make us miss the most recent 1H breakout candle.
+    df = _drop_incomplete_last_candle(df, resolution)
 
     if len(df) < BB_LENGTH + 2:
         return None
@@ -182,6 +177,69 @@ def fetch_candles(pair, resolution):
         return None
 
     return df
+
+
+def _resolution_to_seconds(resolution):
+    """Converts CoinDCX resolution values to candle duration in seconds."""
+    if resolution == "1D":
+        return 86400
+
+    try:
+        return int(resolution) * 60
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_candle_time(raw_time):
+    """
+    Normalizes CoinDCX candle timestamps to UTC epoch seconds.
+    Handles both seconds and milliseconds.
+    """
+    if pd.isna(raw_time):
+        return None
+
+    try:
+        ts = int(raw_time)
+    except (TypeError, ValueError):
+        return None
+
+    # 13 digits usually means milliseconds.
+    if ts > 10**12:
+        ts //= 1000
+
+    return ts
+
+
+def _drop_incomplete_last_candle(df, resolution):
+    """
+    Removes the final row only if it belongs to the candle that is still
+    forming at the current moment.
+    """
+    if df.empty:
+        return df
+
+    candle_seconds = _resolution_to_seconds(resolution)
+    last_candle_time = _normalize_candle_time(df.iloc[-1].get("time"))
+
+    if candle_seconds is None or last_candle_time is None:
+        # Fallback to the old safe behavior if we cannot determine timing.
+        return df.iloc[:-1].reset_index(drop=True)
+
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    last_candle_close_time = last_candle_time + candle_seconds
+
+    if now_ts < last_candle_close_time:
+        return df.iloc[:-1].reset_index(drop=True)
+
+    return df.reset_index(drop=True)
+
+
+def _format_candle_time(raw_time):
+    """Formats a candle timestamp for debug logs."""
+    ts = _normalize_candle_time(raw_time)
+    if ts is None:
+        return "unknown"
+    return datetime.fromtimestamp(ts, timezone.utc).astimezone(IST).strftime("%Y-%m-%d %H:%M")
 
 
 # =====================================================================================
@@ -356,16 +414,6 @@ def daily_scan():
 # HOURLY SCANNER
 # =====================================================================================
 
-def _is_squeezed(prev_row):
-    """
-    Returns True if the squeeze filter is disabled, OR the band width on the
-    pre-breakout candle was at/under MAX_BB_WIDTH_PCT.
-    """
-    if not ENABLE_SQUEEZE_FILTER:
-        return True
-    return prev_row["BB_width_pct"] <= MAX_BB_WIDTH_PCT
-
-
 def _hourly_check_buy(pair):
     """Evaluates a gainer-watchlist pair on the 1H timeframe for a BUY signal."""
     df = fetch_candles(pair, "60")
@@ -378,17 +426,16 @@ def _hourly_check_buy(pair):
     prev = df.iloc[-2]
 
     crossed = prev["close"] <= prev["BB_upper"] and last["close"] > last["BB_upper"]
-    squeezed = _is_squeezed(prev)
-
     if DEBUG_MODE:
         print(
-            f"[DEBUG][BUY] {pair}: prev_close={prev['close']:.6f} "
+            f"[DEBUG][BUY] {pair}: prev_time={_format_candle_time(prev.get('time'))} "
+            f"last_time={_format_candle_time(last.get('time'))} "
+            f"prev_close={prev['close']:.6f} "
             f"prev_upper={prev['BB_upper']:.6f} last_close={last['close']:.6f} "
-            f"last_upper={last['BB_upper']:.6f} width%={prev['BB_width_pct']:.3f} "
-            f"(max {MAX_BB_WIDTH_PCT}) crossed={crossed} squeezed={squeezed}"
+            f"last_upper={last['BB_upper']:.6f} crossed={crossed}"
         )
 
-    if crossed and squeezed:
+    if crossed:
         entry = float(last["high"])
         sl = float(last["low"])
         levels = calculate_trade_levels(entry, sl, "BUY")
@@ -410,17 +457,16 @@ def _hourly_check_sell(pair):
     prev = df.iloc[-2]
 
     crossed = prev["close"] >= prev["BB_lower"] and last["close"] < last["BB_lower"]
-    squeezed = _is_squeezed(prev)
-
     if DEBUG_MODE:
         print(
-            f"[DEBUG][SELL] {pair}: prev_close={prev['close']:.6f} "
+            f"[DEBUG][SELL] {pair}: prev_time={_format_candle_time(prev.get('time'))} "
+            f"last_time={_format_candle_time(last.get('time'))} "
+            f"prev_close={prev['close']:.6f} "
             f"prev_lower={prev['BB_lower']:.6f} last_close={last['close']:.6f} "
-            f"last_lower={last['BB_lower']:.6f} width%={prev['BB_width_pct']:.3f} "
-            f"(max {MAX_BB_WIDTH_PCT}) crossed={crossed} squeezed={squeezed}"
+            f"last_lower={last['BB_lower']:.6f} crossed={crossed}"
         )
 
-    if crossed and squeezed:
+    if crossed:
         entry = float(last["low"])
         sl = float(last["high"])
         levels = calculate_trade_levels(entry, sl, "SELL")
