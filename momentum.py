@@ -1,12 +1,9 @@
-import json
 import requests
 import pandas as pd
-import os
 import logging
 
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from enum import Enum
 
 try:
     from Telegram_Swing import Send_Swing_Telegram_Message
@@ -32,67 +29,33 @@ log = logging.getLogger(__name__)
 # ================================================================
 RESOLUTION          = "60"          # 1H candles
 
-BUY_FILE            = "MomentumBuyWatchlist.json"
-SELL_FILE           = "MomentumSellWatchlist.json"
-
 MAX_WORKERS         = 20
-TOP_N               = 25            # Top 15 gainers & losers
+TOP_N               = 10             # Top 5 gainers & losers
+
+# EXCLUDE extreme movers (already pumped/dumped 50%+ in 24h)
+MAX_GAINER_PCT      = 50.0          # exclude gainers >= 50%
+MIN_LOSER_PCT       = -50.0         # exclude losers <= -50%
+
+# Still require some minimum move to bother looking at the pair
+MIN_GAINER_PCT      = 2.0
+MAX_LOSER_PCT       = -2.0
 
 USE_VOLUME_FILTER   = False
 MIN_VOLUME_USDT     = 10_000_000
 
-LEVERAGE            = 7
+LEVERAGE            = 7             # 7x margin
 INR_TO_USDT_RATE    = None          # None = fetch live
-RISK_PER_TRADE_INR  = 200
+RISK_PER_TRADE_INR  = 100           # max loss per trade
 
-# MOVER THRESHOLD
-MIN_GAINER_PCT      = 2.0           # Gainers: minimum +5% 1D change
-MIN_LOSER_PCT       = -2.0          # Losers:  maximum -5% 1D change
-
-# RSI SETTINGS
-RSI_LENGTH          = 14
-RSI_UPPER_LEVEL     = 55            # RSI above this = overbought bounce
-RSI_LOWER_LEVEL     = 45            # RSI below this = oversold dip
-
-# SWING CANDLES for SL calculation
-SWING_CANDLES       = 10
-
-
-# ================================================================
-# ENUMS
-# ================================================================
-class BuyState(str, Enum):
-    DIP_DONE    = "dip_done"        # RSI < 45 confirmed, waiting for RSI > 55
-
-class SellState(str, Enum):
-    BOUNCE_DONE = "bounce_done"     # RSI > 55 confirmed, waiting for RSI < 45
-
-
-# ================================================================
-# RSI — TRADINGVIEW STYLE (RMA)
-# ================================================================
-def rma(series, length):
-    return series.ewm(alpha=1 / length, adjust=False).mean()
-
-
-def calculate_tv_rsi(close, length=14):
-    delta    = close.diff()
-    gain     = delta.clip(lower=0)
-    loss     = -delta.clip(upper=0)
-    avg_gain = rma(gain, length)
-    avg_loss = rma(loss, length)
-    rs       = avg_gain / avg_loss
-    return 100 - (100 / (1 + rs))
+EMA_LENGTH          = 5
+SWING_CANDLES       = 7             # candles checked BEFORE the gap candle for SL
 
 
 # ================================================================
 # INDICATORS
 # ================================================================
 def calculate_indicators(df):
-    df['ema20']  = df['close'].ewm(span=20,  adjust=False).mean()
-    df['ema50']  = df['close'].ewm(span=50,  adjust=False).mean()
-    df['ema200'] = df['close'].ewm(span=200, adjust=False).mean()
-    df['rsi']    = calculate_tv_rsi(df['close'], RSI_LENGTH)
+    df['ema5'] = df['close'].ewm(span=EMA_LENGTH, adjust=False).mean()
     return df
 
 
@@ -121,7 +84,7 @@ def fetch_data(pair):
 
 
 # ================================================================
-# TOP MOVERS
+# TOP MOVERS  (excluding coins that already moved 50%+)
 # ================================================================
 def fetch_pair_stats(pair):
     url = f"https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
@@ -141,7 +104,11 @@ def fetch_pair_stats(pair):
 
 
 def get_top_movers(pairs):
-    """Returns top N gainers and top N losers sorted by % change."""
+    """
+    Returns top N gainers and top N losers by 24h % change,
+    excluding coins that already gained >= MAX_GAINER_PCT or
+    lost <= MIN_LOSER_PCT (too extended / already blown out).
+    """
     gainers, losers = [], []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
@@ -150,9 +117,15 @@ def get_top_movers(pairs):
             result = f.result()
             if not result:
                 continue
-            if result["change"] > MIN_GAINER_PCT:       # Sirf 5%+ gainers
+
+            chg = result["change"]
+
+            # Gainer bucket: positive move, but not an already-blown-out 50%+ pump
+            if MIN_GAINER_PCT < chg < MAX_GAINER_PCT:
                 gainers.append(result)
-            elif result["change"] < MIN_LOSER_PCT:       # Sirf 5%- losers
+
+            # Loser bucket: negative move, but not an already-blown-out 50%+ dump
+            elif MAX_LOSER_PCT > chg > MIN_LOSER_PCT:
                 losers.append(result)
 
     gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:TOP_N]
@@ -204,8 +177,8 @@ def calc_position(entry, sl):
     if sl_pct == 0:
         return None
 
-    rate         = get_inr_rate()
-    risk_usdt    = RISK_PER_TRADE_INR / rate
+    rate          = get_inr_rate()
+    risk_usdt     = RISK_PER_TRADE_INR / rate
     position_usdt = round(risk_usdt / (sl_pct / 100), 2)
     capital_usdt  = round(position_usdt / LEVERAGE, 2)
     capital_inr   = round(capital_usdt * rate, 2)
@@ -219,316 +192,148 @@ def calc_position(entry, sl):
 
 
 # ================================================================
-# TRADE LEVELS
-# ================================================================
-def trade_levels_buy(df):
-    """
-    BUY entry at current candle high,
-    SL at swing LOW of last SWING_CANDLES candles.
-    Targets at 1:2 and 1:3 RR.
-    """
-    last   = df.iloc[-1]
-    swing  = df.iloc[-SWING_CANDLES:]
-
-    entry  = round(last['high'], 6)
-    sl     = round(swing['low'].min(), 6)
-    risk   = entry - sl
-    t2     = round(entry + 2 * risk, 6)
-    t3     = round(entry + 3 * risk, 6)
-
-    return entry, sl, t2, t3
-
-
-def trade_levels_sell(df):
-    """
-    SELL entry at current candle low,
-    SL at swing HIGH of last SWING_CANDLES candles.
-    Targets at 1:2 and 1:3 RR.
-    """
-    last  = df.iloc[-1]
-    swing = df.iloc[-SWING_CANDLES:]
-
-    entry = round(last['low'], 6)
-    sl    = round(swing['high'].max(), 6)
-    risk  = sl - entry
-    t2    = round(entry - 2 * risk, 6)
-    t3    = round(entry - 3 * risk, 6)
-
-    return entry, sl, t2, t3
-
-
-# ================================================================
-# ALERT MESSAGE BUILDER
-# ================================================================
-def build_buy_msg(pair, entry, sl, t2, t3):
-    pos = calc_position(entry, sl)
-    cap = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
-    qty = pos['quantity'] if pos else "N/A"
-
-    return (
-        f"🟢 BUY — {pair}\n\n"
-        f"Entry    : {entry}\n"
-        f"SL       : {sl}\n"
-        f"Capital  : {cap}\n"
-        f"Quantity : {qty}\n"
-        f"Targets:\n"
-        f"  1:2 → {t2}\n"
-        f"  1:3 → {t3}"
-    )
-
-
-def build_sell_msg(pair, entry, sl, t2, t3):
-    pos = calc_position(entry, sl)
-    cap = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
-    qty = pos['quantity'] if pos else "N/A"
-
-    return (
-        f"🔴 SELL — {pair}\n\n"
-        f"Entry    : {entry}\n"
-        f"SL       : {sl}\n"
-        f"Capital  : {cap}\n"
-        f"Quantity : {qty}\n"
-        f"Targets:\n"
-        f"  1:2 → {t2}\n"
-        f"  1:3 → {t3}"
-    )
-
-
-# ================================================================
-# SCAN — ADD TO BUY WATCHLIST
+# BUY SETUP  (from top gainers)
 #
-# Condition:
-#   • Top 25 gainer
-#   • EMA50 > EMA200  (bullish trend)
-#   • RSI < RSI_LOWER_LEVEL   (dip happened)
-#   → Add with state "dip_done"
+#   • Last CLOSED candle closes BELOW 5 EMA
+#   • That candle's HIGH also stays below 5 EMA (real gap, no wick touch)
+#   • Entry = gap candle's high
+#   • SL    = lowest low among {gap candle, previous 7 candles}
+#             (gap candle is its own SL only if it IS the swing low;
+#              otherwise the true swing low among the previous 7 is used)
 # ================================================================
-def scan_top_gainer_for_buy(pair, existing_buy_pairs):
-    if pair in existing_buy_pairs:
+def check_buy_setup(df):
+    if len(df) < SWING_CANDLES + 1:
         return None
 
+    gap_candle = df.iloc[-1]
+    prev       = df.iloc[-(SWING_CANDLES + 1):-1]   # previous 7 candles
+
+    closed_below_ema = gap_candle['close'] < gap_candle['ema5']
+    high_below_ema    = gap_candle['high']  < gap_candle['ema5']   # gap = no touch
+
+    if not (closed_below_ema and high_below_ema):
+        return None
+
+    entry = round(gap_candle['high'], 6)
+    sl    = round(min(gap_candle['low'], prev['low'].min()), 6)
+
+    if sl >= entry:
+        # sanity guard — shouldn't happen given the gap condition, but never trade a bad SL
+        return None
+
+    risk = entry - sl
+    t2   = round(entry + 2 * risk, 6)
+    t3   = round(entry + 3 * risk, 6)
+    t4   = round(entry + 4 * risk, 6)
+
+    return entry, sl, t2, t3, t4
+
+
+# ================================================================
+# SELL SETUP  (from top losers)
+#
+#   • Last CLOSED candle closes ABOVE 5 EMA
+#   • That candle's LOW also stays above 5 EMA (real gap, no wick touch)
+#   • Entry = gap candle's low
+#   • SL    = highest high among {gap candle, previous 7 candles}
+# ================================================================
+def check_sell_setup(df):
+    if len(df) < SWING_CANDLES + 1:
+        return None
+
+    gap_candle = df.iloc[-1]
+    prev       = df.iloc[-(SWING_CANDLES + 1):-1]   # previous 7 candles
+
+    closed_above_ema = gap_candle['close'] > gap_candle['ema5']
+    low_above_ema     = gap_candle['low']   > gap_candle['ema5']   # gap = no touch
+
+    if not (closed_above_ema and low_above_ema):
+        return None
+
+    entry = round(gap_candle['low'], 6)
+    sl    = round(max(gap_candle['high'], prev['high'].max()), 6)
+
+    if sl <= entry:
+        return None
+
+    risk = sl - entry
+    t2   = round(entry - 2 * risk, 6)
+    t3   = round(entry - 3 * risk, 6)
+    t4   = round(entry - 4 * risk, 6)
+
+    return entry, sl, t2, t3, t4
+
+
+# ================================================================
+# ALERT MESSAGE BUILDERS
+# ================================================================
+def build_buy_msg(pair, entry, sl, t2, t3, t4):
+    pos = calc_position(entry, sl)
+    cap = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
+
+    return (
+        f"🟢 BUY (5 EMA Gap)\n\n"
+        f"Name- {pair}\n"
+        f"Entry- {entry}\n"
+        f"SL- {sl}\n"
+        f"Capital- {cap}\n"
+        f"Risk Per Trade- Rs.{RISK_PER_TRADE_INR}\n"
+        f"-----------------\n"
+        f"T2- {t2}\n"
+        f"T3- {t3}\n"
+        f"T4- {t4}"
+    )
+
+
+def build_sell_msg(pair, entry, sl, t2, t3, t4):
+    pos = calc_position(entry, sl)
+    cap = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
+
+    return (
+        f"🔴 SELL (5 EMA Gap)\n\n"
+        f"Name- {pair}\n"
+        f"Entry- {entry}\n"
+        f"SL- {sl}\n"
+        f"Capital- {cap}\n"
+        f"Risk Per Trade- Rs.{RISK_PER_TRADE_INR}\n"
+        f"-----------------\n"
+        f"T2- {t2}\n"
+        f"T3- {t3}\n"
+        f"T4- {t4}"
+    )
+
+
+# ================================================================
+# SCAN
+# ================================================================
+def scan_pair(pair, side):
     if get_volume(pair) < MIN_VOLUME_USDT:
         return None
 
     df = fetch_data(pair)
-    if df is None or len(df) < 2:
+    if df is None:
         return None
 
-    last = df.iloc[-1]
-
-    # ✅ UPDATED: Only EMA50 > EMA200
-    bullish_trend = last['ema50'] > last['ema200']
-
-    rsi_dipped = last['rsi'] < RSI_LOWER_LEVEL   # RSI < 45
-
-    log.info(
-        f"{pair} | RSI: {round(last['rsi'], 1)} | "
-        f"EMA50: {round(last['ema50'], 4)} | EMA200: {round(last['ema200'], 4)} | "
-        f"bullish={bullish_trend} | dipped={rsi_dipped}"
-    )
-
-    if bullish_trend and rsi_dipped:
-        log.info(f"🟢 BUY Watchlist ADD: {pair} | RSI: {round(last['rsi'], 1)}")
-        return ("ADD_BUY", pair)
+    if side == "buy":
+        result = check_buy_setup(df)
+        if result:
+            entry, sl, t2, t3, t4 = result
+            log.info(f"🟢 BUY setup: {pair} | entry={entry} sl={sl}")
+            return build_buy_msg(pair, entry, sl, t2, t3, t4)
+    else:
+        result = check_sell_setup(df)
+        if result:
+            entry, sl, t2, t3, t4 = result
+            log.info(f"🔴 SELL setup: {pair} | entry={entry} sl={sl}")
+            return build_sell_msg(pair, entry, sl, t2, t3, t4)
 
     return None
-
-
-# ================================================================
-# SCAN — ADD TO SELL WATCHLIST
-#
-# Condition:
-#   • Top 25 loser
-#   • EMA50 < EMA200  (bearish trend)
-#   • RSI > RSI_UPPER_LEVEL   (bounce happened)
-#   → Add with state "bounce_done"
-# ================================================================
-def scan_top_loser_for_sell(pair, existing_sell_pairs):
-    if pair in existing_sell_pairs:
-        return None
-
-    if get_volume(pair) < MIN_VOLUME_USDT:
-        return None
-
-    df = fetch_data(pair)
-    if df is None or len(df) < 2:
-        return None
-
-    last = df.iloc[-1]
-
-    # ✅ UPDATED: Only EMA50 < EMA200
-    bearish_trend = last['ema50'] < last['ema200']
-
-    rsi_bounced = last['rsi'] > RSI_UPPER_LEVEL  # RSI > 55
-
-    log.info(
-        f"{pair} | RSI: {round(last['rsi'], 1)} | "
-        f"EMA50: {round(last['ema50'], 4)} | EMA200: {round(last['ema200'], 4)} | "
-        f"bearish={bearish_trend} | bounced={rsi_bounced}"
-    )
-
-    if bearish_trend and rsi_bounced:
-        log.info(f"🔴 SELL Watchlist ADD: {pair} | RSI: {round(last['rsi'], 1)}")
-        return ("ADD_SELL", pair)
-
-    return None
-
-
-# ================================================================
-# STATE MACHINE
-#
-# BUY  — "dip_done"    → waits for RSI > 55  → ALERT_BUY
-# SELL — "bounce_done" → waits for RSI < 45  → ALERT_SELL
-# ================================================================
-def check_state(entry):
-    pair  = entry["pair"]
-    state = entry["state"]
-
-    df = fetch_data(pair)
-    if df is None or df.empty:
-        return ("STAY", entry)
-
-    last = df.iloc[-1]
-    rsi  = last['rsi']
-
-    # ============================================================
-    # BUY SIDE — dip_done → waiting for RSI > 55
-    # ============================================================
-    if state == BuyState.DIP_DONE:
-
-        # Volume check (optional)
-        if get_volume(pair) < MIN_VOLUME_USDT:
-            log.info(f"❌ BUY Remove (low volume): {pair}")
-            return ("REMOVE", entry)
-
-        # ✅ UPDATED: Trend broken if EMA50 drops below EMA200
-        trend_broken = not (last['ema50'] > last['ema200'])
-
-        if trend_broken:
-            log.info(f"❌ BUY Remove (trend broken): {pair}")
-            return ("REMOVE", entry)
-
-        # ALERT: RSI crossed above 55
-        if rsi > RSI_UPPER_LEVEL:
-            e, sl, t2, t3 = trade_levels_buy(df)
-            msg = build_buy_msg(pair, e, sl, t2, t3)
-            log.info(f"📈 ALERT BUY: {pair} | RSI: {round(rsi, 1)}")
-            return ("ALERT_BUY", entry, msg)
-
-    # ============================================================
-    # SELL SIDE — bounce_done → waiting for RSI < 45
-    # ============================================================
-    elif state == SellState.BOUNCE_DONE:
-
-        # Volume check (optional)
-        if get_volume(pair) < MIN_VOLUME_USDT:
-            log.info(f"❌ SELL Remove (low volume): {pair}")
-            return ("REMOVE", entry)
-
-        # ✅ UPDATED: Trend broken if EMA50 rises above EMA200
-        trend_broken = not (last['ema50'] < last['ema200'])
-
-        if trend_broken:
-            log.info(f"❌ SELL Remove (trend broken): {pair}")
-            return ("REMOVE", entry)
-
-        # ALERT: RSI dropped below 45
-        if rsi < RSI_LOWER_LEVEL:
-            e, sl, t2, t3 = trade_levels_sell(df)
-            msg = build_sell_msg(pair, e, sl, t2, t3)
-            log.info(f"📉 ALERT SELL: {pair} | RSI: {round(rsi, 1)}")
-            return ("ALERT_SELL", entry, msg)
-
-    return ("STAY", entry)
-
-
-# ================================================================
-# LOAD / SAVE WATCHLIST
-# ================================================================
-def load_watchlist(filepath):
-    if os.path.exists(filepath):
-        with open(filepath, "r") as f:
-            return json.load(f)
-    return []
-
-
-def save_watchlist(filepath, data):
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=2)
-
-
-# ================================================================
-# PROCESS WATCHLIST RESULTS
-# ================================================================
-def process_watchlist(watchlist):
-    """
-    Runs check_state on all watchlist entries concurrently.
-    Returns (updated_list, alerts).
-    """
-    updated  = list(watchlist)
-    alerts   = []
-
-    if not watchlist:
-        return updated, alerts
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futures = [ex.submit(check_state, e) for e in watchlist]
-
-        for f in as_completed(futures):
-            res = f.result()
-            if not res:
-                continue
-
-            code = res[0]
-
-            if code in ("ALERT_BUY", "ALERT_SELL"):
-                _, entry, msg = res
-                alerts.append(msg)
-                # Remove from watchlist after alert
-                updated = [e for e in updated if e["pair"] != entry["pair"]]
-
-            elif code == "REMOVE":
-                _, entry = res
-                updated = [e for e in updated if e["pair"] != entry["pair"]]
-
-            # STAY → no change
-
-    return updated, alerts
 
 
 # ================================================================
 # MAIN
 # ================================================================
 def main():
-
-    now_str = datetime.now().isoformat(timespec="seconds")
-
-    # ============================================================
-    # LOAD WATCHLISTS
-    # ============================================================
-    buy_list  = load_watchlist(BUY_FILE)
-    sell_list = load_watchlist(SELL_FILE)
-
-    buy_pairs  = {e["pair"] for e in buy_list}
-    sell_pairs = {e["pair"] for e in sell_list}
-
-    # ============================================================
-    # CHECK EXISTING WATCHLISTS (State Machine)
-    # ============================================================
-    log.info(f"Checking BUY  watchlist ({len(buy_list)}  pairs)...")
-    updated_buy,  buy_alerts  = process_watchlist(buy_list)
-
-    log.info(f"Checking SELL watchlist ({len(sell_list)} pairs)...")
-    updated_sell, sell_alerts = process_watchlist(sell_list)
-
-    all_alerts = buy_alerts + sell_alerts
-
-    # ============================================================
-    # SEND ALERTS
-    # ============================================================
-    if all_alerts:
-        Send_Swing_Telegram_Message("\n\n---\n\n".join(all_alerts))
-
     # ============================================================
     # FETCH ALL FUTURES PAIRS
     # ============================================================
@@ -544,102 +349,50 @@ def main():
         all_pairs = []
 
     if not all_pairs:
-        log.warning("No pairs fetched. Saving watchlists and exiting.")
-        save_watchlist(BUY_FILE,  updated_buy)
-        save_watchlist(SELL_FILE, updated_sell)
+        log.warning("No pairs fetched. Exiting.")
         return
 
     # ============================================================
-    # GET TOP 25 GAINERS & LOSERS
+    # TOP 5 GAINERS & LOSERS (excluding 50%+ already-extended moves)
     # ============================================================
     gainers, losers = get_top_movers(all_pairs)
 
     log.info(
-        f"Top {TOP_N} Gainers: {[g['pair'] + ' ' + str(round(g['change'],1))+'%' for g in gainers]}"
+        f"Top {TOP_N} Gainers (<{MAX_GAINER_PCT}%): "
+        f"{[g['pair'] + ' ' + str(round(g['change'],1)) + '%' for g in gainers]}"
     )
     log.info(
-        f"Top {TOP_N} Losers:  {[l['pair'] + ' ' + str(round(l['change'],1))+'%' for l in losers]}"
+        f"Top {TOP_N} Losers  (>{MIN_LOSER_PCT}%): "
+        f"{[l['pair'] + ' ' + str(round(l['change'],1)) + '%' for l in losers]}"
     )
 
     gainer_pairs = [g["pair"] for g in gainers]
     loser_pairs  = [l["pair"] for l in losers]
 
-    # Updated sets after state machine processing
-    current_buy_pairs  = {e["pair"] for e in updated_buy}
-    current_sell_pairs = {e["pair"] for e in updated_sell}
-
     # ============================================================
-    # SCAN TOP GAINERS → BUY WATCHLIST
-    # Condition: EMA50 > EMA200 AND RSI < 45
+    # SCAN GAINERS FOR BUY SETUP, LOSERS FOR SELL SETUP
     # ============================================================
-    log.info(f"Scanning {len(gainer_pairs)} TOP GAINERS for BUY setup...")
-    new_buy = 0
+    alerts = []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futures = [
-            ex.submit(scan_top_gainer_for_buy, p, current_buy_pairs)
-            for p in gainer_pairs
-        ]
+        futures = []
+        futures += [ex.submit(scan_pair, p, "buy")  for p in gainer_pairs]
+        futures += [ex.submit(scan_pair, p, "sell") for p in loser_pairs]
+
         for f in as_completed(futures):
-            res = f.result()
-            if not res:
-                continue
-
-            code, pair = res
-
-            if code == "ADD_BUY" and pair not in current_buy_pairs:
-                updated_buy.append({
-                    "pair":  pair,
-                    "state": BuyState.DIP_DONE,
-                    "added": now_str
-                })
-                current_buy_pairs.add(pair)
-                new_buy += 1
+            msg = f.result()
+            if msg:
+                alerts.append(msg)
 
     # ============================================================
-    # SCAN TOP LOSERS → SELL WATCHLIST
-    # Condition: EMA50 < EMA200 AND RSI > 55
+    # SEND ALERTS
     # ============================================================
-    log.info(f"Scanning {len(loser_pairs)} TOP LOSERS for SELL setup...")
-    new_sell = 0
+    if alerts:
+        Send_Swing_Telegram_Message("\n\n---\n\n".join(alerts))
+    else:
+        log.info("No 5 EMA gap setups found this run.")
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futures = [
-            ex.submit(scan_top_loser_for_sell, p, current_sell_pairs)
-            for p in loser_pairs
-        ]
-        for f in as_completed(futures):
-            res = f.result()
-            if not res:
-                continue
-
-            code, pair = res
-
-            if code == "ADD_SELL" and pair not in current_sell_pairs:
-                updated_sell.append({
-                    "pair":  pair,
-                    "state": SellState.BOUNCE_DONE,
-                    "added": now_str
-                })
-                current_sell_pairs.add(pair)
-                new_sell += 1
-
-    # ============================================================
-    # SAVE WATCHLISTS
-    # ============================================================
-    save_watchlist(BUY_FILE,  updated_buy)
-    save_watchlist(SELL_FILE, updated_sell)
-
-    # ============================================================
-    # SUMMARY
-    # ============================================================
-    log.info(
-        f"\n{'='*45}\n"
-        f"  Alerts Sent   : {len(all_alerts)}\n"
-        f"  New BUY  Added: {new_buy}  | Total: {len(updated_buy)}\n"
-        f"  New SELL Added: {new_sell} | Total: {len(updated_sell)}\n"
-        f"{'='*45}"
-    )
+    log.info(f"Scan complete. Setups found: {len(alerts)}")
 
 
 # ================================================================
