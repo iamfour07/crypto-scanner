@@ -8,7 +8,7 @@ from Telegram_Swing import Send_Swing_Telegram_Message
 # CONFIG
 resolution = "60"
 limit_hours = 1000
-TOP_COINS_TO_SCAN = 8
+TOP_GAINERS_TO_SCAN = 5
 MAX_WORKERS = 8
 
 # ── Toggle Signals ON/OFF ──
@@ -16,11 +16,8 @@ ENABLE_SELL = True   # Set False to disable SELL scanning
 
 SELL_FILE = "ReversalSellWatchlist.json"
 
-BB_LENGTH = 200
-BB_MULT = 2.5
-
-ST_LENGTH = 9
-ST_FACTOR = 1.5
+RSI_LENGTH = 14
+RSI_THRESHOLD = 40
 
 RISK_RS = 100        # Fixed risk per trade in ₹
 LEVERAGE = 5         # Fixed leverage
@@ -76,8 +73,8 @@ def fetch_pair_stats(pair):
     return {"pair": pair, "change": float(pc)} if pc else None
 
 
-def get_top_movers(pairs):
-    gainers, losers = [], []
+def get_top_gainers(pairs):
+    gainers = []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(fetch_pair_stats, p) for p in pairs]
@@ -85,80 +82,29 @@ def get_top_movers(pairs):
             res = f.result()
             if not res:
                 continue
-            (gainers if res["change"] > 0 else losers).append(res)
+            if res["change"] > 0:
+                gainers.append(res)
 
-    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:TOP_COINS_TO_SCAN]
-    losers = sorted(losers, key=lambda x: x["change"])[:TOP_COINS_TO_SCAN]
+    gainers = sorted(gainers, key=lambda x: x["change"], reverse=True)[:TOP_GAINERS_TO_SCAN]
 
-    return [x["pair"] for x in gainers + losers]
-
-
-# ================= BOLLINGER =================
-def calculate_bollinger(df):
-    mid = df["close"].rolling(BB_LENGTH).mean()
-    std = df["close"].rolling(BB_LENGTH).std()
-    df["BB_upper"] = mid + BB_MULT * std
-    df["BB_lower"] = mid - BB_MULT * std
-    return df
+    return [x["pair"] for x in gainers]
 
 
-def calculate_sma(df):
-    df["SMA5"] = df["close"].rolling(5).mean()
-    return df
-
-
-# ================= SUPERTREND =================
+# ================= RSI =================
 def rma(series, period):
     return series.ewm(alpha=1 / period, adjust=False).mean()
 
 
-def calculate_supertrend(df):
-    df["H-L"] = df["high"] - df["low"]
-    df["H-PC"] = abs(df["high"] - df["close"].shift(1))
-    df["L-PC"] = abs(df["low"] - df["close"].shift(1))
-    df["TR"] = df[["H-L", "H-PC", "L-PC"]].max(axis=1)
-    df["ATR"] = rma(df["TR"], ST_LENGTH)
+def calculate_rsi(df, length=RSI_LENGTH):
+    delta = df["close"].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
 
-    hl2 = (df["high"] + df["low"]) / 2
-    df["basic_upperband"] = hl2 + ST_FACTOR * df["ATR"]
-    df["basic_lowerband"] = hl2 - ST_FACTOR * df["ATR"]
+    avg_gain = rma(gain, length)
+    avg_loss = rma(loss, length)
 
-    final_upperband = [0.0] * len(df)
-    final_lowerband = [0.0] * len(df)
-    supertrend = [True] * len(df)
-
-    for i in range(len(df)):
-        if i == 0:
-            final_upperband[i] = df["basic_upperband"].iloc[i]
-            final_lowerband[i] = df["basic_lowerband"].iloc[i]
-            supertrend[i] = True
-            continue
-
-        if (
-            df["basic_upperband"].iloc[i] < final_upperband[i - 1]
-            or df["close"].iloc[i - 1] > final_upperband[i - 1]
-        ):
-            final_upperband[i] = df["basic_upperband"].iloc[i]
-        else:
-            final_upperband[i] = final_upperband[i - 1]
-
-        if (
-            df["basic_lowerband"].iloc[i] > final_lowerband[i - 1]
-            or df["close"].iloc[i - 1] < final_lowerband[i - 1]
-        ):
-            final_lowerband[i] = df["basic_lowerband"].iloc[i]
-        else:
-            final_lowerband[i] = final_lowerband[i - 1]
-
-        if supertrend[i - 1]:
-            supertrend[i] = df["close"].iloc[i] >= final_lowerband[i]
-        else:
-            supertrend[i] = df["close"].iloc[i] > final_upperband[i]
-
-    df["final_upperband"] = final_upperband
-    df["final_lowerband"] = final_lowerband
-    df["supertrend"] = supertrend  # True = GREEN (bullish), False = RED (bearish)
-    df["supertrend_value"] = df["final_lowerband"].where(df["supertrend"], df["final_upperband"])
+    rs = avg_gain / avg_loss
+    df["RSI"] = 100 - (100 / (1 + rs))
     return df
 
 
@@ -175,7 +121,7 @@ def fetch_candles(pair):
         return None
 
     candles = data["data"]
-    if len(candles) < BB_LENGTH + 5:
+    if len(candles) < RSI_LENGTH + 5:
         return None
 
     df = pd.DataFrame(candles).sort_values("time").iloc[:-1]
@@ -183,9 +129,7 @@ def fetch_candles(pair):
     for col in ["open", "high", "low", "close"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df = calculate_bollinger(df)
-    df = calculate_sma(df)
-    df = calculate_supertrend(df)
+    df = calculate_rsi(df)
 
     return df.dropna()
 
@@ -220,11 +164,11 @@ def check_watchlist_for_signals(watchlist, side):
 
         if side == "SELL":
             if (
-                prev["supertrend"] == True and
-                last["supertrend"] == False  # Supertrend RED
+                prev["RSI"] > RSI_THRESHOLD and
+                last["RSI"] < RSI_THRESHOLD  # RSI crossed downward through 40
             ):
                 entry = float(last["low"])
-                sl = float(last["supertrend_value"])
+                sl = float(prev["high"])
 
                 e, s, lev, cap, loss, t2, t3, t4 = calculate_trade_levels(entry, sl, "SELL")
 
@@ -253,6 +197,7 @@ def check_watchlist_for_signals(watchlist, side):
         for f in as_completed(futures):
             res = f.result()
             if res[0] == "SIGNAL":
+                # Signal fired -> coin is removed from watchlist (not re-added)
                 alerts.append(res[2])
             else:
                 updated_watchlist.append(res[1])
@@ -261,36 +206,8 @@ def check_watchlist_for_signals(watchlist, side):
 
 
 # ================= ADD TO WATCHLIST MODULE =================
-def scan_for_breakouts(top_pairs, sell_watch):
-    sell_set = set(sell_watch)
-
-    new_sell = []
-
-    def process_pair(pair):
-        if pair in sell_set:
-            return None
-
-        df = fetch_candles(pair)
-        if df is None:
-            return None
-
-        last = df.iloc[-1]
-
-        if last["close"] > last["BB_upper"] and last["supertrend"] == True:
-            return ("SELL", pair)
-
-        return None
-
-    with ThreadPoolExecutor(MAX_WORKERS) as executor:
-        futures = [executor.submit(process_pair, p) for p in top_pairs]
-
-        for f in as_completed(futures):
-            res = f.result()
-            if not res:
-                continue
-            new_sell.append(res[1])
-
-    for coin in new_sell:
+def add_gainers_to_watchlist(top_gainers, sell_watch):
+    for coin in top_gainers:
         if coin not in sell_watch:
             sell_watch.append(coin)
 
@@ -311,13 +228,12 @@ def main():
     if alerts:
         Send_Swing_Telegram_Message("\n\n".join(alerts))
 
-    # Step 2: Scan market for new breakouts
-    pairs    = get_active_usdt_coins()
-    top_pairs = get_top_movers(pairs)
-
-    sell_watch = scan_for_breakouts(top_pairs, sell_watch)
+    # Step 2: Fetch top 5 gainers and add to watchlist
+    pairs = get_active_usdt_coins()
+    top_gainers = get_top_gainers(pairs)
 
     if ENABLE_SELL:
+        sell_watch = add_gainers_to_watchlist(top_gainers, sell_watch)
         save_watchlist(SELL_FILE, sell_watch)
 
 

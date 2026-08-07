@@ -1,40 +1,55 @@
 """
 =====================================================================================
-CoinDCX Futures — Bollinger Band Breakout Scanner
+CoinDCX Futures — Momentum Reversal Scanner (RSI-40 Cross-Down after 30%+ Daily Pump)
 =====================================================================================
 
-Strategy   : Pure Bollinger Band breakout (NO Supertrend, NO third-party TA libs)
-Bollinger  : Length = 20, Multiplier = 2   (calculated manually with pandas)
-Risk       : Fixed ₹100 risk per trade regardless of stop-loss distance
-Leverage   : 7x (fixed)
-
-Flow
-----
-1. Daily Scanner (runs only between 05:30 - 05:35 IST):
+Strategy
+--------
+1. WATCHLIST BUILD (runs every time you execute the script):
    - Pulls EVERY active USDT-margined futures pair from CoinDCX
-     (active_instruments endpoint — NOT top-movers / price_change).
-   - On the 1D timeframe, flags fresh upper-band breakouts into
-     GainerWatchlist.json and fresh lower-band breakdowns into
-     LoserWatchlist.json. Both files are overwritten every day.
+     (active_instruments endpoint).
+   - For each pair, checks the CURRENT (in-progress) 1D candle's gain:
+         pct_change = (close - open) / open * 100
+     using the latest available 1D candle data.
+   - Ranks all pairs with pct_change > 30% by size, takes the TOP 5.
+   - Adds them to ReversalWatchlist.json, skipping any pair already present
+     (no duplicates). Existing watchlist entries are never removed here —
+     only the RSI check step (below) removes them.
 
-2. Hourly Scanner (runs every execution):
-   - Loads GainerWatchlist.json / LoserWatchlist.json.
-   - On the 1H timeframe, looks for the same breakout confirmation.
-   - On a BUY signal  -> Telegram alert + coin removed from GainerWatchlist.
-   - On a SELL signal -> Telegram alert + coin removed from LoserWatchlist.
+2. RSI REVERSAL CHECK (runs every time, on everything in ReversalWatchlist):
+   - On the 1H timeframe, calculates RSI (Wilder's smoothing, period 14).
+   - Signal condition (SHORT / SELL):
+         previous closed candle RSI >= 40
+         AND last closed candle RSI  < 40
+     i.e. momentum just cooled off and crossed below 40 for the first time
+     after the pump — the logic being: ride the exhaustion of the move.
+   - On trigger:
+         Entry = last closed 1H candle's LOW
+         SL    = highest HIGH over the last 10 closed 1H candles (swing high)
+     -> Telegram alert sent, coin removed from ReversalWatchlist.
 
-Scheduling
-----------
-This script is designed to be triggered once every hour (e.g. via cron or
-Windows Task Scheduler) at the top of the hour — 5:30, 6:30, 7:30 ... IST.
-Each run decides internally whether the Daily Scanner should also fire.
+Risk / Reward (unchanged from original script)
+-----------------------------------------------
+   - Fixed ₹100 risk per trade regardless of stop-loss distance.
+   - Fixed 7x leverage.
+   - Targets at 2R / 3R / 4R.
 
-Example cron (runs at HH:30 every hour, server in any timezone — IST check
-is handled inside the script):
-    30 * * * * /usr/bin/python3 /path/to/coindcx_bb_scanner.py
+Usage
+-----
+This script is designed to be run MANUALLY, once per hour (no scheduling
+window logic — every run does both the watchlist build AND the RSI check).
+
+    python3 coindcx_reversal_scanner.py
 
 Before running: insert your real Telegram sender in place of the import
 below, keeping the exact function name `Send_EMA_Telegram_Message`.
+
+Assumptions made (flag if any of these are wrong):
+   - RSI period = 14 (standard, Wilder's smoothing) — wasn't specified.
+   - "30% on 1 day" = (close - open) / open * 100 on the current 1D candle,
+     not vs. a rolling 24h ticker or previous day's close.
+   - Swing-high lookback of 10 candles INCLUDES the triggering candle itself
+     (i.e. the last 10 closed 1H candles, last one included).
 =====================================================================================
 """
 
@@ -52,26 +67,32 @@ from Telegram_EMA import Send_EMA_Telegram_Message
 # CONFIG
 # =====================================================================================
 
-# ---- Bollinger Band settings ----
-BB_LENGTH = 20
-BB_MULT = 2
+# ---- Gainer scan settings ----
+MIN_DAILY_GAIN_PCT = 30    # only coins with >30% gain on the current 1D candle
+TOP_N_GAINERS = 5          # cap on how many new coins get added per run
+
+# ---- RSI settings ----
+RSI_LENGTH = 14
+RSI_TRIGGER_LEVEL = 40     # cross below this level (from >= it) = SHORT signal
+
+# ---- Swing-high (SL) settings ----
+SWING_LOOKBACK = 10        # last N closed 1H candles used to find swing high
 
 # ---- Risk management ----
-RISK_RS = 100          # Fixed ₹ risk per trade, regardless of SL distance
-LEVERAGE = 7            # Fixed leverage
+RISK_RS = 100               # Fixed ₹ risk per trade, regardless of SL distance
+LEVERAGE = 7                 # Fixed leverage
 
 # ---- Debugging ----
-# When True, hourly_scan() prints WHY each watchlisted coin did or didn't
-# fire — close vs Bollinger bands for the 1H check.
-# Turn this on if signals aren't coming through and you want to see why.
+# When True, rsi_check() prints WHY each watchlisted coin did or didn't
+# fire — RSI values for the 1H check. Turn on if signals aren't coming
+# through and you want to see why.
 DEBUG_MODE = True
 
 # ---- Threading ----
 MAX_WORKERS = 10
 
-# ---- Watchlist files ----
-GAINER_FILE = "GainerWatchlist.json"
-LOSER_FILE = "LoserWatchlist.json"
+# ---- Watchlist file ----
+REVERSAL_FILE = "ReversalWatchlist.json"
 
 # ---- API endpoints ----
 ACTIVE_INSTRUMENTS_URL = (
@@ -79,10 +100,11 @@ ACTIVE_INSTRUMENTS_URL = (
     "active_instruments?margin_currency_short_name[]=USDT"
 )
 CANDLES_URL = "https://public.coindcx.com/market_data/candlesticks"
+STATS_URL = "https://api.coindcx.com/api/v1/derivatives/futures/data/stats"
 
-# ---- Candle lookback windows (must comfortably exceed BB_LENGTH + buffer) ----
-DAILY_LOOKBACK_DAYS = 400      # for 1D candles
-HOURLY_LOOKBACK_HOURS = 1500   # for 60m candles
+# ---- Candle lookback windows ----
+# (Daily gain % now comes from the stats API — no 1D candle fetch needed.)
+HOURLY_LOOKBACK_HOURS = 200      # comfortably exceeds RSI_LENGTH + SWING_LOOKBACK + buffer
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -113,7 +135,7 @@ def load_watchlist(file):
 
 
 def save_watchlist(file, data):
-    """Overwrite a watchlist JSON file with the given list."""
+    """Overwrite a watchlist JSON file with a de-duplicated, sorted list."""
     with open(file, "w") as f:
         json.dump(sorted(set(data)), f, indent=2)
 
@@ -122,23 +144,17 @@ def save_watchlist(file, data):
 # CANDLE FETCHING
 # =====================================================================================
 
-def fetch_candles(pair, resolution):
+def fetch_candles(pair, resolution, lookback_seconds):
     """
-    Fetch OHLC candles for a pair from CoinDCX and return a Bollinger-annotated
-    DataFrame with the currently-forming (incomplete) candle already dropped.
+    Fetch OHLC candles for a pair from CoinDCX and return a DataFrame with
+    the currently-forming (incomplete) candle dropped where appropriate.
 
     resolution : "60"  -> hourly candles
                  "1D"  -> daily candles
 
-    Returns None if data is insufficient for a reliable BB calculation.
+    Returns None if data is insufficient.
     """
     now = int(datetime.now(timezone.utc).timestamp())
-
-    if resolution == "1D":
-        lookback_seconds = DAILY_LOOKBACK_DAYS * 86400
-    else:
-        lookback_seconds = HOURLY_LOOKBACK_HOURS * 3600
-
     from_time = now - lookback_seconds
 
     params = {
@@ -154,27 +170,13 @@ def fetch_candles(pair, resolution):
         return None
 
     candles = data["data"]
-    if len(candles) < BB_LENGTH + 5:
+    if len(candles) < 2:
         return None
 
     df = pd.DataFrame(candles).sort_values("time").reset_index(drop=True)
 
     for col in ["open", "high", "low", "close"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    # Drop the last candle only when it is still forming. Some API responses
-    # already contain only closed candles, and blindly removing the last row
-    # can make us miss the most recent 1H breakout candle.
-    df = _drop_incomplete_last_candle(df, resolution)
-
-    if len(df) < BB_LENGTH + 2:
-        return None
-
-    df = calculate_bollinger(df)
-    df = df.dropna().reset_index(drop=True)
-
-    if len(df) < 2:
-        return None
 
     return df
 
@@ -183,7 +185,6 @@ def _resolution_to_seconds(resolution):
     """Converts CoinDCX resolution values to candle duration in seconds."""
     if resolution == "1D":
         return 86400
-
     try:
         return int(resolution) * 60
     except (TypeError, ValueError):
@@ -191,30 +192,20 @@ def _resolution_to_seconds(resolution):
 
 
 def _normalize_candle_time(raw_time):
-    """
-    Normalizes CoinDCX candle timestamps to UTC epoch seconds.
-    Handles both seconds and milliseconds.
-    """
+    """Normalizes CoinDCX candle timestamps to UTC epoch seconds."""
     if pd.isna(raw_time):
         return None
-
     try:
         ts = int(raw_time)
     except (TypeError, ValueError):
         return None
-
-    # 13 digits usually means milliseconds.
-    if ts > 10**12:
+    if ts > 10**12:  # 13 digits usually means milliseconds
         ts //= 1000
-
     return ts
 
 
 def _drop_incomplete_last_candle(df, resolution):
-    """
-    Removes the final row only if it belongs to the candle that is still
-    forming at the current moment.
-    """
+    """Removes the final row only if it belongs to the candle still forming."""
     if df.empty:
         return df
 
@@ -222,7 +213,6 @@ def _drop_incomplete_last_candle(df, resolution):
     last_candle_time = _normalize_candle_time(df.iloc[-1].get("time"))
 
     if candle_seconds is None or last_candle_time is None:
-        # Fallback to the old safe behavior if we cannot determine timing.
         return df.iloc[:-1].reset_index(drop=True)
 
     now_ts = int(datetime.now(timezone.utc).timestamp())
@@ -243,18 +233,29 @@ def _format_candle_time(raw_time):
 
 
 # =====================================================================================
-# BOLLINGER BANDS (manual — no TA library)
+# RSI (manual — Wilder's smoothing, no TA library)
 # =====================================================================================
 
-def calculate_bollinger(df, length=BB_LENGTH, mult=BB_MULT):
-    """Adds BB_mid / BB_upper / BB_lower columns using a simple rolling mean + std."""
-    mid = df["close"].rolling(length).mean()
-    std = df["close"].rolling(length).std()
-    df["BB_mid"] = mid
-    df["BB_upper"] = mid + mult * std
-    df["BB_lower"] = mid - mult * std
-    # Band width as a % of the middle band — a small value = a "squeeze".
-    df["BB_width_pct"] = (df["BB_upper"] - df["BB_lower"]) / df["BB_mid"] * 100
+def calculate_rsi(df, length=RSI_LENGTH):
+    """
+    Adds an 'RSI' column using Wilder's smoothing method (the standard
+    definition used by TradingView / most platforms).
+    """
+    delta = df["close"].diff()
+
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    # Wilder's smoothing = an EMA with alpha = 1/length
+    avg_gain = gain.ewm(alpha=1 / length, min_periods=length, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / length, min_periods=length, adjust=False).mean()
+
+    rs = avg_gain / avg_loss
+    df["RSI"] = 100 - (100 / (1 + rs))
+
+    # Where avg_loss is 0 (straight up move), RSI is defined as 100
+    df.loc[avg_loss == 0, "RSI"] = 100
+
     return df
 
 
@@ -308,7 +309,7 @@ def calculate_trade_levels(entry, sl, side):
 # =====================================================================================
 
 def build_message(pair, side, levels):
-    """Formats the Telegram alert message for a BUY or SELL signal."""
+    """Formats the Telegram alert message for a signal."""
     emoji = "🟢" if side == "BUY" else "🔴"
     link = f"https://coindcx.com/futures/{pair}"
 
@@ -316,6 +317,7 @@ def build_message(pair, side, levels):
         f"{emoji} {side} {pair}\n\n"
         f"Entry : {round(levels['entry'], 6)}\n"
         f"SL    : {round(levels['sl'], 6)}\n"
+        f"Qty   : {round(levels['position_size'], 4)}\n"
         f"Capital : ₹{levels['capital_used']}\n"
         f"Leverage : {levels['leverage']}x\n\n"
         f"Risk : ₹{levels['expected_loss']}\n\n"
@@ -358,185 +360,177 @@ def get_active_usdt_pairs():
 
 
 # =====================================================================================
-# DAILY SCANNER
+# STEP 1 — WATCHLIST BUILD (top 5 gainers > 30% via the stats API's 1D % change)
 # =====================================================================================
 
-def _daily_check_pair(pair):
+def _check_daily_gain(pair):
     """
-    Evaluates a single pair on the 1D timeframe.
-    Returns ("GAIN", pair), ("LOSE", pair) or (None, None).
+    Returns (pair, pct_change) using CoinDCX's own 1D % change figure from
+    the stats endpoint (data["price_change_percent"]["1D"]).
+    Returns (pair, None) if the API call fails or the field is missing.
     """
-    df = fetch_candles(pair, "1D")
-    if df is None or len(df) < 2:
-        return (None, None)
+    data = safe_get(f"{STATS_URL}?pair={pair}", timeout=8)
+    if not data:
+        if DEBUG_MODE:
+            print(f"[DEBUG][SCAN] {pair}: skipped — stats API call failed")
+        return (pair, None)
 
-    last = df.iloc[-1]
-    prev = df.iloc[-2]
+    change = data.get("price_change_percent", {}).get("1D")
+    if change is None:
+        if DEBUG_MODE:
+            print(f"[DEBUG][SCAN] {pair}: skipped — no price_change_percent.1D in response")
+        return (pair, None)
 
-    # Fresh breakout ABOVE the upper band
-    if prev["close"] <= prev["BB_upper"] and last["close"] > last["BB_upper"]:
-        return ("GAIN", pair)
+    try:
+        pct_change = float(change)
+    except (TypeError, ValueError):
+        return (pair, None)
 
-    # Fresh breakdown BELOW the lower band
-    if prev["close"] >= prev["BB_lower"] and last["close"] < last["BB_lower"]:
-        return ("LOSE", pair)
-
-    return (None, None)
+    return (pair, pct_change)
 
 
-def daily_scan():
+def build_reversal_watchlist():
     """
-    Scans every active USDT futures pair on the 1D timeframe and rebuilds
-    GainerWatchlist.json / LoserWatchlist.json from scratch.
+    Scans every active USDT futures pair, finds the top 5 gainers with a
+    current 1D gain > MIN_DAILY_GAIN_PCT, and adds them to
+    ReversalWatchlist.json (skipping duplicates, never removing existing
+    entries here).
     """
-    print("[DAILY] Fetching active USDT futures pairs...")
+    print("[SCAN] Fetching active USDT futures pairs...")
     pairs = get_active_usdt_pairs()
-    print(f"[DAILY] {len(pairs)} pairs found. Scanning 1D Bollinger breakouts...")
+    print(f"[SCAN] {len(pairs)} pairs found. Checking 1D gains...")
 
-    gainers, losers = [], []
-
+    results = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {executor.submit(_daily_check_pair, p): p for p in pairs}
+        futures = {executor.submit(_check_daily_gain, p): p for p in pairs}
         for future in as_completed(futures):
-            tag, pair = future.result()
-            if tag == "GAIN":
-                gainers.append(pair)
-            elif tag == "LOSE":
-                losers.append(pair)
+            pair, pct_change = future.result()
+            if pct_change is not None and pct_change > MIN_DAILY_GAIN_PCT:
+                results.append((pair, pct_change))
 
-    save_watchlist(GAINER_FILE, gainers)
-    save_watchlist(LOSER_FILE, losers)
+    # Rank by gain, take top N
+    results.sort(key=lambda x: x[1], reverse=True)
+    top_gainers = results[:TOP_N_GAINERS]
 
-    print(f"[DAILY] GainerWatchlist: {len(gainers)} | LoserWatchlist: {len(losers)}")
+    if DEBUG_MODE:
+        for pair, pct in top_gainers:
+            print(f"[DEBUG][SCAN] Candidate: {pair} +{pct:.2f}%")
+
+    existing = load_watchlist(REVERSAL_FILE)
+    existing_set = set(existing)
+
+    added = []
+    for pair, _ in top_gainers:
+        if pair not in existing_set:
+            added.append(pair)
+            existing_set.add(pair)
+
+    if added:
+        save_watchlist(REVERSAL_FILE, existing_set)
+        print(f"[SCAN] Added {len(added)} new coin(s) to ReversalWatchlist: {added}")
+    else:
+        print("[SCAN] No new coins qualified (or all already on the watchlist).")
 
 
 # =====================================================================================
-# HOURLY SCANNER
+# STEP 2 — RSI REVERSAL CHECK (cross below 40 -> SHORT)
 # =====================================================================================
 
-def _hourly_check_buy(pair):
-    """Evaluates a gainer-watchlist pair on the 1H timeframe for a BUY signal."""
-    df = fetch_candles(pair, "60")
-    if df is None or len(df) < 2:
+def _rsi_check_pair(pair):
+    """
+    Evaluates a single watchlisted pair on the 1H timeframe.
+    Returns (pair, "SELL", levels) on a valid signal, else (pair, None, None).
+    """
+    df = fetch_candles(pair, "60", HOURLY_LOOKBACK_HOURS * 3600)
+    if df is None:
         if DEBUG_MODE:
-            print(f"[DEBUG][BUY] {pair}: skipped — no/insufficient candle data")
+            print(f"[DEBUG][RSI] {pair}: skipped — no candle data")
+        return (pair, None, None)
+
+    df = _drop_incomplete_last_candle(df, "60")
+    if len(df) < RSI_LENGTH + SWING_LOOKBACK + 2:
+        if DEBUG_MODE:
+            print(f"[DEBUG][RSI] {pair}: skipped — insufficient closed candles")
+        return (pair, None, None)
+
+    df = calculate_rsi(df)
+    df = df.dropna(subset=["RSI"]).reset_index(drop=True)
+
+    if len(df) < 2:
+        if DEBUG_MODE:
+            print(f"[DEBUG][RSI] {pair}: skipped — insufficient RSI data")
         return (pair, None, None)
 
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
-    crossed = prev["close"] <= prev["BB_upper"] and last["close"] > last["BB_upper"]
+    crossed_down = prev["RSI"] >= RSI_TRIGGER_LEVEL and last["RSI"] < RSI_TRIGGER_LEVEL
+
     if DEBUG_MODE:
         print(
-            f"[DEBUG][BUY] {pair}: prev_time={_format_candle_time(prev.get('time'))} "
+            f"[DEBUG][RSI] {pair}: prev_time={_format_candle_time(prev.get('time'))} "
             f"last_time={_format_candle_time(last.get('time'))} "
-            f"prev_close={prev['close']:.6f} "
-            f"prev_upper={prev['BB_upper']:.6f} last_close={last['close']:.6f} "
-            f"last_upper={last['BB_upper']:.6f} crossed={crossed}"
+            f"prev_rsi={prev['RSI']:.2f} last_rsi={last['RSI']:.2f} "
+            f"crossed_down={crossed_down}"
         )
 
-    if crossed:
-        entry = float(last["high"])
-        sl = float(last["low"])
-        levels = calculate_trade_levels(entry, sl, "BUY")
-        if levels:
-            return (pair, "BUY", levels)
-
-    return (pair, None, None)
-
-
-def _hourly_check_sell(pair):
-    """Evaluates a loser-watchlist pair on the 1H timeframe for a SELL signal."""
-    df = fetch_candles(pair, "60")
-    if df is None or len(df) < 2:
-        if DEBUG_MODE:
-            print(f"[DEBUG][SELL] {pair}: skipped — no/insufficient candle data")
+    if not crossed_down:
         return (pair, None, None)
 
-    last = df.iloc[-1]
-    prev = df.iloc[-2]
+    # Entry = last closed candle's LOW
+    entry = float(last["low"])
 
-    crossed = prev["close"] >= prev["BB_lower"] and last["close"] < last["BB_lower"]
-    if DEBUG_MODE:
-        print(
-            f"[DEBUG][SELL] {pair}: prev_time={_format_candle_time(prev.get('time'))} "
-            f"last_time={_format_candle_time(last.get('time'))} "
-            f"prev_close={prev['close']:.6f} "
-            f"prev_lower={prev['BB_lower']:.6f} last_close={last['close']:.6f} "
-            f"last_lower={last['BB_lower']:.6f} crossed={crossed}"
-        )
+    # SL = highest HIGH over the last SWING_LOOKBACK closed candles (swing high)
+    swing_window = df.tail(SWING_LOOKBACK)
+    sl = float(swing_window["high"].max())
 
-    if crossed:
-        entry = float(last["low"])
-        sl = float(last["high"])
-        levels = calculate_trade_levels(entry, sl, "SELL")
-        if levels:
-            return (pair, "SELL", levels)
+    if sl <= entry:
+        # Sanity guard: SL must sit above entry for a short. If the swing
+        # high is somehow at/below the entry low, skip rather than send a
+        # broken trade (this can happen on very choppy/insufficient data).
+        if DEBUG_MODE:
+            print(f"[DEBUG][RSI] {pair}: skipped — swing high ({sl}) <= entry ({entry})")
+        return (pair, None, None)
 
-    return (pair, None, None)
+    levels = calculate_trade_levels(entry, sl, "SELL")
+    if levels is None:
+        return (pair, None, None)
+
+    return (pair, "SELL", levels)
 
 
-def hourly_scan():
+def rsi_check():
     """
-    Runs every execution.
-    Checks GainerWatchlist for BUY breakouts and LoserWatchlist for SELL
-    breakdowns on the 1H timeframe, sends Telegram alerts, and removes any
-    triggered coin from its watchlist to prevent duplicate signals.
+    Runs every execution. Checks ReversalWatchlist for RSI cross-below-40
+    signals on the 1H timeframe, sends Telegram alerts, and removes any
+    triggered coin from the watchlist to prevent duplicate signals.
     """
-    gainer_watch = load_watchlist(GAINER_FILE)
-    loser_watch = load_watchlist(LOSER_FILE)
+    watchlist = load_watchlist(REVERSAL_FILE)
+    if not watchlist:
+        print("[RSI] Watchlist is empty — nothing to check.")
+        return
 
     alerts = []
-    triggered_gainers = set()
-    triggered_losers = set()
+    triggered = set()
 
-    # ---- BUY signals from GainerWatchlist ----
-    if gainer_watch:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            futures = {executor.submit(_hourly_check_buy, p): p for p in gainer_watch}
-            for future in as_completed(futures):
-                pair, side, levels = future.result()
-                if side == "BUY":
-                    alerts.append(build_message(pair, "BUY", levels))
-                    triggered_gainers.add(pair)
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(_rsi_check_pair, p): p for p in watchlist}
+        for future in as_completed(futures):
+            pair, side, levels = future.result()
+            if side == "SELL":
+                alerts.append(build_message(pair, "SELL", levels))
+                triggered.add(pair)
 
-    # ---- SELL signals from LoserWatchlist ----
-    if loser_watch:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            futures = {executor.submit(_hourly_check_sell, p): p for p in loser_watch}
-            for future in as_completed(futures):
-                pair, side, levels = future.result()
-                if side == "SELL":
-                    alerts.append(build_message(pair, "SELL", levels))
-                    triggered_losers.add(pair)
-
-    # ---- Send alerts ----
     if alerts:
         send_alert("\n\n".join(alerts))
-        print(f"[HOURLY] Sent {len(alerts)} alert(s).")
+        print(f"[RSI] Sent {len(alerts)} alert(s).")
     else:
-        print("[HOURLY] No signals this run.")
+        print("[RSI] No signals this run.")
 
-    # ---- Remove triggered coins so they don't re-fire ----
-    if triggered_gainers:
-        gainer_watch = [p for p in gainer_watch if p not in triggered_gainers]
-        save_watchlist(GAINER_FILE, gainer_watch)
-
-    if triggered_losers:
-        loser_watch = [p for p in loser_watch if p not in triggered_losers]
-        save_watchlist(LOSER_FILE, loser_watch)
-
-
-# =====================================================================================
-# SCHEDULER LOGIC
-# =====================================================================================
-
-def is_daily_scan_window():
-    """True if current IST time is between 05:30 and 05:35 (inclusive)."""
-    now_ist = datetime.now(IST)
-    window_start = now_ist.replace(hour=5, minute=30, second=0, microsecond=0)
-    window_end = now_ist.replace(hour=5, minute=35, second=0, microsecond=0)
-    return window_start <= now_ist <= window_end
+    if triggered:
+        remaining = [p for p in watchlist if p not in triggered]
+        save_watchlist(REVERSAL_FILE, remaining)
+        print(f"[RSI] Removed from watchlist: {sorted(triggered)}")
 
 
 # =====================================================================================
@@ -547,12 +541,8 @@ def main():
     now_ist = datetime.now(IST)
     print(f"[RUN] {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST")
 
-    if is_daily_scan_window():
-        daily_scan()
-    else:
-        print("[DAILY] Skipped — outside 05:30–05:35 IST window.")
-
-    hourly_scan()
+    build_reversal_watchlist()
+    rsi_check()
 
 
 if __name__ == "__main__":
