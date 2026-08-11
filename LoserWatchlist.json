@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "pair": "B-CLO_USDT",
+    "invalidation": 0.12633
+  },
+  {
+    "pair": "B-JASMY_USDT",
+    "invalidation": 0.004133
+  }
+]
