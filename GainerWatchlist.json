@@ -4,10 +4,6 @@
     "invalidation": 0.0394
   },
   {
-    "pair": "B-XAU_USDT",
-    "invalidation": 4316.41
-  },
-  {
     "pair": "B-ARIA_USDT",
     "invalidation": 0.03111
   },
@@ -28,24 +24,12 @@
     "invalidation": 0.006423
   },
   {
-    "pair": "B-PAXG_USDT",
-    "invalidation": 4306.02
-  },
-  {
     "pair": "B-XAG_USDT",
     "invalidation": 63.1
   },
   {
-    "pair": "B-MERL_USDT",
-    "invalidation": 0.01874
-  },
-  {
     "pair": "B-YB_USDT",
     "invalidation": 0.07256
-  },
-  {
-    "pair": "B-TOWNS_USDT",
-    "invalidation": 0.002423
   },
   {
     "pair": "B-C_USDT",
