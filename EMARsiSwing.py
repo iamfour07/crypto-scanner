@@ -95,7 +95,7 @@ INR_TO_USDT_RATE     = None         # None = fetch live
 
 # ---- Candles ----
 RESOLUTION           = "60"         # 1H candles for everything
-HOURLY_LOOKBACK_HOURS = 700          # buffer comfortably above BB_LENGTH=100
+HOURLY_LOOKBACK_HOURS = 1500          # buffer comfortably above BB_LENGTH=100
 
 # ---- Threading ----
 MAX_WORKERS          = 15
@@ -394,10 +394,14 @@ def calculate_supertrend(df, length=ST_LENGTH, factor=ST_FACTOR):
 
 
 # =====================================================================================
-# RISK / POSITION SIZING (fixed Rs.100 risk, 7x leverage)
+# RISK / POSITION SIZING (fixed Rs.100 risk, 7x leverage, INR only)
 # =====================================================================================
 
 def get_inr_rate():
+    """
+    Live USDT->INR conversion rate. Used ONLY internally to size the position
+    correctly against a Rs.-denominated risk budget — never shown to the user.
+    """
     if INR_TO_USDT_RATE is not None:
         return INR_TO_USDT_RATE
     try:
@@ -412,31 +416,39 @@ def get_inr_rate():
 
 
 def calc_position(entry, sl):
+    """
+    Fixed-risk position sizing, fully in INR terms.
+
+    RISK_INR (Rs.) is the only risk input. The live USDT/INR rate is used
+    solely as an internal conversion step to size the position against the
+    exchange's USDT-margined contracts — the final capital figure returned
+    is in INR (capital_inr), which is what should be shown in alerts.
+    """
     sl_pct = abs(entry - sl) / entry * 100
     if sl_pct == 0:
         return None
 
-    rate = get_inr_rate()
-    risk_usdt = RISK_INR / rate
+    rate = get_inr_rate()                                   # USDT -> INR, internal use only
+    risk_usdt = RISK_INR / rate                              # convert Rs. risk budget to USDT
     position_usdt = round(risk_usdt / (sl_pct / 100), 2)
     capital_usdt = round(position_usdt / LEVERAGE, 2)
-    capital_inr = round(capital_usdt * rate, 2)
+    capital_inr = round(capital_usdt * rate, 2)              # convert back to INR for display
     quantity = round(position_usdt / entry, 4)
 
     return {
-        "capital_inr": capital_inr,
-        "capital_usdt": capital_usdt,
+        "capital_inr": capital_inr,   # <-- use this for display
+        "capital_usdt": capital_usdt, # internal only, not shown in alerts
         "quantity": quantity,
     }
 
 
 # =====================================================================================
-# ALERT MESSAGE
+# ALERT MESSAGE (INR only)
 # =====================================================================================
 
 def build_short_msg(pair, entry, sl, t2, t3, t4):
     pos = calc_position(entry, sl)
-    cap = f"Rs.{pos['capital_inr']} (~${pos['capital_usdt']} USDT)" if pos else "N/A"
+    cap = f"Rs.{pos['capital_inr']}" if pos else "N/A"
 
     return (
         f"\U0001F534 SHORT (Supertrend Flip)\n\n"
