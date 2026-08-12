@@ -1,13 +1,8 @@
 [
-  "B-ACT_USDT",
-  "B-ARC_USDT",
-  "B-BANANAS31_USDT",
-  "B-BMT_USDT",
-  "B-CAP_USDT",
-  "B-COOKIE_USDT",
-  "B-GRVT_USDT",
-  "B-JOE_USDT",
-  "B-MUBARAK_USDT",
-  "B-NIL_USDT",
-  "B-SAGA_USDT"
+  {
+    "pair": "B-PROM_USDT"
+  },
+  {
+    "pair": "B-APR_USDT"
+  }
 ]
