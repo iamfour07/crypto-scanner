@@ -12,20 +12,12 @@
     "invalidation": 0.1413
   },
   {
-    "pair": "B-TRX_USDT",
-    "invalidation": 0.33056
-  },
-  {
     "pair": "B-VELVET_USDT",
     "invalidation": 0.4291
   },
   {
     "pair": "B-BNB_USDT",
     "invalidation": 598.75
-  },
-  {
-    "pair": "B-WET_USDT",
-    "invalidation": 0.06737
   },
   {
     "pair": "B-LINK_USDT",
