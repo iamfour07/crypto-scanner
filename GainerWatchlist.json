@@ -4,19 +4,59 @@
     "invalidation": 0.03111
   },
   {
-    "pair": "B-PROM_USDT",
-    "invalidation": 1.967
-  },
-  {
-    "pair": "B-PENGU_USDT",
-    "invalidation": 0.006423
-  },
-  {
     "pair": "B-XAG_USDT",
     "invalidation": 63.1
   },
   {
     "pair": "B-YB_USDT",
     "invalidation": 0.07256
+  },
+  {
+    "pair": "B-PENGU_USDT",
+    "invalidation": 0.006423
+  },
+  {
+    "pair": "B-AT_USDT",
+    "invalidation": 0.1413
+  },
+  {
+    "pair": "B-TRX_USDT",
+    "invalidation": 0.33056
+  },
+  {
+    "pair": "B-H_USDT",
+    "invalidation": 0.08029
+  },
+  {
+    "pair": "B-VELVET_USDT",
+    "invalidation": 0.4291
+  },
+  {
+    "pair": "B-BNB_USDT",
+    "invalidation": 598.75
+  },
+  {
+    "pair": "B-WET_USDT",
+    "invalidation": 0.06737
+  },
+  {
+    "pair": "B-LINK_USDT",
+    "invalidation": 8.287
+  },
+  {
+    "pair": "B-HOLO_USDT",
+    "invalidation": 0.0688
+  },
+  {
+    "pair": "B-FLOW_USDT",
+    "invalidation": 0.02961
+  },
+  {
+    "pair": "B-LUNA2_USDT",
+    "invalidation": 0.0414
+  },
+  {
+    "pair": "B-CETUS_USDT",
+    "invalidation": 0.01848
   }
 ]
