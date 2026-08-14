@@ -110,7 +110,7 @@ ACTIVE_INSTRUMENTS_URL = (
 )
 STATS_URL_TMPL = "https://api.coindcx.com/api/v1/derivatives/futures/data/stats?pair={pair}"
 CANDLES_URL = "https://public.coindcx.com/market_data/candlesticks"
-MARKETS_DETAILS_URL = "https://api.coindcx.com/exchange/v1/markets_details"
+TICKER_URL = "https://api.coindcx.com/exchange/ticker"
 
 
 # =====================================================================================
@@ -405,14 +405,14 @@ def get_inr_rate():
     if INR_TO_USDT_RATE is not None:
         return INR_TO_USDT_RATE
     try:
-        data = safe_get(MARKETS_DETAILS_URL, timeout=5)
+        data = safe_get(TICKER_URL, timeout=5)
         if data:
             for m in data:
-                if m.get("symbol") == "USDTINR":
-                    return float(m.get("last_price", 84.0))
+                if m.get("market") == "USDTINR":
+                    return float(m.get("last_price"))
     except Exception:
         pass
-    return 84.0
+    return 88.0  # emergency fallback only, used if the ticker call fails
 
 
 def calc_position(entry, sl):
