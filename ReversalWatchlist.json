@@ -6,12 +6,12 @@
     "pair": "B-AKE_USDT"
   },
   {
-    "pair": "B-EDEN_USDT"
-  },
-  {
     "pair": "B-SCRT_USDT"
   },
   {
     "pair": "B-ACE_USDT"
+  },
+  {
+    "pair": "B-VELVET_USDT"
   }
 ]
