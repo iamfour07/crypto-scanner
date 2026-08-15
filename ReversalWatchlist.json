@@ -12,15 +12,12 @@
     "pair": "B-H_USDT"
   },
   {
-    "pair": "B-ROBO_USDT"
-  },
-  {
-    "pair": "B-PRL_USDT"
-  },
-  {
     "pair": "B-ACE_USDT"
   },
   {
     "pair": "B-HEMI_USDT"
+  },
+  {
+    "pair": "B-COW_USDT"
   }
 ]
