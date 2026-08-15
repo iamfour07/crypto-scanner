@@ -19,5 +19,8 @@
   },
   {
     "pair": "B-WAL_USDT"
+  },
+  {
+    "pair": "B-AIO_USDT"
   }
 ]
