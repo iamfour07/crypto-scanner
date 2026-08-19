@@ -3,12 +3,12 @@
     "pair": "B-HEMI_USDT"
   },
   {
-    "pair": "B-MUBARAK_USDT"
-  },
-  {
     "pair": "B-TREE_USDT"
   },
   {
     "pair": "B-RE_USDT"
+  },
+  {
+    "pair": "B-MAGMA_USDT"
   }
 ]
