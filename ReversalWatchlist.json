@@ -16,5 +16,8 @@
   },
   {
     "pair": "B-EDGE_USDT"
+  },
+  {
+    "pair": "B-BIO_USDT"
   }
 ]
