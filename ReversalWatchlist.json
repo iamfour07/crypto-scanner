@@ -19,5 +19,8 @@
   },
   {
     "pair": "B-BIO_USDT"
+  },
+  {
+    "pair": "B-USELESS_USDT"
   }
 ]
