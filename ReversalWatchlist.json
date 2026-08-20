@@ -9,9 +9,6 @@
     "pair": "B-BOME_USDT"
   },
   {
-    "pair": "B-RED_USDT"
-  },
-  {
     "pair": "B-BIO_USDT"
   },
   {
@@ -22,5 +19,8 @@
   },
   {
     "pair": "B-ONG_USDT"
+  },
+  {
+    "pair": "B-ACE_USDT"
   }
 ]
