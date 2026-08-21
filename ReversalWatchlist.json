@@ -24,12 +24,12 @@
     "pair": "B-ONT_USDT"
   },
   {
-    "pair": "B-ONG_USDT"
-  },
-  {
     "pair": "B-ENA_USDT"
   },
   {
     "pair": "B-PROM_USDT"
+  },
+  {
+    "pair": "B-GALA_USDT"
   }
 ]
