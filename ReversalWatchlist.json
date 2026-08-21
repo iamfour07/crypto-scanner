@@ -28,5 +28,8 @@
   },
   {
     "pair": "B-ENA_USDT"
+  },
+  {
+    "pair": "B-PROM_USDT"
   }
 ]
