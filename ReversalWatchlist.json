@@ -3,9 +3,6 @@
     "pair": "B-MAGMA_USDT"
   },
   {
-    "pair": "B-BOME_USDT"
-  },
-  {
     "pair": "B-BIO_USDT"
   },
   {
@@ -34,5 +31,11 @@
   },
   {
     "pair": "B-BLESS_USDT"
+  },
+  {
+    "pair": "B-US_USDT"
+  },
+  {
+    "pair": "B-ROBO_USDT"
   }
 ]
