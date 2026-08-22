@@ -31,5 +31,8 @@
   },
   {
     "pair": "B-STX_USDT"
+  },
+  {
+    "pair": "B-ENS_USDT"
   }
 ]
