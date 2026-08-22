@@ -52,5 +52,14 @@
   },
   {
     "pair": "B-MUBARAK_USDT"
+  },
+  {
+    "pair": "B-WIF_USDT"
+  },
+  {
+    "pair": "B-MOVE_USDT"
+  },
+  {
+    "pair": "B-1000BONK_USDT"
   }
 ]
