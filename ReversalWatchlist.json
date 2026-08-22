@@ -43,5 +43,14 @@
   },
   {
     "pair": "B-DASH_USDT"
+  },
+  {
+    "pair": "B-TRUMP_USDT"
+  },
+  {
+    "pair": "B-MELANIA_USDT"
+  },
+  {
+    "pair": "B-MUBARAK_USDT"
   }
 ]
