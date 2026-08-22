@@ -6,9 +6,6 @@
     "pair": "B-PROM_USDT"
   },
   {
-    "pair": "B-US_USDT"
-  },
-  {
     "pair": "B-STX_USDT"
   },
   {
@@ -21,18 +18,15 @@
     "pair": "B-TRUMP_USDT"
   },
   {
-    "pair": "B-MELANIA_USDT"
-  },
-  {
     "pair": "B-MUBARAK_USDT"
-  },
-  {
-    "pair": "B-WIF_USDT"
   },
   {
     "pair": "B-MOVE_USDT"
   },
   {
     "pair": "B-1000BONK_USDT"
+  },
+  {
+    "pair": "B-ZAMA_USDT"
   }
 ]
