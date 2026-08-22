@@ -34,5 +34,8 @@
   },
   {
     "pair": "B-ENS_USDT"
+  },
+  {
+    "pair": "B-ZEC_USDT"
   }
 ]
