@@ -24,9 +24,6 @@
     "pair": "B-BCH_USDT"
   },
   {
-    "pair": "B-BLESS_USDT"
-  },
-  {
     "pair": "B-US_USDT"
   },
   {
@@ -37,5 +34,14 @@
   },
   {
     "pair": "B-ZEC_USDT"
+  },
+  {
+    "pair": "B-TRB_USDT"
+  },
+  {
+    "pair": "B-ZEN_USDT"
+  },
+  {
+    "pair": "B-DASH_USDT"
   }
 ]
