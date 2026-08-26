@@ -1,5 +1,11 @@
 [
   {
     "pair": "B-PORTAL_USDT"
+  },
+  {
+    "pair": "B-BMT_USDT"
+  },
+  {
+    "pair": "B-TAC_USDT"
   }
 ]
