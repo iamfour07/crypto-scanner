@@ -3,9 +3,6 @@
     "pair": "B-TAC_USDT"
   },
   {
-    "pair": "B-EDEN_USDT"
-  },
-  {
     "pair": "B-MAGMA_USDT"
   },
   {
@@ -13,5 +10,8 @@
   },
   {
     "pair": "B-BICO_USDT"
+  },
+  {
+    "pair": "B-ARIA_USDT"
   }
 ]
