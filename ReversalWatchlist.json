@@ -1,8 +1,5 @@
 [
   {
-    "pair": "B-ZORA_USDT"
-  },
-  {
     "pair": "B-HEMI_USDT"
   },
   {
@@ -10,5 +7,8 @@
   },
   {
     "pair": "B-USELESS_USDT"
+  },
+  {
+    "pair": "B-ARB_USDT"
   }
 ]
