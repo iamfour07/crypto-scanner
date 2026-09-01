@@ -1,11 +1,11 @@
 [
   {
-    "pair": "B-HEMI_USDT"
-  },
-  {
     "pair": "B-USELESS_USDT"
   },
   {
     "pair": "B-ARB_USDT"
+  },
+  {
+    "pair": "B-UAI_USDT"
   }
 ]
