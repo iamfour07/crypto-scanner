@@ -1,8 +1,5 @@
 [
   {
-    "pair": "B-USELESS_USDT"
-  },
-  {
     "pair": "B-ARB_USDT"
   },
   {
@@ -13,5 +10,8 @@
   },
   {
     "pair": "B-FF_USDT"
+  },
+  {
+    "pair": "B-T_USDT"
   }
 ]
