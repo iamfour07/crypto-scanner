@@ -3,9 +3,6 @@
     "pair": "B-CLO_USDT"
   },
   {
-    "pair": "B-FF_USDT"
-  },
-  {
     "pair": "B-EGLD_USDT"
   },
   {
@@ -13,5 +10,11 @@
   },
   {
     "pair": "B-HEMI_USDT"
+  },
+  {
+    "pair": "B-BR_USDT"
+  },
+  {
+    "pair": "B-EDGE_USDT"
   }
 ]
