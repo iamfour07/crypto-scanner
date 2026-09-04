@@ -1,567 +1,185 @@
+import json
 import requests
 import pandas as pd
-import json
-import os
-from zoneinfo import ZoneInfo
-
 from datetime import datetime, timezone
-from concurrent.futures import ThreadPoolExecutor
-from Telegram_EMA import Send_EMA_Telegram_Message
+from Telegram_Swing import Send_Swing_Telegram_Message
 
 # ================= CONFIG =================
+PAIR = "B-XAU_USDT"      # CoinDCX futures pair for BTC
+resolution = "60"        # 1 hour candles
+limit_hours = 1000       # how far back to fetch
 
-MAX_WORKERS = 20
+RSI_LENGTH = 28
+RSI_UPPER = 60
+RSI_LOWER = 40
 
-LIMIT_HOURS = 1000
+EMA_FAST = 9
+EMA_MID = 21
+EMA_SLOW = 55
 
-DAILY_RESOLUTION = "1D"
-INTRADAY_RESOLUTION = "60"
-
-BB_LENGTH = 20
-BB_STD = 2
-
-RISK_PER_TRADE = 100
-LEVERAGE = 5
-
-BUY_FILE = "BuyMomentum.json"
-SELL_FILE = "SellMomentum.json"
-
-# ================= LOAD / SAVE =================
-
-def load_json(file, default):
-
-    if os.path.exists(file):
-
-        try:
-            with open(file, "r") as f:
-                return json.load(f)
-
-        except:
-            return default
-
-    return default
+WATCHLIST_FILE = "IntradayWatchlist.json"
 
 
-def save_json(file, data):
+# ================= UTIL =================
+def safe_get(url, params=None, timeout=10):
+    try:
+        r = requests.get(url, params=params, timeout=timeout)
+        r.raise_for_status()
+        return r.json()
+    except Exception:
+        return None
 
+
+# ================= INDICATORS =================
+def rma(series, period):
+    return series.ewm(alpha=1 / period, adjust=False).mean()
+
+
+def calculate_rsi(df, length=RSI_LENGTH):
+    delta = df["close"].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    avg_gain = rma(gain, length)
+    avg_loss = rma(loss, length)
+
+    rs = avg_gain / avg_loss
+    df["RSI"] = 100 - (100 / (1 + rs))
+    return df
+
+
+def calculate_emas(df):
+    df["EMA9"] = df["close"].ewm(span=EMA_FAST, adjust=False).mean()
+    df["EMA21"] = df["close"].ewm(span=EMA_MID, adjust=False).mean()
+    df["EMA55"] = df["close"].ewm(span=EMA_SLOW, adjust=False).mean()
+    return df
+
+
+# ================= FETCH =================
+def fetch_candles(pair):
+    now = int(datetime.now(timezone.utc).timestamp())
+    from_time = now - limit_hours * 3600
+
+    url = "https://public.coindcx.com/market_data/candlesticks"
+    params = {"pair": pair, "from": from_time, "to": now, "resolution": resolution, "pcode": "f"}
+
+    data = safe_get(url, params)
+    if not data or "data" not in data:
+        return None
+
+    candles = data["data"]
+    if len(candles) < max(RSI_LENGTH, EMA_SLOW) + 5:
+        return None
+
+    df = pd.DataFrame(candles).sort_values("time").iloc[:-1]  # drop unclosed candle
+
+    for col in ["open", "high", "low", "close"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    df = calculate_rsi(df)
+    df = calculate_emas(df)
+
+    return df.dropna()
+
+
+# ================= WATCHLIST =================
+def load_watchlist(file):
+    try:
+        with open(file) as f:
+            data = json.load(f)
+            return data if data else {}
+    except Exception:
+        return {}
+
+
+def save_watchlist(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=2)
 
 
-# ================= FETCH CANDLES =================
+# ================= STEP 1: SEED WATCHLIST FROM RSI =================
+def check_rsi_and_seed(last):
+    """Only called when watchlist is empty."""
+    rsi_val = float(last["RSI"])
+    close_val = float(last["close"])
 
-def fetch_candles(pair, resolution):
+    if rsi_val < RSI_LOWER:
+        return {"last_close_price": close_val, "setup_type": "buy"}
 
-    url = "https://public.coindcx.com/market_data/candlesticks"
-
-    now = int(datetime.now(timezone.utc).timestamp())
-
-    params = {
-        "pair": pair,
-        "from": now - LIMIT_HOURS * 3600,
-        "to": now,
-        "resolution": resolution,
-        "pcode": "f"
-    }
-
-    try:
-
-        response = requests.get(
-            url,
-            params=params,
-            timeout=10
-        )
-
-        data = response.json()
-
-        if not isinstance(data, dict):
-            return None
-
-        if "data" not in data:
-            return None
-
-        df = (
-            pd.DataFrame(data["data"])
-            .sort_values("time")
-            .reset_index(drop=True)
-        )
-
-        for col in ["open", "high", "low", "close"]:
-
-            df[col] = pd.to_numeric(
-                df[col],
-                errors="coerce"
-            )
-
-        # remove incomplete candle
-        df = df.iloc[:-1]
-
-        if len(df) < 30:
-            return None
-
-        return df
-
-    except:
-        return None
-
-
-# ================= BOLLINGER BANDS =================
-
-def add_bollinger_bands(df):
-
-    df["basis"] = (
-        df["close"]
-        .rolling(BB_LENGTH)
-        .mean()
-    )
-
-    df["std"] = (
-        df["close"]
-        .rolling(BB_LENGTH)
-        .std()
-    )
-
-    df["upper_bb"] = (
-        df["basis"] + (BB_STD * df["std"])
-    )
-
-    df["lower_bb"] = (
-        df["basis"] - (BB_STD * df["std"])
-    )
-
-    return df
-
-
-# ================= FETCH ALL PAIRS =================
-
-def get_all_pairs():
-
-    url = (
-        "https://api.coindcx.com/exchange/v1/"
-        "derivatives/futures/data/"
-        "active_instruments?"
-        "margin_currency_short_name[]=USDT"
-    )
-
-    try:
-
-        data = requests.get(url).json()
-
-        return [
-            p for p in data
-            if isinstance(p, str)
-        ]
-
-    except:
-        return []
-
-
-# ================= DAILY BB PROCESS =================
-
-def process_daily_pair(pair):
-
-    df = fetch_candles(
-        pair,
-        DAILY_RESOLUTION
-    )
-
-    if df is None:
-        return None
-
-    df = add_bollinger_bands(df)
-
-    if len(df) < BB_LENGTH + 5:
-        return None
-
-    prev = df.iloc[-2]
-
-    last = df.iloc[-1]
-
-    # ================= BUY =================
-
-    bullish = (
-
-        prev["close"] <= prev["upper_bb"]
-
-        and
-
-        last["close"] > last["upper_bb"]
-    )
-
-    # ================= SELL =================
-
-    bearish = (
-
-        prev["close"] >= prev["lower_bb"]
-
-        and
-
-        last["close"] < last["lower_bb"]
-    )
-
-    if bullish:
-
-        return {
-            "side": "BUY",
-            "data": {
-                "name": pair,
-                "high": float(last["high"]),
-                "low": float(last["low"]),
-                "close": float(last["close"]),
-                "time": str(last["time"])
-            }
-        }
-
-    if bearish:
-
-        return {
-            "side": "SELL",
-            "data": {
-                "name": pair,
-                "high": float(last["high"]),
-                "low": float(last["low"]),
-                "close": float(last["close"]),
-                "time": str(last["time"])
-            }
-        }
+    if rsi_val > RSI_UPPER:
+        return {"last_close_price": close_val, "setup_type": "sell"}
 
     return None
 
 
-# ================= RUN DAILY SCAN =================
+# ================= STEP 2: CHECK EMA TRIGGER =================
+def check_ema_trigger(watch, last, prev):
+    """Only called when watchlist already has an entry."""
+    setup_type = watch.get("setup_type")
 
-def run_daily_scan():
+    if setup_type == "sell":
+        nine_below_21 = last["EMA9"] < last["EMA21"]
+        crossed_below_55 = prev["EMA21"] >= prev["EMA55"] and last["EMA21"] < last["EMA55"]
+        if nine_below_21 and crossed_below_55:
+            return True
 
-    print("🚀 Running Daily BB Scan")
+    elif setup_type == "buy":
+        nine_above_21 = last["EMA9"] > last["EMA21"]
+        crossed_above_55 = prev["EMA21"] <= prev["EMA55"] and last["EMA21"] > last["EMA55"]
+        if nine_above_21 and crossed_above_55:
+            return True
 
-    buy_list = load_json(
-        BUY_FILE,
-        []
+    return False
+
+
+def build_alert_message(watch, last):
+    setup_type = watch.get("setup_type")
+    emoji = "🟢" if setup_type == "buy" else "🔴"
+    link = f"https://coindcx.com/futures/{PAIR}"
+
+    msg = (
+        f"{emoji} {setup_type.upper()} SETUP TRIGGERED — BTC\n"
+        f"Watchlisted Price : {round(watch.get('last_close_price'), 2)}\n"
+        f"Current Close     : {round(float(last['close']), 2)}\n"
+        f"EMA9  : {round(float(last['EMA9']), 2)}\n"
+        f"EMA21 : {round(float(last['EMA21']), 2)}\n"
+        f"EMA55 : {round(float(last['EMA55']), 2)}\n"
+        f"{link}\n"
+        f"------------------------------------------------"
     )
-
-    sell_list = load_json(
-        SELL_FILE,
-        []
-    )
-
-    pairs = get_all_pairs()
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-
-        results = list(
-            executor.map(
-                process_daily_pair,
-                pairs
-            )
-        )
-
-    for result in results:
-
-        if result is None:
-            continue
-
-        pair = result["data"]["name"]
-
-        # ================= BUY =================
-
-        if result["side"] == "BUY":
-
-            if not any(
-                c["name"] == pair
-                for c in buy_list
-            ):
-
-                buy_list.append(
-                    result["data"]
-                )
-
-                print(f"🟢 Added BUY: {pair}")
-
-        # ================= SELL =================
-
-        elif result["side"] == "SELL":
-
-            if not any(
-                c["name"] == pair
-                for c in sell_list
-            ):
-
-                sell_list.append(
-                    result["data"]
-                )
-
-                print(f"🔴 Added SELL: {pair}")
-
-    save_json(BUY_FILE, buy_list)
-
-    save_json(SELL_FILE, sell_list)
-
-    Send_EMA_Telegram_Message(
-        f"✅ Daily BB Scan Completed\n\n"
-        f"🟢 Buy Watchlist: {len(buy_list)}\n"
-        f"🔴 Sell Watchlist: {len(sell_list)}"
-    )
-
-
-# ================= BUY MONITOR =================
-
-def monitor_buy_watchlist():
-
-    buy_list = load_json(
-        BUY_FILE,
-        []
-    )
-
-    updated_buy = []
-
-    for coin in buy_list:
-
-        pair = coin["name"]
-
-        breakout_high = coin["high"]
-
-        breakout_low = coin["low"]
-
-        # ================= DAILY INVALIDATION =================
-
-        daily_df = fetch_candles(
-            pair,
-            DAILY_RESOLUTION
-        )
-
-        if daily_df is None:
-
-            updated_buy.append(coin)
-
-            continue
-
-        last_daily = daily_df.iloc[-1]
-
-        # invalidate if daily close below breakout low
-        if last_daily["close"] < breakout_low:
-
-            print(f"❌ BUY INVALIDATED: {pair}")
-
-            continue
-
-        # ================= 1H BREAKOUT =================
-
-        intraday_df = fetch_candles(
-            pair,
-            INTRADAY_RESOLUTION
-        )
-
-        if intraday_df is None:
-
-            updated_buy.append(coin)
-
-            continue
-
-        last_1h = intraday_df.iloc[-1]
-
-        # CLOSE BREAKOUT
-        if last_1h["close"] > breakout_high:
-
-            entry = breakout_high
-
-            sl = breakout_low
-
-            risk = entry - sl
-
-            if risk <= 0:
-                continue
-
-            qty = RISK_PER_TRADE / risk
-
-            margin = (qty * entry) / LEVERAGE
-
-            # ===== TARGETS =====
-            t1 = entry + (risk * 1)
-            t2 = entry + (risk * 2)
-            t3 = entry + (risk * 3)
-            t4 = entry + (risk * 4)
-
-            Send_EMA_Telegram_Message(
-                f"🟢 BUY BREAKOUT CONFIRMED\n\n"
-                f"Pair: {pair}\n\n"
-                f"1H Candle Close Above Breakout High\n\n"
-                f"Entry: {entry:.6f}\n"
-                f"Stop Loss: {sl:.6f}\n\n"
-                f"Risk Per Trade: ₹{RISK_PER_TRADE}\n"
-                f"Leverage: {LEVERAGE}x\n"
-                f"Quantity: {qty:.4f}\n"
-                f"Margin Required: ₹{margin:.2f}\n\n"
-                f"Targets:\n"
-                f"1:1 → {t1:.6f}\n"
-                f"1:2 → {t2:.6f}\n"
-                f"1:3 → {t3:.6f}\n"
-                f"1:4 → {t4:.6f}"
-            )
-
-            print(f"🟢 BUY ALERT: {pair}")
-
-        else:
-
-            updated_buy.append(coin)
-
-    save_json(
-        BUY_FILE,
-        updated_buy
-    )
-
-
-# ================= SELL MONITOR =================
-
-def monitor_sell_watchlist():
-
-    sell_list = load_json(
-        SELL_FILE,
-        []
-    )
-
-    updated_sell = []
-
-    for coin in sell_list:
-
-        pair = coin["name"]
-
-        breakdown_high = coin["high"]
-
-        breakdown_low = coin["low"]
-
-        # ================= DAILY INVALIDATION =================
-
-        daily_df = fetch_candles(
-            pair,
-            DAILY_RESOLUTION
-        )
-
-        if daily_df is None:
-
-            updated_sell.append(coin)
-
-            continue
-
-        last_daily = daily_df.iloc[-1]
-
-        # invalidate if daily close above breakdown high
-        if last_daily["close"] > breakdown_high:
-
-            print(f"❌ SELL INVALIDATED: {pair}")
-
-            continue
-
-        # ================= 1H BREAKDOWN =================
-
-        intraday_df = fetch_candles(
-            pair,
-            INTRADAY_RESOLUTION
-        )
-
-        if intraday_df is None:
-
-            updated_sell.append(coin)
-
-            continue
-
-        last_1h = intraday_df.iloc[-1]
-
-        # CLOSE BREAKDOWN
-        if last_1h["close"] < breakdown_low:
-
-            entry = breakdown_low
-
-            sl = breakdown_high
-
-            risk = sl - entry
-
-            if risk <= 0:
-                continue
-
-            qty = RISK_PER_TRADE / risk
-
-            margin = (qty * entry) / LEVERAGE
-
-            # ===== TARGETS =====
-            t1 = entry - (risk * 1)
-            t2 = entry - (risk * 2)
-            t3 = entry - (risk * 3)
-            t4 = entry - (risk * 4)
-
-            Send_EMA_Telegram_Message(
-                f"🔴 SELL BREAKDOWN CONFIRMED\n\n"
-                f"Pair: {pair}\n\n"
-                f"1H Candle Close Below Breakdown Low\n\n"
-                f"Entry: {entry:.6f}\n"
-                f"Stop Loss: {sl:.6f}\n\n"
-                f"Risk Per Trade: ₹{RISK_PER_TRADE}\n"
-                f"Leverage: {LEVERAGE}x\n"
-                f"Quantity: {qty:.4f}\n"
-                f"Margin Required: ₹{margin:.2f}\n\n"
-                f"Targets:\n"
-                f"1:1 → {t1:.6f}\n"
-                f"1:2 → {t2:.6f}\n"
-                f"1:3 → {t3:.6f}\n"
-                f"1:4 → {t4:.6f}"
-            )
-
-            print(f"🔴 SELL ALERT: {pair}")
-
-        else:
-
-            updated_sell.append(coin)
-
-    save_json(
-        SELL_FILE,
-        updated_sell
-    )
+    return msg
 
 
 # ================= MAIN =================
-
 def main():
+    df = fetch_candles(PAIR)
+    if df is None or len(df) < 10:
+        print("Not enough candle data, skipping this run.")
+        return
 
-    print("🚀 Script Started")
+    last = df.iloc[-1]
+    prev = df.iloc[-2]
 
- 
-    now = datetime.now(
-        ZoneInfo("Asia/Kolkata")
-    )
+    watch = load_watchlist(WATCHLIST_FILE)
 
-    # # ================= TIME DEBUG =================
-
-    # print("\n================ TIME DEBUG ================\n")
-
-    # print(f"Current IST Time: {now}")
-
-    # print(f"Hour: {now.hour}")
-
-    # print(f"Minute: {now.minute}")
-
-    # print(f"Second: {now.second}")
-
-    # print("\n===========================================\n")
-
-    # ================= RUN ONLY AT 5:30 AM =================
-
-    if now.hour == 5 and 30 <= now.minute <= 35:
-
-        print("✅ DAILY SCAN CONDITION MATCHED")
-
-        run_daily_scan()
-
+    if not watch:
+        # Step 1: try to seed a new buy/sell watch from RSI
+        new_watch = check_rsi_and_seed(last)
+        if new_watch:
+            save_watchlist(WATCHLIST_FILE, new_watch)
+            print(f"Watchlist seeded: {new_watch}")
+        else:
+            print(f"RSI={round(float(last['RSI']), 2)} — inside 40-60 band, no action.")
     else:
-
-        print("❌ DAILY SCAN CONDITION NOT MATCHED")
-
-
-    # ================= MONITOR WATCHLIST =================
-
-    monitor_buy_watchlist()
-
-    monitor_sell_watchlist()
-
-    print("✅ Script Completed")
+        # Step 2: check EMA trigger for the pending setup
+        triggered = check_ema_trigger(watch, last, prev)
+        if triggered:
+            msg = build_alert_message(watch, last)
+            Send_Swing_Telegram_Message(msg)
+            save_watchlist(WATCHLIST_FILE, {})
+            print("Trigger fired, alert sent, watchlist cleared.")
+        else:
+            print(f"Watching pending '{watch.get('setup_type')}' setup, condition not yet met.")
 
 
 if __name__ == "__main__":
