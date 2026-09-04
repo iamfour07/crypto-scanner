@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 import pandas as pd
 from datetime import datetime, timezone
@@ -83,6 +84,14 @@ def fetch_candles(pair):
 
 
 # ================= WATCHLIST =================
+def ensure_watchlist_file(file):
+    """Create the watchlist file with {} only if it doesn't already exist."""
+    if not os.path.exists(file):
+        with open(file, "w") as f:
+            json.dump({}, f, indent=2)
+        print(f"{file} not found — created a new empty watchlist.")
+
+
 def load_watchlist(file):
     try:
         with open(file) as f:
@@ -160,6 +169,7 @@ def main():
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
+    ensure_watchlist_file(WATCHLIST_FILE)
     watch = load_watchlist(WATCHLIST_FILE)
 
     if not watch:
