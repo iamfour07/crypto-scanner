@@ -91,6 +91,7 @@ ST_FACTOR            = 1.5
 # ---- Risk management ----
 RISK_INR             = 100          # fixed Rs. risk per trade
 LEVERAGE             = 7            # fixed leverage
+MAX_CAPITAL_INR      = 3000         # maximum margin/capital allowed per trade
 INR_TO_USDT_RATE     = None         # None = fetch live
 
 # ---- Candles ----
@@ -417,28 +418,52 @@ def get_inr_rate():
 
 def calc_position(entry, sl):
     """
-    Fixed-risk position sizing, fully in INR terms.
+    Fixed-risk position sizing with a maximum INR capital/margin cap.
 
-    RISK_INR (Rs.) is the only risk input. The live USDT/INR rate is used
-    solely as an internal conversion step to size the position against the
-    exchange's USDT-margined contracts — the final capital figure returned
-    is in INR (capital_inr), which is what should be shown in alerts.
+    Risk target = RISK_INR.
+    Final margin is capped at MAX_CAPITAL_INR.
+    If the capital cap is reached, actual risk becomes lower than RISK_INR.
     """
-    sl_pct = abs(entry - sl) / entry * 100
-    if sl_pct == 0:
+    risk_abs = abs(entry - sl)
+
+    if entry <= 0 or risk_abs <= 0:
         return None
 
-    rate = get_inr_rate()                                   # USDT -> INR, internal use only
-    risk_usdt = RISK_INR / rate                              # convert Rs. risk budget to USDT
-    position_usdt = round(risk_usdt / (sl_pct / 100), 2)
-    capital_usdt = round(position_usdt / LEVERAGE, 2)
-    capital_inr = round(capital_usdt * rate, 2)              # convert back to INR for display
-    quantity = round(position_usdt / entry, 4)
+    # USDT -> INR conversion, used internally for USDT-margined futures.
+    rate = get_inr_rate()
+
+    # Convert the fixed INR risk budget to USDT.
+    risk_usdt = RISK_INR / rate
+
+    # Risk-based position value:
+    # Risk = Position Value * (SL distance / Entry)
+    sl_pct_decimal = risk_abs / entry
+    position_usdt_risk = risk_usdt / sl_pct_decimal
+
+    # Maximum position value allowed by the INR capital/margin cap:
+    # Margin = Position Value / Leverage
+    max_capital_usdt = MAX_CAPITAL_INR / rate
+    position_usdt_cap = max_capital_usdt * LEVERAGE
+
+    # Use the smaller position size.
+    position_usdt = min(position_usdt_risk, position_usdt_cap)
+
+    # Final margin/capital.
+    capital_usdt = position_usdt / LEVERAGE
+    capital_inr = capital_usdt * rate
+
+    # Quantity.
+    quantity = position_usdt / entry
+
+    # Actual INR risk after applying the capital cap.
+    actual_risk_usdt = quantity * risk_abs
+    actual_risk_inr = actual_risk_usdt * rate
 
     return {
-        "capital_inr": capital_inr,   # <-- use this for display
-        "capital_usdt": capital_usdt, # internal only, not shown in alerts
-        "quantity": quantity,
+        "capital_inr": round(capital_inr, 2),
+        "capital_usdt": round(capital_usdt, 2),
+        "quantity": round(quantity, 8),
+        "actual_risk_inr": round(actual_risk_inr, 2),
     }
 
 
@@ -448,18 +473,24 @@ def calc_position(entry, sl):
 
 def build_short_msg(pair, entry, sl, t2, t3, t4):
     pos = calc_position(entry, sl)
-    cap = f"Rs.{pos['capital_inr']}" if pos else "N/A"
+
+    if not pos:
+        return None
 
     return (
-        f"\U0001F534 SHORT (Supertrend Flip)\n\n"
-        f"Name- {pair}\n"
-        f"Entry- {entry}\n"
-        f"SL- {sl}\n"
-        f"Capital- {cap}\n"
-        f"Risk Per Trade- Rs.{RISK_INR}\n"
-        f"-----------------\n"
-        f"T2- {t2}\n"
-        f"T3- {t3}\n"
+        f"🔴 SHORT (Supertrend Flip)\\n\\n"
+        f"Name- {pair}\\n"
+        f"Entry- {entry}\\n"
+        f"SL- {sl}\\n"
+        f"Quantity- {pos['quantity']:.8f}\\n"
+        f"Capital- Rs.{pos['capital_inr']:.2f}\\n"
+        f"Risk Target- Rs.{RISK_INR}\\n"
+        f"Actual Risk- Rs.{pos['actual_risk_inr']:.2f}\\n"
+        f"Max Capital- Rs.{MAX_CAPITAL_INR}\\n"
+        f"Leverage- {LEVERAGE}x\\n"
+        f"-----------------\\n"
+        f"T2- {t2}\\n"
+        f"T3- {t3}\\n"
         f"T4- {t4}"
     )
 
