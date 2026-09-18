@@ -16,5 +16,8 @@
   },
   {
     "pair": "B-NEAR_USDT"
+  },
+  {
+    "pair": "B-G_USDT"
   }
 ]
