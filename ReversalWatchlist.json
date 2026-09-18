@@ -13,5 +13,8 @@
   },
   {
     "pair": "B-ARB_USDT"
+  },
+  {
+    "pair": "B-NEAR_USDT"
   }
 ]
