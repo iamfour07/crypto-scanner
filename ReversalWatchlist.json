@@ -10,5 +10,8 @@
   },
   {
     "pair": "B-COTI_USDT"
+  },
+  {
+    "pair": "B-DRIFT_USDT"
   }
 ]
