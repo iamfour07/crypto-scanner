@@ -24,10 +24,10 @@ LIMIT_HOURS = 200
 EMA_FAST = 9
 EMA_SLOW = 30
 
-SWING_LOOKBACK = 10
+SWING_LOOKBACK = 20
 
 RISK_PER_TRADE = 100       # ₹100 risk per trade
-LEVERAGE = 5               # 5x leverage
+LEVERAGE = 10              # 5x leverage
 
 # Optional maximum margin you are willing to use
 MAX_CAPITAL = 3000         # ₹3,000 maximum margin
