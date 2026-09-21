@@ -16,7 +16,7 @@ except ImportError:
 # ============================================================
 # STRATEGY CONFIG
 # ============================================================
-PAIR = "B-BTC_USDT"
+PAIR = "B-SOL_USDT"
 
 RESOLUTION = "15"
 LIMIT_HOURS = 200
