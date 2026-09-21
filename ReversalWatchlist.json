@@ -1,20 +1,17 @@
 [
   {
-    "pair": "B-AVA_USDT"
-  },
-  {
     "pair": "B-DRIFT_USDT"
-  },
-  {
-    "pair": "B-ARB_USDT"
   },
   {
     "pair": "B-NEAR_USDT"
   },
   {
-    "pair": "B-G_USDT"
+    "pair": "B-UNI_USDT"
   },
   {
-    "pair": "B-UNI_USDT"
+    "pair": "B-SAGA_USDT"
+  },
+  {
+    "pair": "B-PTB_USDT"
   }
 ]

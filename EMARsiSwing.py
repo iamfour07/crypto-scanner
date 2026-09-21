@@ -478,21 +478,18 @@ def build_short_msg(pair, entry, sl, t2, t3, t4):
         return None
 
     return (
-        f"🔴 SHORT (Supertrend Flip)\\n\\n"
-        f"Name- {pair}\\n"
-        f"Entry- {entry}\\n"
-        f"SL- {sl}\\n"
-        f"Quantity- {pos['quantity']:.8f}\\n"
-        f"Capital- Rs.{pos['capital_inr']:.2f}\\n"
-        f"Risk Target- Rs.{RISK_INR}\\n"
-        f"Actual Risk- Rs.{pos['actual_risk_inr']:.2f}\\n"
-        f"Max Capital- Rs.{MAX_CAPITAL_INR}\\n"
-        f"Leverage- {LEVERAGE}x\\n"
-        f"-----------------\\n"
-        f"T2- {t2}\\n"
-        f"T3- {t3}\\n"
-        f"T4- {t4}"
-    )
+        f"🔴 SHORT (Supertrend Flip)\n\n"
+        f"Name - {pair}\n"
+        f"Entry - {entry}\n"
+        f"Capital - Rs.{pos['capital_inr']:.2f}\n"
+        f"Risk per trade - Rs.{RISK_INR}\n"
+        f"SL - {sl}\n"
+        f"\n"
+        f"-----------------\n"
+        f"T1 - {t2}\n"
+        f"T2 - {t3}\n"
+        f"T3 - {t4}"
+  )
 
 
 # =====================================================================================
