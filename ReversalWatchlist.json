@@ -19,5 +19,17 @@
   },
   {
     "pair": "B-NIL_USDT"
+  },
+  {
+    "pair": "B-BTW_USDT"
+  },
+  {
+    "pair": "B-KMNO_USDT"
+  },
+  {
+    "pair": "B-UAI_USDT"
+  },
+  {
+    "pair": "B-PHA_USDT"
   }
 ]
