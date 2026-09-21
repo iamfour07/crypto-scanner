@@ -13,5 +13,8 @@
   },
   {
     "pair": "B-PTB_USDT"
+  },
+  {
+    "pair": "B-ZETA_USDT"
   }
 ]
