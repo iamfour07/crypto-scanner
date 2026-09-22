@@ -357,9 +357,8 @@ def create_telegram_message(trade):
 ━━━━━━━━━━━━━━━━━━
 📊 Strategy
 ━━━━━━━━━━━━━━━━━━
-Coin: BTC/USDT
+Coin: SOL/USDT
 Timeframe: 15 Min
-EMA: 9 / 30
 
 ━━━━━━━━━━━━━━━━━━
 📌 TRADE SETUP
@@ -375,32 +374,13 @@ SL %: {trade["sl_percentage"]:.2f}%
 ━━━━━━━━━━━━━━━━━━
 Risk: ₹{RISK_PER_TRADE:.2f}
 Leverage: {LEVERAGE}x
-
-Quantity: {trade["qty"]:.8f}
-Position Value: ₹{trade["position_value"]:.2f}
 Required Margin: ₹{trade["margin"]:.2f}
-
-Actual Risk: ₹{trade["actual_risk"]:.2f}
-
 ━━━━━━━━━━━━━━━━━━
 🎯 TARGETS
 ━━━━━━━━━━━━━━━━━━
 1:2 → {trade["target_2"]:.2f}
 1:3 → {trade["target_3"]:.2f}
 1:4 → {trade["target_4"]:.2f}
-
-━━━━━━━━━━━━━━━━━━
-📈 EMA
-━━━━━━━━━━━━━━━━━━
-EMA 9: {trade["ema_9"]:.2f}
-EMA 30: {trade["ema_30"]:.2f}
-
-⚠️ Signal generated only from
-the last CLOSED 15-minute candle.
-
-Entry is triggered only when
-price reaches the signal candle
-high/low.
 """
 
     return msg
