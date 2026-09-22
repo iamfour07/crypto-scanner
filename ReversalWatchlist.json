@@ -13,5 +13,26 @@
   },
   {
     "pair": "B-PTB_USDT"
+  },
+  {
+    "pair": "B-ZETA_USDT"
+  },
+  {
+    "pair": "B-NIL_USDT"
+  },
+  {
+    "pair": "B-BTW_USDT"
+  },
+  {
+    "pair": "B-KMNO_USDT"
+  },
+  {
+    "pair": "B-UAI_USDT"
+  },
+  {
+    "pair": "B-PHA_USDT"
+  },
+  {
+    "pair": "B-SEI_USDT"
   }
 ]
