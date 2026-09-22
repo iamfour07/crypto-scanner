@@ -365,16 +365,8 @@ Timeframe: 15 Min
 ━━━━━━━━━━━━━━━━━━
 Entry: {trade["entry"]:.2f}
 Stop Loss: {trade["sl"]:.2f}
-
-SL Distance: {trade["risk"]:.2f}
-SL %: {trade["sl_percentage"]:.2f}%
-
-━━━━━━━━━━━━━━━━━━
-💰 RISK MANAGEMENT
-━━━━━━━━━━━━━━━━━━
-Risk: ₹{RISK_PER_TRADE:.2f}
-Leverage: {LEVERAGE}x
 Required Margin: ₹{trade["margin"]:.2f}
+Leverage: {LEVERAGE}x
 ━━━━━━━━━━━━━━━━━━
 🎯 TARGETS
 ━━━━━━━━━━━━━━━━━━
