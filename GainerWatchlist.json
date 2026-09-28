@@ -5,6 +5,16 @@
     "previous_day_low": 0.08065
   },
   {
+    "pair": "B-JASMY_USDT",
+    "previous_day_high": 0.005453,
+    "previous_day_low": 0.004655
+  },
+  {
+    "pair": "B-ARKM_USDT",
+    "previous_day_high": 0.1452,
+    "previous_day_low": 0.1355
+  },
+  {
     "pair": "B-ORCA_USDT",
     "previous_day_high": 1.858,
     "previous_day_low": 1.62
@@ -15,18 +25,8 @@
     "previous_day_low": 0.002
   },
   {
-    "pair": "B-JASMY_USDT",
-    "previous_day_high": 0.005453,
-    "previous_day_low": 0.004655
-  },
-  {
     "pair": "B-WOO_USDT",
     "previous_day_high": 0.0146,
     "previous_day_low": 0.01319
-  },
-  {
-    "pair": "B-ARKM_USDT",
-    "previous_day_high": 0.1452,
-    "previous_day_low": 0.1355
   }
 ]
