@@ -1,13 +1,13 @@
 [
   {
-    "pair": "B-JASMY_USDT",
-    "previous_day_high": 0.005453,
-    "previous_day_low": 0.004655
-  },
-  {
     "pair": "B-NOM_USDT",
     "previous_day_high": 0.002587,
     "previous_day_low": 0.002
+  },
+  {
+    "pair": "B-JASMY_USDT",
+    "previous_day_high": 0.005453,
+    "previous_day_low": 0.004655
   },
   {
     "pair": "B-ORCA_USDT",
