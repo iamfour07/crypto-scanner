@@ -1,8 +1,23 @@
 [
   {
+    "pair": "B-NIGHT_USDT",
+    "previous_day_high": 0.02881,
+    "previous_day_low": 0.02548
+  },
+  {
     "pair": "B-IOTA_USDT",
     "previous_day_high": 0.05696,
     "previous_day_low": 0.04898
+  },
+  {
+    "pair": "B-HBAR_USDT",
+    "previous_day_high": 0.13099,
+    "previous_day_low": 0.09397
+  },
+  {
+    "pair": "B-NOM_USDT",
+    "previous_day_high": 0.002587,
+    "previous_day_low": 0.002
   },
   {
     "pair": "B-NMR_USDT",
@@ -15,33 +30,13 @@
     "previous_day_low": 13.521
   },
   {
-    "pair": "B-NOM_USDT",
-    "previous_day_high": 0.002587,
-    "previous_day_low": 0.002
-  },
-  {
-    "pair": "B-ORCA_USDT",
-    "previous_day_high": 1.858,
-    "previous_day_low": 1.62
-  },
-  {
-    "pair": "B-ALGO_USDT",
-    "previous_day_high": 0.13917,
-    "previous_day_low": 0.11475
-  },
-  {
-    "pair": "B-NIGHT_USDT",
-    "previous_day_high": 0.02881,
-    "previous_day_low": 0.02548
-  },
-  {
     "pair": "B-JASMY_USDT",
     "previous_day_high": 0.005453,
     "previous_day_low": 0.004655
   },
   {
-    "pair": "B-HBAR_USDT",
-    "previous_day_high": 0.13099,
-    "previous_day_low": 0.09397
+    "pair": "B-ALGO_USDT",
+    "previous_day_high": 0.13917,
+    "previous_day_low": 0.11475
   }
 ]
