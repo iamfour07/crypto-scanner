@@ -1,23 +1,23 @@
 [
   {
-    "pair": "B-JASMY_USDT",
-    "previous_day_high": 0.005453,
-    "previous_day_low": 0.004655
-  },
-  {
     "pair": "B-LINK_USDT",
     "previous_day_high": 15.522,
     "previous_day_low": 13.521
   },
   {
-    "pair": "B-HBAR_USDT",
-    "previous_day_high": 0.13099,
-    "previous_day_low": 0.09397
-  },
-  {
     "pair": "B-NMR_USDT",
     "previous_day_high": 15.5,
     "previous_day_low": 9.669
+  },
+  {
+    "pair": "B-JASMY_USDT",
+    "previous_day_high": 0.005453,
+    "previous_day_low": 0.004655
+  },
+  {
+    "pair": "B-HBAR_USDT",
+    "previous_day_high": 0.13099,
+    "previous_day_low": 0.09397
   },
   {
     "pair": "B-IOTA_USDT",
