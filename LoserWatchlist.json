@@ -5,13 +5,13 @@
     "previous_day_low": 4116.6
   },
   {
-    "pair": "B-HANA_USDT",
-    "previous_day_high": 0.01429,
-    "previous_day_low": 0.01256
-  },
-  {
     "pair": "B-PAXG_USDT",
     "previous_day_high": 4257.0,
     "previous_day_low": 4120.42
+  },
+  {
+    "pair": "B-HANA_USDT",
+    "previous_day_high": 0.01429,
+    "previous_day_low": 0.01256
   }
 ]
