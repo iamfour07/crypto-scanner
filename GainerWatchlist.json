@@ -10,9 +10,9 @@
     "previous_day_low": 0.09397
   },
   {
-    "pair": "B-ICP_USDT",
-    "previous_day_high": 3.553,
-    "previous_day_low": 3.044
+    "pair": "B-PUMP_USDT",
+    "previous_day_high": 0.00603,
+    "previous_day_low": 0.004677
   },
   {
     "pair": "B-IOTA_USDT",
@@ -25,8 +25,8 @@
     "previous_day_low": 13.521
   },
   {
-    "pair": "B-PUMP_USDT",
-    "previous_day_high": 0.00603,
-    "previous_day_low": 0.004677
+    "pair": "B-ICP_USDT",
+    "previous_day_high": 3.553,
+    "previous_day_low": 3.044
   }
 ]
