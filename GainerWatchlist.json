@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-IOTA_USDT",
-    "previous_day_high": 0.05696,
-    "previous_day_low": 0.04898
-  },
-  {
     "pair": "B-LINK_USDT",
     "previous_day_high": 15.522,
     "previous_day_low": 13.521
@@ -28,5 +23,10 @@
     "pair": "B-PUMP_USDT",
     "previous_day_high": 0.00603,
     "previous_day_low": 0.004677
+  },
+  {
+    "pair": "B-IOTA_USDT",
+    "previous_day_high": 0.05696,
+    "previous_day_low": 0.04898
   }
 ]
