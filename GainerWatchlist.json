@@ -38,5 +38,35 @@
     "pair": "B-MON_USDT",
     "previous_day_high": 0.03527,
     "previous_day_low": 0.03133
+  },
+  {
+    "pair": "B-ENJ_USDT",
+    "previous_day_high": 0.04072,
+    "previous_day_low": 0.02954
+  },
+  {
+    "pair": "B-SAND_USDT",
+    "previous_day_high": 0.07179,
+    "previous_day_low": 0.04423
+  },
+  {
+    "pair": "B-MANA_USDT",
+    "previous_day_high": 0.111,
+    "previous_day_low": 0.08811
+  },
+  {
+    "pair": "B-MAGIC_USDT",
+    "previous_day_high": 0.06659,
+    "previous_day_low": 0.05408
+  },
+  {
+    "pair": "B-AAVE_USDT",
+    "previous_day_high": 187.4,
+    "previous_day_low": 170.66
+  },
+  {
+    "pair": "B-GALA_USDT",
+    "previous_day_high": 0.002748,
+    "previous_day_low": 0.002243
   }
 ]
