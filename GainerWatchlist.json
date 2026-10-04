@@ -58,5 +58,15 @@
     "pair": "B-IOTA_USDT",
     "previous_day_high": 0.05696,
     "previous_day_low": 0.04898
+  },
+  {
+    "pair": "B-FLUID_USDT",
+    "previous_day_high": 1.715,
+    "previous_day_low": 1.581
+  },
+  {
+    "pair": "B-STRK_USDT",
+    "previous_day_high": 0.05567,
+    "previous_day_low": 0.04246
   }
 ]
