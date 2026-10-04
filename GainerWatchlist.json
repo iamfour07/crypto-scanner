@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-HBAR_USDT",
-    "previous_day_high": 0.13099,
-    "previous_day_low": 0.09397
-  },
-  {
     "pair": "B-AAVE_USDT",
     "previous_day_high": 187.4,
     "previous_day_low": 170.66
@@ -18,6 +13,11 @@
     "pair": "B-ICP_USDT",
     "previous_day_high": 3.553,
     "previous_day_low": 3.044
+  },
+  {
+    "pair": "B-NMR_USDT",
+    "previous_day_high": 15.5,
+    "previous_day_low": 9.669
   },
   {
     "pair": "B-NOM_USDT",
@@ -35,14 +35,9 @@
     "previous_day_low": 0.1659
   },
   {
-    "pair": "B-NMR_USDT",
-    "previous_day_high": 15.5,
-    "previous_day_low": 9.669
-  },
-  {
-    "pair": "B-MANA_USDT",
-    "previous_day_high": 0.111,
-    "previous_day_low": 0.08811
+    "pair": "B-HBAR_USDT",
+    "previous_day_high": 0.13099,
+    "previous_day_low": 0.09397
   },
   {
     "pair": "B-MAGIC_USDT",
@@ -55,13 +50,13 @@
     "previous_day_low": 0.04246
   },
   {
-    "pair": "B-IOTA_USDT",
-    "previous_day_high": 0.05696,
-    "previous_day_low": 0.04898
-  },
-  {
     "pair": "B-GALA_USDT",
     "previous_day_high": 0.002748,
     "previous_day_low": 0.002243
+  },
+  {
+    "pair": "B-MANA_USDT",
+    "previous_day_high": 0.111,
+    "previous_day_low": 0.08811
   }
 ]
