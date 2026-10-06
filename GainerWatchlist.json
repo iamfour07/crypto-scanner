@@ -1,18 +1,8 @@
 [
   {
-    "pair": "B-ENJ_USDT",
-    "previous_day_high": 0.04072,
-    "previous_day_low": 0.02954
-  },
-  {
-    "pair": "B-AXS_USDT",
-    "previous_day_high": 1.4512,
-    "previous_day_low": 1.1949
-  },
-  {
-    "pair": "B-NMR_USDT",
-    "previous_day_high": 15.5,
-    "previous_day_low": 9.669
+    "pair": "B-RLC_USDT",
+    "previous_day_high": 0.7761,
+    "previous_day_low": 0.3623
   },
   {
     "pair": "B-EDU_USDT",
@@ -30,9 +20,14 @@
     "previous_day_low": 0.002243
   },
   {
-    "pair": "B-PARTI_USDT",
-    "previous_day_high": 0.03197,
-    "previous_day_low": 0.02724
+    "pair": "B-NOM_USDT",
+    "previous_day_high": 0.00328,
+    "previous_day_low": 0.002289
+  },
+  {
+    "pair": "B-AXS_USDT",
+    "previous_day_high": 1.4512,
+    "previous_day_low": 1.1949
   },
   {
     "pair": "B-ALICE_USDT",
@@ -40,14 +35,9 @@
     "previous_day_low": 0.1659
   },
   {
-    "pair": "B-NOM_USDT",
-    "previous_day_high": 0.00328,
-    "previous_day_low": 0.002289
-  },
-  {
-    "pair": "B-RLC_USDT",
-    "previous_day_high": 0.7761,
-    "previous_day_low": 0.3623
+    "pair": "B-ENJ_USDT",
+    "previous_day_high": 0.04072,
+    "previous_day_low": 0.02954
   },
   {
     "pair": "B-AAVE_USDT",
@@ -60,9 +50,9 @@
     "previous_day_low": 0.05408
   },
   {
-    "pair": "B-CARV_USDT",
-    "previous_day_high": 0.0548,
-    "previous_day_low": 0.0451
+    "pair": "B-NMR_USDT",
+    "previous_day_high": 15.5,
+    "previous_day_low": 9.669
   },
   {
     "pair": "B-GRIFFAIN_USDT",
@@ -70,9 +60,9 @@
     "previous_day_low": 0.01709
   },
   {
-    "pair": "B-API3_USDT",
-    "previous_day_high": 0.33,
-    "previous_day_low": 0.2872
+    "pair": "B-HBAR_USDT",
+    "previous_day_high": 0.13099,
+    "previous_day_low": 0.09397
   },
   {
     "pair": "B-LINK_USDT",
@@ -80,8 +70,13 @@
     "previous_day_low": 13.521
   },
   {
-    "pair": "B-HBAR_USDT",
-    "previous_day_high": 0.13099,
-    "previous_day_low": 0.09397
+    "pair": "B-CARV_USDT",
+    "previous_day_high": 0.0548,
+    "previous_day_low": 0.0451
+  },
+  {
+    "pair": "B-API3_USDT",
+    "previous_day_high": 0.33,
+    "previous_day_low": 0.2872
   }
 ]
