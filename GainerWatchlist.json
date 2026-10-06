@@ -53,5 +53,40 @@
     "pair": "B-NMR_USDT",
     "previous_day_high": 15.5,
     "previous_day_low": 9.669
+  },
+  {
+    "pair": "B-RLC_USDT",
+    "previous_day_high": 0.7761,
+    "previous_day_low": 0.3623
+  },
+  {
+    "pair": "B-EDU_USDT",
+    "previous_day_high": 0.06344,
+    "previous_day_low": 0.05188
+  },
+  {
+    "pair": "B-GRIFFAIN_USDT",
+    "previous_day_high": 0.019932,
+    "previous_day_low": 0.01709
+  },
+  {
+    "pair": "B-API3_USDT",
+    "previous_day_high": 0.33,
+    "previous_day_low": 0.2872
+  },
+  {
+    "pair": "B-PARTI_USDT",
+    "previous_day_high": 0.03197,
+    "previous_day_low": 0.02724
+  },
+  {
+    "pair": "B-KAIA_USDT",
+    "previous_day_high": 0.04085,
+    "previous_day_low": 0.03732
+  },
+  {
+    "pair": "B-CARV_USDT",
+    "previous_day_high": 0.0548,
+    "previous_day_low": 0.0451
   }
 ]
