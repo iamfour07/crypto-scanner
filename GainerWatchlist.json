@@ -48,5 +48,25 @@
     "pair": "B-MANA_USDT",
     "previous_day_high": 0.111,
     "previous_day_low": 0.08811
+  },
+  {
+    "pair": "B-ESP_USDT",
+    "previous_day_high": 0.12239,
+    "previous_day_low": 0.11122
+  },
+  {
+    "pair": "B-CAP_USDT",
+    "previous_day_high": 0.10162,
+    "previous_day_low": 0.07095
+  },
+  {
+    "pair": "B-LIGHT_USDT",
+    "previous_day_high": 0.2181,
+    "previous_day_low": 0.2
+  },
+  {
+    "pair": "B-NMR_USDT",
+    "previous_day_high": 17.424,
+    "previous_day_low": 11.784
   }
 ]
