@@ -1,17 +1,12 @@
 [
   {
-    "pair": "B-OGN_USDT",
-    "previous_day_high": 0.02393,
-    "previous_day_low": 0.0204
+    "pair": "B-MANA_USDT",
+    "previous_day_high": 0.111,
+    "previous_day_low": 0.08811
   },
   {
     "pair": "B-ALICE_USDT",
     "previous_day_high": 0.2474,
     "previous_day_low": 0.1659
-  },
-  {
-    "pair": "B-MANA_USDT",
-    "previous_day_high": 0.111,
-    "previous_day_low": 0.08811
   }
 ]
