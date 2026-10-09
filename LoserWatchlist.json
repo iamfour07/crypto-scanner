@@ -1,8 +1,8 @@
 [
   {
-    "pair": "B-EDGE_USDT",
-    "previous_day_high": 0.4186,
-    "previous_day_low": 0.3629
+    "pair": "B-KGEN_USDT",
+    "previous_day_high": 0.1545,
+    "previous_day_low": 0.128
   },
   {
     "pair": "B-OPEN_USDT",
@@ -15,8 +15,8 @@
     "previous_day_low": 0.007396
   },
   {
-    "pair": "B-KGEN_USDT",
-    "previous_day_high": 0.1545,
-    "previous_day_low": 0.128
+    "pair": "B-EDGE_USDT",
+    "previous_day_high": 0.4186,
+    "previous_day_low": 0.3629
   }
 ]
