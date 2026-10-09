@@ -1,8 +1,8 @@
 [
   {
-    "pair": "B-BLUAI_USDT",
-    "previous_day_high": 0.009881,
-    "previous_day_low": 0.007396
+    "pair": "B-OPEN_USDT",
+    "previous_day_high": 0.1161,
+    "previous_day_low": 0.1005
   },
   {
     "pair": "B-KGEN_USDT",
@@ -10,8 +10,8 @@
     "previous_day_low": 0.128
   },
   {
-    "pair": "B-OPEN_USDT",
-    "previous_day_high": 0.1161,
-    "previous_day_low": 0.1005
+    "pair": "B-BLUAI_USDT",
+    "previous_day_high": 0.009881,
+    "previous_day_low": 0.007396
   }
 ]
