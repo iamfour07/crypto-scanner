@@ -1,5 +1,10 @@
 [
   {
+    "pair": "B-GTC_USDT",
+    "previous_day_high": 0.22,
+    "previous_day_low": 0.16559
+  },
+  {
     "pair": "B-MANA_USDT",
     "previous_day_high": 0.111,
     "previous_day_low": 0.08811
@@ -8,10 +13,5 @@
     "pair": "B-JCT_USDT",
     "previous_day_high": 0.002674,
     "previous_day_low": 0.00131
-  },
-  {
-    "pair": "B-GTC_USDT",
-    "previous_day_high": 0.22,
-    "previous_day_low": 0.16559
   }
 ]
