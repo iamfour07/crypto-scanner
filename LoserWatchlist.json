@@ -13,5 +13,10 @@
     "pair": "B-OPEN_USDT",
     "previous_day_high": 0.1161,
     "previous_day_low": 0.1005
+  },
+  {
+    "pair": "B-APR_USDT",
+    "previous_day_high": 0.1104,
+    "previous_day_low": 0.0707
   }
 ]

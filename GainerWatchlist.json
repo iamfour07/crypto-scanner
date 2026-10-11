@@ -23,5 +23,15 @@
     "pair": "B-W_USDT",
     "previous_day_high": 0.01869,
     "previous_day_low": 0.015111
+  },
+  {
+    "pair": "B-TIA_USDT",
+    "previous_day_high": 0.6117,
+    "previous_day_low": 0.4709
+  },
+  {
+    "pair": "B-CHIP_USDT",
+    "previous_day_high": 0.0703,
+    "previous_day_low": 0.05144
   }
 ]
