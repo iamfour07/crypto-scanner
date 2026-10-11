@@ -5,11 +5,6 @@
     "previous_day_low": 0.05144
   },
   {
-    "pair": "B-MANA_USDT",
-    "previous_day_high": 0.111,
-    "previous_day_low": 0.08811
-  },
-  {
     "pair": "B-GTC_USDT",
     "previous_day_high": 0.22,
     "previous_day_low": 0.16559
@@ -28,5 +23,10 @@
     "pair": "B-KAIA_USDT",
     "previous_day_high": 0.063,
     "previous_day_low": 0.03689
+  },
+  {
+    "pair": "B-MANA_USDT",
+    "previous_day_high": 0.111,
+    "previous_day_low": 0.08811
   }
 ]
