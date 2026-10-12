@@ -13,5 +13,10 @@
     "pair": "B-BLUAI_USDT",
     "previous_day_high": 0.009881,
     "previous_day_low": 0.007396
+  },
+  {
+    "pair": "B-RVN_USDT",
+    "previous_day_high": 0.002149,
+    "previous_day_low": 0.001866
   }
 ]
