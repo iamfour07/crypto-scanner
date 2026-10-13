@@ -8,5 +8,15 @@
     "pair": "B-BLUAI_USDT",
     "previous_day_high": 0.009881,
     "previous_day_low": 0.007396
+  },
+  {
+    "pair": "B-BLUR_USDT",
+    "previous_day_high": 0.01923,
+    "previous_day_low": 0.01361
+  },
+  {
+    "pair": "B-SPACE_USDT",
+    "previous_day_high": 0.004442,
+    "previous_day_low": 0.004104
   }
 ]
