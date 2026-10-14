@@ -1,18 +1,8 @@
 [
   {
-    "pair": "B-1000RATS_USDT",
-    "previous_day_high": 0.03414,
-    "previous_day_low": 0.01586
-  },
-  {
     "pair": "B-GPS_USDT",
     "previous_day_high": 0.00933,
     "previous_day_low": 0.007601
-  },
-  {
-    "pair": "B-BILL_USDT",
-    "previous_day_high": 0.01045,
-    "previous_day_low": 0.00834
   },
   {
     "pair": "B-M_USDT",
