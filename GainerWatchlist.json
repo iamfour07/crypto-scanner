@@ -1,38 +1,8 @@
 [
   {
-    "pair": "B-RSR_USDT",
-    "previous_day_high": 0.002589,
-    "previous_day_low": 0.001627
-  },
-  {
-    "pair": "B-GTC_USDT",
-    "previous_day_high": 0.3247,
-    "previous_day_low": 0.15625
-  },
-  {
-    "pair": "B-Q_USDT",
-    "previous_day_high": 0.043459,
-    "previous_day_low": 0.02952
-  },
-  {
-    "pair": "B-TRUTH_USDT",
-    "previous_day_high": 0.020923,
-    "previous_day_low": 0.014545
-  },
-  {
-    "pair": "B-CKB_USDT",
-    "previous_day_high": 0.0021797,
-    "previous_day_low": 0.0013766
-  },
-  {
-    "pair": "B-KAIA_USDT",
-    "previous_day_high": 0.063,
-    "previous_day_low": 0.03689
-  },
-  {
-    "pair": "B-NATGAS_USDT",
-    "previous_day_high": 3.648,
-    "previous_day_low": 3.406
+    "pair": "B-CHIP_USDT",
+    "previous_day_high": 0.0703,
+    "previous_day_low": 0.05144
   },
   {
     "pair": "B-MANA_USDT",
@@ -40,13 +10,38 @@
     "previous_day_low": 0.08811
   },
   {
-    "pair": "B-CHIP_USDT",
-    "previous_day_high": 0.0703,
-    "previous_day_low": 0.05144
-  },
-  {
     "pair": "B-CTR_USDT",
     "previous_day_high": 0.014644,
     "previous_day_low": 0.013234
+  },
+  {
+    "pair": "B-NATGAS_USDT",
+    "previous_day_high": 3.648,
+    "previous_day_low": 3.406
+  },
+  {
+    "pair": "B-RSR_USDT",
+    "previous_day_high": 0.002589,
+    "previous_day_low": 0.001627
+  },
+  {
+    "pair": "B-CKB_USDT",
+    "previous_day_high": 0.0021797,
+    "previous_day_low": 0.0013766
+  },
+  {
+    "pair": "B-GTC_USDT",
+    "previous_day_high": 0.3247,
+    "previous_day_low": 0.15625
+  },
+  {
+    "pair": "B-KAIA_USDT",
+    "previous_day_high": 0.063,
+    "previous_day_low": 0.03689
+  },
+  {
+    "pair": "B-TRUTH_USDT",
+    "previous_day_high": 0.020923,
+    "previous_day_low": 0.014545
   }
 ]
