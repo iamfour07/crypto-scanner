@@ -1,13 +1,13 @@
 [
   {
-    "pair": "B-GPS_USDT",
-    "previous_day_high": 0.00933,
-    "previous_day_low": 0.007601
-  },
-  {
     "pair": "B-M_USDT",
     "previous_day_high": 0.9148,
     "previous_day_low": 0.7905
+  },
+  {
+    "pair": "B-GPS_USDT",
+    "previous_day_high": 0.00933,
+    "previous_day_low": 0.007601
   },
   {
     "pair": "B-ARC_USDT",
