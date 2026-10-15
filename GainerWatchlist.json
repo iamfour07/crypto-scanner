@@ -1,5 +1,25 @@
 [
   {
+    "pair": "B-CTR_USDT",
+    "previous_day_high": 0.014644,
+    "previous_day_low": 0.013234
+  },
+  {
+    "pair": "B-MANA_USDT",
+    "previous_day_high": 0.111,
+    "previous_day_low": 0.08811
+  },
+  {
+    "pair": "B-NATGAS_USDT",
+    "previous_day_high": 3.648,
+    "previous_day_low": 3.406
+  },
+  {
+    "pair": "B-KAIA_USDT",
+    "previous_day_high": 0.063,
+    "previous_day_low": 0.03689
+  },
+  {
     "pair": "B-WAL_USDT",
     "previous_day_high": 0.06774,
     "previous_day_low": 0.0383
@@ -10,29 +30,9 @@
     "previous_day_low": 0.001627
   },
   {
-    "pair": "B-CTR_USDT",
-    "previous_day_high": 0.014644,
-    "previous_day_low": 0.013234
-  },
-  {
-    "pair": "B-KAIA_USDT",
-    "previous_day_high": 0.063,
-    "previous_day_low": 0.03689
-  },
-  {
     "pair": "B-GTC_USDT",
     "previous_day_high": 0.3247,
     "previous_day_low": 0.15625
-  },
-  {
-    "pair": "B-CKB_USDT",
-    "previous_day_high": 0.0021797,
-    "previous_day_low": 0.0013766
-  },
-  {
-    "pair": "B-MANA_USDT",
-    "previous_day_high": 0.111,
-    "previous_day_low": 0.08811
   },
   {
     "pair": "B-ZEREBRO_USDT",
@@ -40,8 +40,8 @@
     "previous_day_low": 0.027403
   },
   {
-    "pair": "B-NATGAS_USDT",
-    "previous_day_high": 3.648,
-    "previous_day_low": 3.406
+    "pair": "B-CKB_USDT",
+    "previous_day_high": 0.0021797,
+    "previous_day_low": 0.0013766
   }
 ]
