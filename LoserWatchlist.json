@@ -1,22 +1,17 @@
 [
   {
-    "pair": "B-ARC_USDT",
-    "previous_day_high": 0.06052,
-    "previous_day_low": 0.02195
-  },
-  {
     "pair": "B-GPS_USDT",
     "previous_day_high": 0.00933,
     "previous_day_low": 0.007601
   },
   {
+    "pair": "B-ARC_USDT",
+    "previous_day_high": 0.06052,
+    "previous_day_low": 0.02195
+  },
+  {
     "pair": "B-XAG_USDT",
     "previous_day_high": 59.47,
     "previous_day_low": 55.49
-  },
-  {
-    "pair": "B-EPIC_USDT",
-    "previous_day_high": 0.4597,
-    "previous_day_low": 0.2598
   }
 ]
