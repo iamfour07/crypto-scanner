@@ -1,18 +1,23 @@
 [
   {
-    "pair": "B-NATGAS_USDT",
-    "previous_day_high": 3.648,
-    "previous_day_low": 3.406
-  },
-  {
-    "pair": "B-RSR_USDT",
-    "previous_day_high": 0.002589,
-    "previous_day_low": 0.001627
+    "pair": "B-ICNT_USDT",
+    "previous_day_high": 0.1519,
+    "previous_day_low": 0.1015
   },
   {
     "pair": "B-PYTH_USDT",
     "previous_day_high": 0.10086,
     "previous_day_low": 0.08049
+  },
+  {
+    "pair": "B-KAIA_USDT",
+    "previous_day_high": 0.063,
+    "previous_day_low": 0.03689
+  },
+  {
+    "pair": "B-RSR_USDT",
+    "previous_day_high": 0.002589,
+    "previous_day_low": 0.001627
   },
   {
     "pair": "B-DUSK_USDT",
@@ -30,18 +35,13 @@
     "previous_day_low": 0.0013766
   },
   {
-    "pair": "B-KAIA_USDT",
-    "previous_day_high": 0.063,
-    "previous_day_low": 0.03689
-  },
-  {
-    "pair": "B-ICNT_USDT",
-    "previous_day_high": 0.1519,
-    "previous_day_low": 0.1015
-  },
-  {
     "pair": "B-GTC_USDT",
     "previous_day_high": 0.3247,
     "previous_day_low": 0.15625
+  },
+  {
+    "pair": "B-NATGAS_USDT",
+    "previous_day_high": 3.648,
+    "previous_day_low": 3.406
   }
 ]
