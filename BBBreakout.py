@@ -61,7 +61,7 @@ except ImportError:
 # =====================================================================================
 
 # ---- Risk management ----
-RISK_PER_TRADE_INR = 150        # loss at SL, in Rs.
+RISK_PER_TRADE_INR = 300        # loss at SL, in Rs.
 LEVERAGE = 5                    # used ONLY for the capital (margin) shown
 INR_TO_USDT_RATE = None         # None = fetch live USDT/INR rate
 INR_RATE_FALLBACK = 99.0        # used only if the live rate cannot be fetched
