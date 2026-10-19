@@ -13,5 +13,55 @@
     "pair": "B-XAG_USDT",
     "previous_day_high": 59.47,
     "previous_day_low": 55.49
+  },
+  {
+    "pair": "B-KAT_USDT",
+    "previous_day_high": 0.004007,
+    "previous_day_low": 0.003643
+  },
+  {
+    "pair": "B-RPL_USDT",
+    "previous_day_high": 1.564,
+    "previous_day_low": 1.442
+  },
+  {
+    "pair": "B-SONIC_USDT",
+    "previous_day_high": 0.02142,
+    "previous_day_low": 0.01946
+  },
+  {
+    "pair": "B-DATAIP_USDT",
+    "previous_day_high": 0.1751,
+    "previous_day_low": 0.1569
+  },
+  {
+    "pair": "B-PIEVERSE_USDT",
+    "previous_day_high": 1.0999,
+    "previous_day_low": 1.0365
+  },
+  {
+    "pair": "B-CYS_USDT",
+    "previous_day_high": 0.133,
+    "previous_day_low": 0.1115
+  },
+  {
+    "pair": "B-ROBO_USDT",
+    "previous_day_high": 0.006841,
+    "previous_day_low": 0.006018
+  },
+  {
+    "pair": "B-POLYX_USDT",
+    "previous_day_high": 0.03534,
+    "previous_day_low": 0.03265
+  },
+  {
+    "pair": "B-HMSTR_USDT",
+    "previous_day_high": 0.0001489,
+    "previous_day_low": 0.0001373
+  },
+  {
+    "pair": "B-SAHARA_USDT",
+    "previous_day_high": 0.00765,
+    "previous_day_low": 0.007157
   }
 ]
