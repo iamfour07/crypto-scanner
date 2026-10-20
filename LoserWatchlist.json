@@ -48,5 +48,10 @@
     "pair": "B-ARC_USDT",
     "previous_day_high": 0.06052,
     "previous_day_low": 0.02195
+  },
+  {
+    "pair": "B-AIGENSYN_USDT",
+    "previous_day_high": 0.01712,
+    "previous_day_low": 0.01634
   }
 ]

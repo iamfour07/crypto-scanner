@@ -23,5 +23,20 @@
     "pair": "B-KAIA_USDT",
     "previous_day_high": 0.063,
     "previous_day_low": 0.03689
+  },
+  {
+    "pair": "B-AVA_USDT",
+    "previous_day_high": 0.4498,
+    "previous_day_low": 0.317
+  },
+  {
+    "pair": "B-GTC_USDT",
+    "previous_day_high": 0.37487,
+    "previous_day_low": 0.25365
+  },
+  {
+    "pair": "B-CTR_USDT",
+    "previous_day_high": 0.017418,
+    "previous_day_low": 0.013186
   }
 ]
