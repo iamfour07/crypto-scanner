@@ -5,11 +5,6 @@
     "previous_day_low": 0.007601
   },
   {
-    "pair": "B-PIEVERSE_USDT",
-    "previous_day_high": 1.0999,
-    "previous_day_low": 1.0365
-  },
-  {
     "pair": "B-XAG_USDT",
     "previous_day_high": 59.47,
     "previous_day_low": 55.49
@@ -18,5 +13,10 @@
     "pair": "B-MITO_USDT",
     "previous_day_high": 0.01348,
     "previous_day_low": 0.00908
+  },
+  {
+    "pair": "B-PIEVERSE_USDT",
+    "previous_day_high": 1.0999,
+    "previous_day_low": 1.0365
   }
 ]
