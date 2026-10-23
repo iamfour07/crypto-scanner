@@ -8,10 +8,5 @@
     "pair": "B-GPS_USDT",
     "previous_day_high": 0.00933,
     "previous_day_low": 0.007601
-  },
-  {
-    "pair": "B-PTB_USDT",
-    "previous_day_high": 0.0008888,
-    "previous_day_low": 0.0004228
   }
 ]
