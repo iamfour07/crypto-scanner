@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-BMT_USDT",
-    "previous_day_high": 0.0494,
-    "previous_day_low": 0.02241
-  },
-  {
     "pair": "B-ORDER_USDT",
     "previous_day_high": 0.10317,
     "previous_day_low": 0.03278
@@ -13,6 +8,11 @@
     "pair": "B-CL_USDT",
     "previous_day_high": 104.72,
     "previous_day_low": 99.15
+  },
+  {
+    "pair": "B-BMT_USDT",
+    "previous_day_high": 0.0494,
+    "previous_day_low": 0.02241
   },
   {
     "pair": "B-BZ_USDT",
