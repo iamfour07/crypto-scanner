@@ -1,15 +1,5 @@
 [
   {
-    "pair": "B-XAG_USDT",
-    "previous_day_high": 54.87,
-    "previous_day_low": 53.12
-  },
-  {
-    "pair": "B-GPS_USDT",
-    "previous_day_high": 0.00933,
-    "previous_day_low": 0.007601
-  },
-  {
     "pair": "B-XAU_USDT",
     "previous_day_high": 4042.96,
     "previous_day_low": 3985.02
@@ -20,8 +10,18 @@
     "previous_day_low": 0.014926
   },
   {
+    "pair": "B-XAG_USDT",
+    "previous_day_high": 54.87,
+    "previous_day_low": 53.12
+  },
+  {
     "pair": "B-FOGO_USDT",
     "previous_day_high": 0.003832,
     "previous_day_low": 0.003196
+  },
+  {
+    "pair": "B-GPS_USDT",
+    "previous_day_high": 0.00933,
+    "previous_day_low": 0.007601
   }
 ]
