@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-Q_USDT",
-    "previous_day_high": 0.214134,
-    "previous_day_low": 0.052033
-  },
-  {
     "pair": "B-TA_USDT",
     "previous_day_high": 0.06274,
     "previous_day_low": 0.05756
@@ -15,9 +10,9 @@
     "previous_day_low": 0.02241
   },
   {
-    "pair": "B-AIN_USDT",
-    "previous_day_high": 0.07609,
-    "previous_day_low": 0.0365
+    "pair": "B-ORDER_USDT",
+    "previous_day_high": 0.10317,
+    "previous_day_low": 0.03278
   },
   {
     "pair": "B-BZ_USDT",
@@ -30,8 +25,8 @@
     "previous_day_low": 99.15
   },
   {
-    "pair": "B-ORDER_USDT",
-    "previous_day_high": 0.10317,
-    "previous_day_low": 0.03278
+    "pair": "B-Q_USDT",
+    "previous_day_high": 0.214134,
+    "previous_day_low": 0.052033
   }
 ]
