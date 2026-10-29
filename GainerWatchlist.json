@@ -43,5 +43,20 @@
     "pair": "B-HAEDAL_USDT",
     "previous_day_high": 0.03389,
     "previous_day_low": 0.02104
+  },
+  {
+    "pair": "B-ON_USDT",
+    "previous_day_high": 0.2073,
+    "previous_day_low": 0.1433
+  },
+  {
+    "pair": "B-BLESS_USDT",
+    "previous_day_high": 0.014442,
+    "previous_day_low": 0.008618
+  },
+  {
+    "pair": "B-FIGHT_USDT",
+    "previous_day_high": 0.004613,
+    "previous_day_low": 0.003696
   }
 ]
