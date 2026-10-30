@@ -43,5 +43,10 @@
     "pair": "B-ON_USDT",
     "previous_day_high": 0.2073,
     "previous_day_low": 0.1433
+  },
+  {
+    "pair": "B-TRX_USDT",
+    "previous_day_high": 0.36534,
+    "previous_day_low": 0.32823
   }
 ]
