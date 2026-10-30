@@ -1,18 +1,18 @@
 [
   {
-    "pair": "B-AAVE_USDT",
-    "previous_day_high": 137.94,
-    "previous_day_low": 118.32
-  },
-  {
     "pair": "B-HBAR_USDT",
     "previous_day_high": 0.07579,
     "previous_day_low": 0.06546
   },
   {
-    "pair": "B-IOTA_USDT",
-    "previous_day_high": 0.04161,
-    "previous_day_low": 0.037
+    "pair": "B-GPS_USDT",
+    "previous_day_high": 0.00933,
+    "previous_day_low": 0.007601
+  },
+  {
+    "pair": "B-AAVE_USDT",
+    "previous_day_high": 137.94,
+    "previous_day_low": 118.32
   },
   {
     "pair": "B-DOT_USDT",
@@ -30,9 +30,9 @@
     "previous_day_low": 0.005632
   },
   {
-    "pair": "B-GPS_USDT",
-    "previous_day_high": 0.00933,
-    "previous_day_low": 0.007601
+    "pair": "B-IOTA_USDT",
+    "previous_day_high": 0.04161,
+    "previous_day_low": 0.037
   },
   {
     "pair": "B-FLOW_USDT",
