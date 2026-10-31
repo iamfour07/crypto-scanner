@@ -10,23 +10,23 @@
     "previous_day_low": 0.003696
   },
   {
-    "pair": "B-ACU_USDT",
-    "previous_day_high": 0.1565,
-    "previous_day_low": 0.11533
-  },
-  {
     "pair": "B-HAEDAL_USDT",
     "previous_day_high": 0.03389,
     "previous_day_low": 0.02104
   },
   {
-    "pair": "B-BEAMX_USDT",
-    "previous_day_high": 0.005433,
-    "previous_day_low": 0.003225
+    "pair": "B-ACU_USDT",
+    "previous_day_high": 0.1565,
+    "previous_day_low": 0.11533
   },
   {
     "pair": "B-ORDER_USDT",
     "previous_day_high": 0.10317,
     "previous_day_low": 0.03278
+  },
+  {
+    "pair": "B-BEAMX_USDT",
+    "previous_day_high": 0.005433,
+    "previous_day_low": 0.003225
   }
 ]
