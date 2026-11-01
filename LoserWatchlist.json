@@ -48,5 +48,15 @@
     "pair": "B-HBAR_USDT",
     "previous_day_high": 0.07579,
     "previous_day_low": 0.06546
+  },
+  {
+    "pair": "B-SUN_USDT",
+    "previous_day_high": 0.016278,
+    "previous_day_low": 0.014808
+  },
+  {
+    "pair": "B-SLX_USDT",
+    "previous_day_high": 0.0457,
+    "previous_day_low": 0.04345
   }
 ]
