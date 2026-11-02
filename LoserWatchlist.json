@@ -48,5 +48,15 @@
     "pair": "B-PAXG_USDT",
     "previous_day_high": 4020.37,
     "previous_day_low": 3887.64
+  },
+  {
+    "pair": "B-SOL_USDT",
+    "previous_day_high": 95.95,
+    "previous_day_low": 93.13
+  },
+  {
+    "pair": "B-JELLYJELLY_USDT",
+    "previous_day_high": 0.04373,
+    "previous_day_low": 0.04178
   }
 ]
