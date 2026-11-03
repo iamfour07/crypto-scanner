@@ -28,5 +28,10 @@
     "pair": "B-FIGHT_USDT",
     "previous_day_high": 0.004613,
     "previous_day_low": 0.003696
+  },
+  {
+    "pair": "B-ARIA_USDT",
+    "previous_day_high": 0.13487,
+    "previous_day_low": 0.08203
   }
 ]
