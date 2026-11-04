@@ -63,5 +63,10 @@
     "pair": "B-PIPPIN_USDT",
     "previous_day_high": 0.014,
     "previous_day_low": 0.01318
+  },
+  {
+    "pair": "B-MUBARAK_USDT",
+    "previous_day_high": 0.04242,
+    "previous_day_low": 0.03851
   }
 ]

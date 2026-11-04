@@ -33,5 +33,10 @@
     "pair": "B-BLESS_USDT",
     "previous_day_high": 0.014442,
     "previous_day_low": 0.008618
+  },
+  {
+    "pair": "B-HOT_USDT",
+    "previous_day_high": 0.000598,
+    "previous_day_low": 0.000411
   }
 ]
