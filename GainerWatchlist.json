@@ -1,23 +1,8 @@
 [
   {
-    "pair": "B-FIGHT_USDT",
-    "previous_day_high": 0.004613,
-    "previous_day_low": 0.003696
-  },
-  {
-    "pair": "B-HOT_USDT",
-    "previous_day_high": 0.000598,
-    "previous_day_low": 0.000411
-  },
-  {
     "pair": "B-CLANKER_USDT",
     "previous_day_high": 27.1,
     "previous_day_low": 14.21
-  },
-  {
-    "pair": "B-ESPORTS_USDT",
-    "previous_day_high": 0.022484,
-    "previous_day_low": 0.008552
   },
   {
     "pair": "B-ELSA_USDT",
@@ -25,18 +10,33 @@
     "previous_day_low": 0.06225
   },
   {
-    "pair": "B-ORDER_USDT",
-    "previous_day_high": 0.10317,
-    "previous_day_low": 0.03278
+    "pair": "B-HOT_USDT",
+    "previous_day_high": 0.000598,
+    "previous_day_low": 0.000411
   },
   {
-    "pair": "B-ARIA_USDT",
-    "previous_day_high": 0.13487,
-    "previous_day_low": 0.08203
+    "pair": "B-ESPORTS_USDT",
+    "previous_day_high": 0.022484,
+    "previous_day_low": 0.008552
   },
   {
     "pair": "B-HAEDAL_USDT",
     "previous_day_high": 0.03389,
     "previous_day_low": 0.02104
+  },
+  {
+    "pair": "B-ORDER_USDT",
+    "previous_day_high": 0.10317,
+    "previous_day_low": 0.03278
+  },
+  {
+    "pair": "B-FIGHT_USDT",
+    "previous_day_high": 0.004613,
+    "previous_day_low": 0.003696
+  },
+  {
+    "pair": "B-ARIA_USDT",
+    "previous_day_high": 0.13487,
+    "previous_day_low": 0.08203
   }
 ]
