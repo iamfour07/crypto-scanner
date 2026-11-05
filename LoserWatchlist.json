@@ -33,5 +33,25 @@
     "pair": "B-IOTA_USDT",
     "previous_day_high": 0.04161,
     "previous_day_low": 0.037
+  },
+  {
+    "pair": "B-HUMA_USDT",
+    "previous_day_high": 0.02251,
+    "previous_day_low": 0.01642
+  },
+  {
+    "pair": "B-TRUMP_USDT",
+    "previous_day_high": 1.589,
+    "previous_day_low": 1.215
+  },
+  {
+    "pair": "B-BZ_USDT",
+    "previous_day_high": 105.07,
+    "previous_day_low": 93.37
+  },
+  {
+    "pair": "B-MELANIA_USDT",
+    "previous_day_high": 0.07623,
+    "previous_day_low": 0.06399
   }
 ]

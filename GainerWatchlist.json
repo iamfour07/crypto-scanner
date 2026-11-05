@@ -28,5 +28,15 @@
     "pair": "B-HAEDAL_USDT",
     "previous_day_high": 0.03389,
     "previous_day_low": 0.02104
+  },
+  {
+    "pair": "B-ELSA_USDT",
+    "previous_day_high": 0.11423,
+    "previous_day_low": 0.06225
+  },
+  {
+    "pair": "B-CLANKER_USDT",
+    "previous_day_high": 27.1,
+    "previous_day_low": 14.21
   }
 ]
