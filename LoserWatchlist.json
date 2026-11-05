@@ -5,14 +5,9 @@
     "previous_day_low": 93.37
   },
   {
-    "pair": "B-FIDA_USDT",
-    "previous_day_high": 0.01664,
-    "previous_day_low": 0.01563
-  },
-  {
-    "pair": "B-IOTA_USDT",
-    "previous_day_high": 0.04161,
-    "previous_day_low": 0.037
+    "pair": "B-HBAR_USDT",
+    "previous_day_high": 0.07579,
+    "previous_day_low": 0.06546
   },
   {
     "pair": "B-SUN_USDT",
@@ -25,8 +20,8 @@
     "previous_day_low": 0.8892
   },
   {
-    "pair": "B-HBAR_USDT",
-    "previous_day_high": 0.07579,
-    "previous_day_low": 0.06546
+    "pair": "B-IOTA_USDT",
+    "previous_day_high": 0.04161,
+    "previous_day_low": 0.037
   }
 ]
