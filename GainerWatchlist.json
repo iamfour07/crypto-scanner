@@ -1,10 +1,5 @@
 [
   {
-    "pair": "B-CLANKER_USDT",
-    "previous_day_high": 27.1,
-    "previous_day_low": 14.21
-  },
-  {
     "pair": "B-ICNT_USDT",
     "previous_day_high": 0.3239,
     "previous_day_low": 0.2189
@@ -13,6 +8,11 @@
     "pair": "B-ESPORTS_USDT",
     "previous_day_high": 0.022484,
     "previous_day_low": 0.008552
+  },
+  {
+    "pair": "B-CLANKER_USDT",
+    "previous_day_high": 27.1,
+    "previous_day_low": 14.21
   },
   {
     "pair": "B-HAEDAL_USDT",
