@@ -198,5 +198,20 @@
     "pair": "B-AEVO_USDT",
     "previous_day_high": 0.02033,
     "previous_day_low": 0.01824
+  },
+  {
+    "pair": "B-CYS_USDT",
+    "previous_day_high": 0.0946,
+    "previous_day_low": 0.0858
+  },
+  {
+    "pair": "B-YB_USDT",
+    "previous_day_high": 0.05707,
+    "previous_day_low": 0.04941
+  },
+  {
+    "pair": "B-SIGN_USDT",
+    "previous_day_high": 0.011118,
+    "previous_day_low": 0.008283
   }
 ]
