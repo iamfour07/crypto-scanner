@@ -1,13 +1,13 @@
 [
   {
-    "pair": "B-SUN_USDT",
-    "previous_day_high": 0.016278,
-    "previous_day_low": 0.014808
+    "pair": "B-XLM_USDT",
+    "previous_day_high": 0.1518,
+    "previous_day_low": 0.14214
   },
   {
-    "pair": "B-TURBO_USDT",
-    "previous_day_high": 0.0007742,
-    "previous_day_low": 0.0006832
+    "pair": "B-AIGENSYN_USDT",
+    "previous_day_high": 0.01485,
+    "previous_day_low": 0.01335
   },
   {
     "pair": "B-BZ_USDT",
@@ -20,34 +20,19 @@
     "previous_day_low": 0.01557
   },
   {
-    "pair": "B-BIGTIME_USDT",
-    "previous_day_high": 0.005795,
-    "previous_day_low": 0.005155
-  },
-  {
-    "pair": "B-XRP_USDT",
-    "previous_day_high": 1.1693,
-    "previous_day_low": 1.0882
-  },
-  {
     "pair": "B-DYDX_USDT",
     "previous_day_high": 0.0952,
     "previous_day_low": 0.0847
   },
   {
-    "pair": "B-AIGENSYN_USDT",
-    "previous_day_high": 0.01485,
-    "previous_day_low": 0.01335
+    "pair": "B-TURBO_USDT",
+    "previous_day_high": 0.0007742,
+    "previous_day_low": 0.0006832
   },
   {
     "pair": "B-STO_USDT",
     "previous_day_high": 0.02721,
     "previous_day_low": 0.02415
-  },
-  {
-    "pair": "B-XLM_USDT",
-    "previous_day_high": 0.1518,
-    "previous_day_low": 0.14214
   },
   {
     "pair": "B-XPL_USDT",
@@ -65,19 +50,9 @@
     "previous_day_low": 0.13816
   },
   {
-    "pair": "B-MEME_USDT",
-    "previous_day_high": 0.0003987,
-    "previous_day_low": 0.0003578
-  },
-  {
     "pair": "B-TNSR_USDT",
     "previous_day_high": 0.02588,
     "previous_day_low": 0.02314
-  },
-  {
-    "pair": "B-BANANA_USDT",
-    "previous_day_high": 3.05,
-    "previous_day_low": 2.811
   },
   {
     "pair": "B-PNUT_USDT",
@@ -85,9 +60,24 @@
     "previous_day_low": 0.03133
   },
   {
-    "pair": "B-LINEA_USDT",
-    "previous_day_high": 0.002186,
-    "previous_day_low": 0.00195
+    "pair": "B-BANANA_USDT",
+    "previous_day_high": 3.05,
+    "previous_day_low": 2.811
+  },
+  {
+    "pair": "B-XRP_USDT",
+    "previous_day_high": 1.1693,
+    "previous_day_low": 1.0882
+  },
+  {
+    "pair": "B-BIGTIME_USDT",
+    "previous_day_high": 0.005795,
+    "previous_day_low": 0.005155
+  },
+  {
+    "pair": "B-SUN_USDT",
+    "previous_day_high": 0.016278,
+    "previous_day_low": 0.014808
   },
   {
     "pair": "B-NXPC_USDT",
@@ -95,14 +85,9 @@
     "previous_day_low": 0.1382
   },
   {
-    "pair": "B-ASTER_USDT",
-    "previous_day_high": 0.6834,
-    "previous_day_low": 0.6332
-  },
-  {
-    "pair": "B-ZBT_USDT",
-    "previous_day_high": 0.06098,
-    "previous_day_low": 0.05691
+    "pair": "B-LINEA_USDT",
+    "previous_day_high": 0.002186,
+    "previous_day_low": 0.00195
   },
   {
     "pair": "B-EGLD_USDT",
@@ -110,9 +95,19 @@
     "previous_day_low": 2.799
   },
   {
+    "pair": "B-ZBT_USDT",
+    "previous_day_high": 0.06098,
+    "previous_day_low": 0.05691
+  },
+  {
     "pair": "B-SPACE_USDT",
     "previous_day_high": 0.003336,
     "previous_day_low": 0.002938
+  },
+  {
+    "pair": "B-MEME_USDT",
+    "previous_day_high": 0.0003987,
+    "previous_day_low": 0.0003578
   },
   {
     "pair": "B-TAC_USDT",
@@ -120,24 +115,24 @@
     "previous_day_low": 0.000859
   },
   {
-    "pair": "B-FRAX_USDT",
-    "previous_day_high": 0.2349,
-    "previous_day_low": 0.2126
-  },
-  {
     "pair": "B-SPELL_USDT",
     "previous_day_high": 7.27e-05,
     "previous_day_low": 6.6e-05
   },
   {
-    "pair": "B-ZORA_USDT",
-    "previous_day_high": 0.00515,
-    "previous_day_low": 0.004626
+    "pair": "B-FRAX_USDT",
+    "previous_day_high": 0.2349,
+    "previous_day_low": 0.2126
   },
   {
     "pair": "B-ID_USDT",
     "previous_day_high": 0.0279,
     "previous_day_low": 0.02519
+  },
+  {
+    "pair": "B-ZORA_USDT",
+    "previous_day_high": 0.00515,
+    "previous_day_low": 0.004626
   },
   {
     "pair": "B-XVG_USDT",
@@ -153,5 +148,10 @@
     "pair": "B-CELO_USDT",
     "previous_day_high": 0.06773,
     "previous_day_low": 0.05957
+  },
+  {
+    "pair": "B-ASTER_USDT",
+    "previous_day_high": 0.6834,
+    "previous_day_low": 0.6332
   }
 ]
