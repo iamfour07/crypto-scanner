@@ -103,5 +103,10 @@
     "pair": "B-STO_USDT",
     "previous_day_high": 0.02721,
     "previous_day_low": 0.02415
+  },
+  {
+    "pair": "B-BZ_USDT",
+    "previous_day_high": 97.88,
+    "previous_day_low": 90.02
   }
 ]
