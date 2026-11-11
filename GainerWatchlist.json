@@ -5,13 +5,13 @@
     "previous_day_low": 0.008552
   },
   {
-    "pair": "B-NATGAS_USDT",
-    "previous_day_high": 3.537,
-    "previous_day_low": 3.367
-  },
-  {
     "pair": "B-HAEDAL_USDT",
     "previous_day_high": 0.03389,
     "previous_day_low": 0.02104
+  },
+  {
+    "pair": "B-NATGAS_USDT",
+    "previous_day_high": 3.537,
+    "previous_day_low": 3.367
   }
 ]
