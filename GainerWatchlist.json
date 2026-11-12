@@ -1,12 +1,12 @@
 [
   {
-    "pair": "B-ESPORTS_USDT",
-    "previous_day_high": 0.022484,
-    "previous_day_low": 0.008552
-  },
-  {
     "pair": "B-HAEDAL_USDT",
     "previous_day_high": 0.03389,
     "previous_day_low": 0.02104
+  },
+  {
+    "pair": "B-ESPORTS_USDT",
+    "previous_day_high": 0.022484,
+    "previous_day_low": 0.008552
   }
 ]
