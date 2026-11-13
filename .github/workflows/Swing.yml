@@ -3,9 +3,8 @@ name: Master Swing Scanner
 on:
   workflow_dispatch:
 
-# Concurrency group ensures this waits if the Master Scanneris running
 concurrency:
-  group: scanner-lock
+  group: ${{ github.workflow }}   # own lock: never overlaps itself, never cancels other scanners
   cancel-in-progress: false
 
 permissions:
@@ -19,6 +18,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          ref: main          # latest main at run time, not the commit at trigger time
           fetch-depth: 0
 
       - name: Setup Python
@@ -43,16 +43,26 @@ jobs:
           git config --local user.name "github-actions[bot]"
 
           # Sirf zaroori files add karein
-          git add IntradayWatchlist.json
+          if [ -f IntradayWatchlist.json ]; then git add IntradayWatchlist.json; fi
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Update gold watchlist [skip ci]"
 
           # Kisi bhi extra temporary file change ko discard karein
           git checkout -- . || true
 
-          # Agar changes hain toh hi commit aur push karein
-          if ! git diff --cached --quiet; then
-            git commit -m "Update momentum watchlists [skip ci]"
-            git pull --rebase origin main
-            git push origin main
-          else
-            echo "No changes to commit"
-          fi
+          # Doosra scanner same time push kare toh retry (alag files, conflict nahi hoga)
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin main; then
+              echo "Pushed on attempt $i"
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "Push failed (attempt $i) — retrying"
+            sleep $((i * 5))
+          done
+          echo "Push failed after 5 attempts"
+          exit 1
