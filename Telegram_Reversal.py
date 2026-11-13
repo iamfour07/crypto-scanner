@@ -10,10 +10,11 @@ def Send_Reversal_Telegram_Message(message):
         "text": message,  # Escape special characters like < > &
     }
     try:
-        response = requests.post(url, data=payload)
+        response = requests.post(url, data=payload, timeout=15)
         if response.status_code == 200:
             print("✅ Message sent successfully")
-        else:
-            print("⚠️ Failed to send message:", response.text)
+            return True
+        print("⚠️ Failed to send message:", response.text)
     except Exception as e:
         print("⚠️ Error:", e)
+    return False

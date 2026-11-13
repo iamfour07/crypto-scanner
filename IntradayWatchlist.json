@@ -1,1 +1,9 @@
-{}
+{
+  "last_processed_ts": 1794560400,
+  "active": false,
+  "last_rsi": null,
+  "alert_count": 0,
+  "watch_started": null,
+  "last_alert": null,
+  "buy_prices": []
+}

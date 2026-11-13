@@ -1,0 +1,7 @@
+{
+    "code-runner.executorMap": {
+        "python": "cd $dir && /opt/homebrew/bin/python3 -u $fileName"
+    },
+    "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+    "code-runner.ignoreSelection": true
+}
