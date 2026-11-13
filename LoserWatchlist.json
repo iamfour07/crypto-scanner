@@ -88,5 +88,20 @@
     "pair": "B-XVG_USDT",
     "previous_day_high": 0.002066,
     "previous_day_low": 0.001842
+  },
+  {
+    "pair": "B-BTC_USDT",
+    "previous_day_high": 74191.7,
+    "previous_day_low": 71082.0
+  },
+  {
+    "pair": "B-ID_USDT",
+    "previous_day_high": 0.02569,
+    "previous_day_low": 0.02406
+  },
+  {
+    "pair": "B-RARE_USDT",
+    "previous_day_high": 0.01049,
+    "previous_day_low": 0.0099
   }
 ]
