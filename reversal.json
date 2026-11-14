@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "symbol": "SHELL_USDT",
+    "pair": "B-SHELL_USDT",
+    "breakout_date": "2026-11-13",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "KITE_USDT",
+    "pair": "B-KITE_USDT",
+    "breakout_date": "2026-11-13",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "BARD_USDT",
+    "pair": "B-BARD_USDT",
+    "breakout_date": "2026-11-13",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  }
+]
