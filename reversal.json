@@ -34,5 +34,17 @@
     "ema_9": null,
     "stop_loss": null,
     "last_checked_ts": null
+  },
+  {
+    "symbol": "SOPH_USDT",
+    "pair": "B-SOPH_USDT",
+    "breakout_date": "2026-11-14",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
   }
 ]
