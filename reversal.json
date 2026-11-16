@@ -33,19 +33,7 @@
     "confirmation_close": 0.1021,
     "ema_9": 0.10975459884838126,
     "stop_loss": 0.1194,
-    "last_checked_ts": 1794787200
-  },
-  {
-    "symbol": "SOPH_USDT",
-    "pair": "B-SOPH_USDT",
-    "breakout_date": "2026-11-14",
-    "status": "YES",
-    "trigger_price": 0.001113,
-    "ema_confirmation_date": "2026-11-15",
-    "confirmation_close": 0.001176,
-    "ema_9": 0.0014855681394806575,
-    "stop_loss": 0.002559,
-    "last_checked_ts": 1794787200
+    "last_checked_ts": 1794790800
   },
   {
     "symbol": "NIGHT_USDT",
