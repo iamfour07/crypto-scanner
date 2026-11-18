@@ -21,19 +21,19 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1794956400
+    "last_checked_ts": 1794960000
   },
   {
     "symbol": "NIGHT_USDT",
     "pair": "B-NIGHT_USDT",
     "breakout_date": "2026-11-15",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.04373,
+    "ema_confirmation_date": "2026-11-17",
+    "confirmation_close": 0.04484,
+    "ema_9": 0.04554099116794719,
+    "stop_loss": 0.04998,
+    "last_checked_ts": 1794960000
   },
   {
     "symbol": "FF_USDT",
@@ -99,6 +99,54 @@
     "symbol": "BLESS_USDT",
     "pair": "B-BLESS_USDT",
     "breakout_date": "2026-11-16",
+    "status": "YES",
+    "trigger_price": 0.009555,
+    "ema_confirmation_date": "2026-11-17",
+    "confirmation_close": 0.009992,
+    "ema_9": 0.01056261613476998,
+    "stop_loss": 0.019455,
+    "last_checked_ts": 1794960000
+  },
+  {
+    "symbol": "BREV_USDT",
+    "pair": "B-BREV_USDT",
+    "breakout_date": "2026-11-17",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "CTR_USDT",
+    "pair": "B-CTR_USDT",
+    "breakout_date": "2026-11-17",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "MMT_USDT",
+    "pair": "B-MMT_USDT",
+    "breakout_date": "2026-11-17",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "GPS_USDT",
+    "pair": "B-GPS_USDT",
+    "breakout_date": "2026-11-17",
     "status": "NO",
     "trigger_price": null,
     "ema_confirmation_date": null,
