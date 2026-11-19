@@ -21,7 +21,7 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795042800
+    "last_checked_ts": 1795046400
   },
   {
     "symbol": "FF_USDT",
@@ -93,7 +93,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795042800
+    "last_checked_ts": 1795046400
   },
   {
     "symbol": "BREV_USDT",
@@ -135,6 +135,66 @@
     "symbol": "GPS_USDT",
     "pair": "B-GPS_USDT",
     "breakout_date": "2026-11-17",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "PIEVERSE_USDT",
+    "pair": "B-PIEVERSE_USDT",
+    "breakout_date": "2026-11-18",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "VELVET_USDT",
+    "pair": "B-VELVET_USDT",
+    "breakout_date": "2026-11-18",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "MEGA_USDT",
+    "pair": "B-MEGA_USDT",
+    "breakout_date": "2026-11-18",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "PHAROS_USDT",
+    "pair": "B-PHAROS_USDT",
+    "breakout_date": "2026-11-18",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "PIPPIN_USDT",
+    "pair": "B-PIPPIN_USDT",
+    "breakout_date": "2026-11-18",
     "status": "NO",
     "trigger_price": null,
     "ema_confirmation_date": null,
