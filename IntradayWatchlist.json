@@ -1,10 +1,10 @@
 {
-  "last_processed_ts": 1795134600,
+  "last_processed_ts": 1795136400,
   "active": true,
-  "last_rsi": 30.042908989815572,
-  "alert_count": 9,
+  "last_rsi": 28.23099403914871,
+  "alert_count": 10,
   "watch_started": "2026-11-19 19:30 IST",
-  "last_alert": "2026-11-20 06:30 IST",
+  "last_alert": "2026-11-20 07:00 IST",
   "buy_prices": [
     3721.03,
     3716.65,
@@ -14,6 +14,7 @@
     3641.11,
     3632.72,
     3612.84,
-    3603.38
+    3603.38,
+    3581.91
   ]
 }
