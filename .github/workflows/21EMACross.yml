@@ -13,7 +13,7 @@ permissions:
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20      # both scanners run in this one job
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,25 +31,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas requests
 
-      - name: Run Scanner
+      # Both scanners run one after the other in the SAME job, so their JSON files
+      # are committed and pushed together — they can never race each other.
+      # continue-on-error: if one scanner crashes, the other still runs and its
+      # JSON is still committed.
+      - name: Run 1H EMA 9 Scanner (EMARsiSwing.py)
+        id: ema
+        continue-on-error: true
         run: python EMARsiSwing.py
         env:
           TELEGRAM_BOT_TOKEN_21_EMA: ${{ secrets.TELEGRAM_BOT_TOKEN_21_EMA }}
           TELEGRAM_CHAT_ID_21_EMA: ${{ secrets.TELEGRAM_CHAT_ID_21_EMA }}
 
+      - name: Run Daily BB Reversal Scanner (ReversalSell.py)
+        id: reversal
+        continue-on-error: true
+        run: python ReversalSell.py
+        env:
+          TELEGRAM_BOT_TOKEN_21_EMA: ${{ secrets.TELEGRAM_BOT_TOKEN_21_EMA }}
+          TELEGRAM_CHAT_ID_21_EMA: ${{ secrets.TELEGRAM_CHAT_ID_21_EMA }}
+
       - name: Commit Watchlist Updates
+        if: always()
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
           # Sirf zaroori files add karein
           if [ -f ReversalWatchlist.json ]; then git add ReversalWatchlist.json; fi
+          if [ -f reversal.json ]; then git add reversal.json; fi
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "Update EMA watchlists [skip ci]"
+          git commit -m "Update EMA + reversal watchlists [skip ci]"
 
           # Kisi bhi extra temporary file change ko discard karein
           git checkout -- . || true
@@ -65,4 +81,12 @@ jobs:
             sleep $((i * 5))
           done
           echo "Push failed after 5 attempts"
+          exit 1
+
+      # Show the run as failed (red) if either scanner crashed, after the commit is done
+      - name: Report scanner failures
+        if: steps.ema.outcome == 'failure' || steps.reversal.outcome == 'failure'
+        run: |
+          echo "EMARsiSwing.py: ${{ steps.ema.outcome }}"
+          echo "ReversalSell.py: ${{ steps.reversal.outcome }}"
           exit 1

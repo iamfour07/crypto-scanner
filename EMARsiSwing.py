@@ -1,46 +1,33 @@
 """
 =====================================================================================
-CoinDCX Futures — Heikin Ashi Supertrend Reversal Scanner
+CoinDCX Futures — Top-Gainer EMA 9 Breakdown Scanner (SHORT)
 =====================================================================================
 
-Strategy   : Fade extended pumps once momentum flips (SHORT-only)
-Candles    : Heikin Ashi (NOT raw candlesticks) — used for BOTH stages below
-Watchlist  : Bollinger Band(length=100, mult=3) touch/close on HA candles
-Signal     : Supertrend(length=9, factor=1.5) flip from GREEN -> RED
-Risk       : Fixed Rs.100 risk per trade regardless of stop-loss distance
+Strategy   : Fade extended pumps once price closes below EMA 9 (SHORT-only)
+Candles    : normal 1H candlesticks (no Heikin Ashi)
+Watchlist  : top gainers (24h change > MIN_GAINER_PCT)
+Signal     : first closed 1H candle that closes below EMA 9
+Risk       : Fixed Rs.100 risk per trade (margin capped at MAX_CAPITAL_INR)
 Leverage   : 7x (fixed)
-Timeframe  : 1H candles for everything (watchlist entry AND signal check)
 
 Flow (every run — designed to be triggered hourly via cron)
 -------------------------------------------------------------------------------------
-STEP 1 - Watchlist update (ALWAYS runs, every execution):
-    - Pull 24h % change for every active USDT-M futures pair
-      (same stats endpoint used in the reversal/gainer scanner).
-    - Keep only pairs with change > MIN_GAINER_PCT (30%), take top 10 by change.
-    - Skip any pair that is ALREADY on ReversalWatchlist.json (no duplicate add,
-      no re-check of a pair that's already being watched).
-    - For each remaining candidate: build 1H Heikin Ashi candles, compute
-      Bollinger Bands (length=100, mult=3) on the HA close.
-    - If the last CLOSED HA candle's high touches OR its close is above the
-      upper band -> add the pair to ReversalWatchlist.json.
+STEP 1 - Watchlist update (ALWAYS runs):
+    - Pull 24h % change for every active USDT-M futures pair.
+    - Keep pairs with change > MIN_GAINER_PCT (30%), top TOP_N (10) by change.
+    - Add them to ReversalWatchlist.json (no duplicates).
 
-STEP 2 - Supertrend flip check (runs ONLY if the watchlist is non-empty
-          after Step 1 — this includes pairs just added this run):
-    - For every pair on the watchlist: build 1H Heikin Ashi candles, compute
-      Supertrend(length=9, factor=1.5).
-    - Compare the PREVIOUS closed HA candle's Supertrend colour against the
-      LAST closed HA candle's colour.
-    - GREEN -> RED flip on the last closed candle triggers a SHORT alert:
-        Entry = low of the flip candle (last closed HA candle)
-        SL    = that same candle's Supertrend value (sits ABOVE price,
-                since the trend just flipped to red)
-        Targets = 2R / 3R / 4R below entry (short direction)
-    - On alert, the pair is REMOVED from the watchlist immediately so it
-      cannot re-fire on the next run.
-    - If the watchlist is still empty after Step 1, Step 2 is skipped.
-
-Before running: insert your real Telegram sender in place of the import
-below, keeping the exact function name `Send_EMA_Telegram_Message`.
+STEP 2 - EMA 9 check (for every pair on the watchlist):
+    - Setup: the LAST closed 1H candle closes below EMA 9, and the candle
+      before it closed at/above its EMA 9 (= first close below EMA 9).
+    - Entry   = LOW of that candle (sell below it)
+    - SL      = previous confirmed swing high (pivot high with SWING_LEFT_BARS
+                candles on the left and SWING_RIGHT_BARS closed candles on the
+                right), the most recent one above the entry.
+                No swing high -> no alert.
+    - Targets = 2R / 3R / 4R below entry.
+    - On a successful alert the pair is removed from the watchlist. If the
+      Telegram send fails, the pair is kept.
 =====================================================================================
 """
 
@@ -58,6 +45,7 @@ try:
 except ImportError:
     def Send_EMA_Telegram_Message(msg):
         print(f"\n--- TELEGRAM ALERT ---\n{msg}\n----------------------")
+        return False
 
 
 # =====================================================================================
@@ -80,13 +68,13 @@ log = logging.getLogger(__name__)
 TOP_N               = 10            # top N gainers considered each run
 MIN_GAINER_PCT       = 30.0          # only pairs with 24h change strictly above this
 
-# ---- Bollinger Band settings (watchlist entry, on HA close) ----
-BB_LENGTH            = 100
-BB_MULT              = 3
+# ---- EMA ----
+EMA_LENGTH           = 9
 
-# ---- Supertrend settings (signal check, on HA candles) ----
-ST_LENGTH            = 9
-ST_FACTOR            = 1.5
+# ---- Swing high (stop loss) ----
+SWING_LEFT_BARS      = 3            # pivot high: higher than N candles on the left ...
+SWING_RIGHT_BARS     = 3            # ... and N closed candles on the right (confirmed)
+SWING_MAX_LOOKBACK   = 10           # search the last N 1H candles for the swing high
 
 # ---- Risk management ----
 RISK_INR             = 100          # fixed Rs. risk per trade
@@ -96,7 +84,7 @@ INR_TO_USDT_RATE     = None         # None = fetch live
 
 # ---- Candles ----
 RESOLUTION           = "60"         # 1H candles for everything
-HOURLY_LOOKBACK_HOURS = 1500          # buffer comfortably above BB_LENGTH=100
+HOURLY_LOOKBACK_HOURS = 300         # enough 1H history for EMA 9 + swing detection
 
 # ---- Threading ----
 MAX_WORKERS          = 15
@@ -210,7 +198,7 @@ def get_top_gainers(pairs):
 
 
 # =====================================================================================
-# CANDLE FETCHING + HEIKIN ASHI CONVERSION
+# CANDLE FETCHING (normal candlesticks)
 # =====================================================================================
 
 def _resolution_to_seconds(resolution):
@@ -276,122 +264,38 @@ def fetch_raw_candles(pair, resolution=RESOLUTION):
     df = _drop_incomplete_last_candle(df, resolution)
     df = df.dropna(subset=["open", "high", "low", "close"]).reset_index(drop=True)
 
-    if len(df) < BB_LENGTH + 2:
+    if len(df) < max(EMA_LENGTH, SWING_LEFT_BARS + SWING_RIGHT_BARS) + 2:
         return None
 
     return df
 
 
-def heikin_ashi(df):
-    """Converts a raw OHLC DataFrame to Heikin Ashi OHLC. Returns a new DataFrame."""
-    ha = df.copy().reset_index(drop=True)
-    ha_close = (df["open"] + df["high"] + df["low"] + df["close"]) / 4.0
-
-    ha_open = pd.Series(index=df.index, dtype="float64")
-    ha_open.iloc[0] = (df["open"].iloc[0] + df["close"].iloc[0]) / 2.0
-    for i in range(1, len(df)):
-        ha_open.iloc[i] = (ha_open.iloc[i - 1] + ha_close.iloc[i - 1]) / 2.0
-
-    ha_high = pd.concat([df["high"], ha_open, ha_close], axis=1).max(axis=1)
-    ha_low = pd.concat([df["low"], ha_open, ha_close], axis=1).min(axis=1)
-
-    ha["open"] = ha_open
-    ha["high"] = ha_high
-    ha["low"] = ha_low
-    ha["close"] = ha_close
-    return ha
-
-
-def fetch_ha_candles(pair, resolution=RESOLUTION):
-    """Fetches raw candles and converts to Heikin Ashi. Returns None if unavailable."""
-    df = fetch_raw_candles(pair, resolution)
-    if df is None:
-        return None
-    return heikin_ashi(df)
-
-
 # =====================================================================================
-# BOLLINGER BANDS (manual, on HA close) — watchlist entry
+# INDICATORS — EMA 9 + swing high
 # =====================================================================================
 
-def calculate_bollinger(df, length=BB_LENGTH, mult=BB_MULT):
-    mid = df["close"].rolling(length).mean()
-    std = df["close"].rolling(length).std()
-    df["BB_mid"] = mid
-    df["BB_upper"] = mid + mult * std
-    df["BB_lower"] = mid - mult * std
+def add_ema(df, length=EMA_LENGTH):
+    df["EMA"] = df["close"].ewm(span=length, adjust=False, min_periods=length).mean()
     return df
 
 
-# =====================================================================================
-# SUPERTREND (manual, on HA candles) — signal check
-# =====================================================================================
-
-def calculate_supertrend(df, length=ST_LENGTH, factor=ST_FACTOR):
+def find_swing_high(df, upto_idx, left=SWING_LEFT_BARS, right=SWING_RIGHT_BARS,
+                    max_lookback=SWING_MAX_LOOKBACK, above=None):
     """
-    Adds 'ST_value' and 'ST_direction' ('green'/'red') columns.
-    Standard Supertrend recursion using Wilder's ATR on HA high/low/close.
+    Index of the most recent CONFIRMED pivot high at or before `upto_idx`, else None.
+    Confirmed = its `right` candles are all closed (i + right <= upto_idx).
+    Pivot: high[i] > every high in the `left` candles before it and >= every high in
+    the `right` candles after it. With `above`, the pivot high must also be > above.
     """
-    high, low, close = df["high"], df["low"], df["close"]
-    prev_close = close.shift(1)
-
-    tr = pd.concat([
-        high - low,
-        (high - prev_close).abs(),
-        (low - prev_close).abs(),
-    ], axis=1).max(axis=1)
-
-    atr = tr.ewm(alpha=1.0 / length, adjust=False).mean()
-
-    hl2 = (high + low) / 2.0
-    basic_upper = hl2 + factor * atr
-    basic_lower = hl2 - factor * atr
-
-    n = len(df)
-    final_upper = [0.0] * n
-    final_lower = [0.0] * n
-    st_value = [0.0] * n
-    st_dir = [None] * n
-
-    for i in range(n):
-        if i == 0:
-            final_upper[i] = basic_upper.iloc[i]
-            final_lower[i] = basic_lower.iloc[i]
-            st_value[i] = final_upper[i]
-            st_dir[i] = "red"
+    highs = df["high"].to_numpy()
+    stop = max(left, upto_idx - max_lookback)
+    for i in range(upto_idx - right, stop - 1, -1):
+        h = highs[i]
+        if above is not None and h <= above:
             continue
-
-        # Final upper band
-        if basic_upper.iloc[i] < final_upper[i - 1] or close.iloc[i - 1] > final_upper[i - 1]:
-            final_upper[i] = basic_upper.iloc[i]
-        else:
-            final_upper[i] = final_upper[i - 1]
-
-        # Final lower band
-        if basic_lower.iloc[i] > final_lower[i - 1] or close.iloc[i - 1] < final_lower[i - 1]:
-            final_lower[i] = basic_lower.iloc[i]
-        else:
-            final_lower[i] = final_lower[i - 1]
-
-        # Supertrend value / direction
-        if st_value[i - 1] == final_upper[i - 1]:
-            if close.iloc[i] <= final_upper[i]:
-                st_value[i] = final_upper[i]
-                st_dir[i] = "red"
-            else:
-                st_value[i] = final_lower[i]
-                st_dir[i] = "green"
-        else:  # previous was tracking the lower band (green)
-            if close.iloc[i] >= final_lower[i]:
-                st_value[i] = final_lower[i]
-                st_dir[i] = "green"
-            else:
-                st_value[i] = final_upper[i]
-                st_dir[i] = "red"
-
-    df["ST_value"] = st_value
-    df["ST_direction"] = st_dir
-    return df
+        if h > highs[i - left:i].max() and h >= highs[i + 1:i + right + 1].max():
+            return i
+    return None
 
 
 # =====================================================================================
@@ -478,12 +382,13 @@ def build_short_msg(pair, entry, sl, t2, t3, t4):
         return None
 
     return (
-        f"🔴 SHORT (Supertrend Flip)\n\n"
+        f"🔴 SHORT (EMA {EMA_LENGTH} Breakdown)\n\n"
         f"Name - {pair}\n"
-        f"Entry - {entry}\n"
+        f"Entry (sell below) - {entry}\n"
+        f"SL (swing high) - {sl}\n"
+        f"Quantity - {pos['quantity']:.6g}\n"
         f"Capital - Rs.{pos['capital_inr']:.2f}\n"
-        f"Risk per trade - Rs.{RISK_INR}\n"
-        f"SL - {sl}\n"
+        f"Risk per trade - Rs.{pos['actual_risk_inr']:.2f}\n"
         f"\n"
         f"-----------------\n"
         f"T1 - {t2}\n"
@@ -496,43 +401,11 @@ def build_short_msg(pair, entry, sl, t2, t3, t4):
 # STEP 1 — WATCHLIST UPDATE
 # =====================================================================================
 
-def check_bb_touch(pair, existing_pairs):
-    """
-    Returns pair (str) if it should be added to the watchlist, else None.
-    Condition: last closed HA candle's high touches/exceeds OR close is
-    above the upper Bollinger Band (length=100, mult=3) computed on HA close.
-    """
-    if pair in existing_pairs:
-        return None
-
-    ha_df = fetch_ha_candles(pair)
-    if ha_df is None or len(ha_df) < BB_LENGTH + 2:
-        return None
-
-    ha_df = calculate_bollinger(ha_df)
-    ha_df = ha_df.dropna(subset=["BB_upper"]).reset_index(drop=True)
-    if ha_df.empty:
-        return None
-
-    last = ha_df.iloc[-1]
-    touched = last["high"] >= last["BB_upper"] or last["close"] > last["BB_upper"]
-
-    if touched:
-        log.info(
-            f"[WATCHLIST-ADD] {pair} | HA high={last['high']:.6f} "
-            f"HA close={last['close']:.6f} BB_upper={last['BB_upper']:.6f}"
-        )
-        return pair
-
-    return None
-
-
 def update_watchlist():
     """
     STEP 1 — always runs.
-    Adds newly-qualifying top gainers (>30% change, HA candle touching
-    upper BB(100,3)) to the watchlist. Pairs already on the watchlist are
-    skipped entirely (no re-check, no duplicate).
+    Adds new top gainers (>MIN_GAINER_PCT change) to the watchlist.
+    Pairs already on the watchlist are skipped (no duplicate).
     """
     watchlist = load_watchlist(WATCHLIST_FILE)
     existing_pairs = {e["pair"] for e in watchlist}
@@ -551,14 +424,7 @@ def update_watchlist():
 
     candidate_pairs = [g["pair"] for g in gainers if g["pair"] not in existing_pairs]
 
-    newly_added = []
-    if candidate_pairs:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-            futures = {ex.submit(check_bb_touch, p, existing_pairs): p for p in candidate_pairs}
-            for f in as_completed(futures):
-                result = f.result()
-                if result:
-                    newly_added.append({"pair": result})
+    newly_added = [{"pair": p} for p in candidate_pairs]
 
     if newly_added:
         watchlist = watchlist + newly_added
@@ -572,43 +438,42 @@ def update_watchlist():
 
 
 # =====================================================================================
-# STEP 2 — SUPERTREND FLIP CHECK
+# STEP 2 — EMA 9 BREAKDOWN CHECK
 # =====================================================================================
 
-def check_supertrend_flip(pair):
+def check_ema_breakdown(pair):
     """
-    Returns (pair, alert_message) if a green->red Supertrend flip fired on
-    the last closed HA candle, else (pair, None).
+    Returns (pair, alert_message) if the last closed 1H candle is the first close
+    below EMA 9 and a valid swing high exists, else (pair, None).
     """
-    ha_df = fetch_ha_candles(pair)
-    if ha_df is None or len(ha_df) < ST_LENGTH + 2:
+    df = fetch_raw_candles(pair)
+    if df is None:
         return pair, None
 
-    ha_df = calculate_supertrend(ha_df)
-    if len(ha_df) < 2:
+    df = add_ema(df)
+    last_idx = len(df) - 1
+    prev, last = df.iloc[-2], df.iloc[-1]
+    if pd.isna(last["EMA"]) or pd.isna(prev["EMA"]):
         return pair, None
 
-    prev = ha_df.iloc[-2]
-    last = ha_df.iloc[-1]
-
-    flipped = prev["ST_direction"] == "green" and last["ST_direction"] == "red"
-    if not flipped:
+    first_close_below = last["close"] < last["EMA"] and prev["close"] >= prev["EMA"]
+    if not first_close_below:
         return pair, None
 
     entry = round(float(last["low"]), 6)
-    sl = round(float(last["ST_value"]), 6)
-
-    if sl <= entry:
-        # Shouldn't happen given a red Supertrend sits above price, but
-        # never fire on a broken/degenerate level.
+    sw_idx = find_swing_high(df, last_idx, above=entry)
+    if sw_idx is None:
+        log.info(f"{pair}: closed below EMA {EMA_LENGTH} but no confirmed swing high — skipped")
         return pair, None
+    sl = round(float(df.iloc[sw_idx]["high"]), 6)
 
     risk = sl - entry
     t2 = round(entry - 2 * risk, 6)
     t3 = round(entry - 3 * risk, 6)
     t4 = round(entry - 4 * risk, 6)
 
-    log.info(f"\U0001F534 SUPERTREND FLIP: {pair} | entry={entry} sl={sl}")
+    log.info(f"\U0001F534 EMA {EMA_LENGTH} BREAKDOWN: {pair} | close={last['close']} "
+             f"ema={last['EMA']:.6f} entry={entry} sl={sl}")
     msg = build_short_msg(pair, entry, sl, t2, t3, t4)
     return pair, msg
 
@@ -616,12 +481,11 @@ def check_supertrend_flip(pair):
 def run_signal_check(watchlist):
     """
     STEP 2 — only runs if watchlist is non-empty.
-    Checks every watchlisted pair for a green->red Supertrend flip on the
-    last closed HA candle. Fires alerts and removes triggered pairs from
-    the watchlist immediately.
+    Checks every watchlisted pair for the EMA 9 breakdown setup. Sends alerts and
+    removes alerted pairs from the watchlist (only if Telegram accepted the message).
     """
     if not watchlist:
-        log.info("Watchlist empty — skipping Supertrend flip check this run.")
+        log.info("Watchlist empty — skipping EMA check this run.")
         return
 
     pairs = [e["pair"] for e in watchlist]
@@ -629,27 +493,32 @@ def run_signal_check(watchlist):
     triggered_pairs = set()
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futures = {ex.submit(check_supertrend_flip, p): p for p in pairs}
+        futures = {ex.submit(check_ema_breakdown, p): p for p in pairs}
         for f in as_completed(futures):
             pair, msg = f.result()
             if msg:
                 alerts.append(msg)
                 triggered_pairs.add(pair)
 
-    if alerts:
-        try:
-            Send_EMA_Telegram_Message("\n\n---\n\n".join(alerts))
-        except Exception as e:
-            log.warning(f"Failed to send Telegram message: {e}")
-        log.info(f"Sent {len(alerts)} alert(s).")
-    else:
-        log.info("No Supertrend flips this run.")
+    if not alerts:
+        log.info(f"No EMA {EMA_LENGTH} breakdowns this run.")
+        return
 
-    if triggered_pairs:
-        remaining = [e for e in watchlist if e["pair"] not in triggered_pairs]
-        save_watchlist(WATCHLIST_FILE, remaining)
-        log.info(f"Removed {len(triggered_pairs)} triggered pair(s) from watchlist: "
-                  f"{sorted(triggered_pairs)}")
+    try:
+        sent = Send_EMA_Telegram_Message("\n\n---\n\n".join(alerts))
+    except Exception as e:
+        log.warning(f"Failed to send Telegram message: {e}")
+        sent = False
+
+    if not sent:
+        log.warning(f"Telegram send FAILED — {len(alerts)} pair(s) kept on the watchlist.")
+        return
+
+    log.info(f"Sent {len(alerts)} alert(s).")
+    remaining = [e for e in watchlist if e["pair"] not in triggered_pairs]
+    save_watchlist(WATCHLIST_FILE, remaining)
+    log.info(f"Removed {len(triggered_pairs)} triggered pair(s) from watchlist: "
+             f"{sorted(triggered_pairs)}")
 
 
 # =====================================================================================
@@ -657,7 +526,7 @@ def run_signal_check(watchlist):
 # =====================================================================================
 
 def main():
-    log.info("=== HA Reversal Scanner run started ===")
+    log.info("=== EMA 9 Breakdown Scanner run started ===")
 
     watchlist = update_watchlist()
     run_signal_check(watchlist)
