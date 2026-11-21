@@ -9,7 +9,7 @@
     "confirmation_close": 0.02555,
     "ema_9": 0.025945940850557302,
     "stop_loss": 0.02672,
-    "last_checked_ts": 1795244400
+    "last_checked_ts": 1795248000
   },
   {
     "symbol": "KITE_USDT",
@@ -21,7 +21,7 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795244400
+    "last_checked_ts": 1795248000
   },
   {
     "symbol": "FF_USDT",
@@ -93,19 +93,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795244400
-  },
-  {
-    "symbol": "BREV_USDT",
-    "pair": "B-BREV_USDT",
-    "breakout_date": "2026-11-17",
-    "status": "YES",
-    "trigger_price": 0.06809,
-    "ema_confirmation_date": "2026-11-20",
-    "confirmation_close": 0.07106,
-    "ema_9": 0.07386855516790006,
-    "stop_loss": 0.07653,
-    "last_checked_ts": 1795244400
+    "last_checked_ts": 1795248000
   },
   {
     "symbol": "CTR_USDT",
