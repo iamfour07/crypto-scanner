@@ -9,7 +9,7 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795298400
+    "last_checked_ts": 1795316400
   },
   {
     "symbol": "FF_USDT",
@@ -81,7 +81,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795298400
+    "last_checked_ts": 1795316400
   },
   {
     "symbol": "CTR_USDT",
@@ -195,6 +195,18 @@
     "symbol": "1000LUNC_USDT",
     "pair": "B-1000LUNC_USDT",
     "breakout_date": "2026-11-19",
+    "status": "YES",
+    "trigger_price": 0.0393,
+    "ema_confirmation_date": "2026-11-21",
+    "confirmation_close": 0.03984,
+    "ema_9": 0.04102509765440427,
+    "stop_loss": 0.0441,
+    "last_checked_ts": 1795316400
+  },
+  {
+    "symbol": "USDC_USDT",
+    "pair": "B-USDC_USDT",
+    "breakout_date": "2026-11-20",
     "status": "NO",
     "trigger_price": null,
     "ema_confirmation_date": null,
@@ -204,9 +216,33 @@
     "last_checked_ts": null
   },
   {
-    "symbol": "USDC_USDT",
-    "pair": "B-USDC_USDT",
-    "breakout_date": "2026-11-20",
+    "symbol": "NAORIS_USDT",
+    "pair": "B-NAORIS_USDT",
+    "breakout_date": "2026-11-21",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "DODOX_USDT",
+    "pair": "B-DODOX_USDT",
+    "breakout_date": "2026-11-21",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "VVV_USDT",
+    "pair": "B-VVV_USDT",
+    "breakout_date": "2026-11-21",
     "status": "NO",
     "trigger_price": null,
     "ema_confirmation_date": null,
