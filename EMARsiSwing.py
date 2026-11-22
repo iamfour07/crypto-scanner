@@ -382,7 +382,6 @@ def build_short_msg(pair, entry, sl, t2, t3, t4):
         return None
 
     return (
-        f"🔴 SHORT (EMA {EMA_LENGTH} Breakdown)\n\n"
         f"Name - {pair}\n"
         f"Entry (sell below) - {entry}\n"
         f"SL (swing high) - {sl}\n"
