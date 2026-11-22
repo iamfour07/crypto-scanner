@@ -8,7 +8,7 @@ Candles    : normal 1H candlesticks (no Heikin Ashi)
 Watchlist  : top gainers (24h change > MIN_GAINER_PCT)
 Signal     : first closed 1H candle that closes below EMA 9
 Risk       : Fixed Rs.100 risk per trade (margin capped at MAX_CAPITAL_INR)
-Leverage   : 7x (fixed)
+Leverage   : 5x (fixed)
 
 Flow (every run — designed to be triggered hourly via cron)
 -------------------------------------------------------------------------------------
@@ -21,10 +21,7 @@ STEP 2 - EMA 9 check (for every pair on the watchlist):
     - Setup: the LAST closed 1H candle closes below EMA 9, and the candle
       before it closed at/above its EMA 9 (= first close below EMA 9).
     - Entry   = LOW of that candle (sell below it)
-    - SL      = previous confirmed swing high (pivot high with SWING_LEFT_BARS
-                candles on the left and SWING_RIGHT_BARS closed candles on the
-                right), the most recent one above the entry.
-                No swing high -> no alert.
+    - SL      = HIGH of the candle just before the entry candle.
     - Targets = 2R / 3R / 4R below entry.
     - On a successful alert the pair is removed from the watchlist. If the
       Telegram send fails, the pair is kept.
@@ -71,20 +68,16 @@ MIN_GAINER_PCT       = 30.0          # only pairs with 24h change strictly above
 # ---- EMA ----
 EMA_LENGTH           = 9
 
-# ---- Swing high (stop loss) ----
-SWING_LEFT_BARS      = 3            # pivot high: higher than N candles on the left ...
-SWING_RIGHT_BARS     = 3            # ... and N closed candles on the right (confirmed)
-SWING_MAX_LOOKBACK   = 10           # search the last N 1H candles for the swing high
 
 # ---- Risk management ----
-RISK_INR             = 100          # fixed Rs. risk per trade
-LEVERAGE             = 7            # fixed leverage
-MAX_CAPITAL_INR      = 3000         # maximum margin/capital allowed per trade
+RISK_INR             = 300          # fixed Rs. risk per trade
+LEVERAGE             = 5            # fixed leverage
+MAX_CAPITAL_INR      = 10000         # maximum margin/capital allowed per trade
 INR_TO_USDT_RATE     = None         # None = fetch live
 
 # ---- Candles ----
 RESOLUTION           = "60"         # 1H candles for everything
-HOURLY_LOOKBACK_HOURS = 300         # enough 1H history for EMA 9 + swing detection
+HOURLY_LOOKBACK_HOURS = 300         # enough 1H history for EMA 9
 
 # ---- Threading ----
 MAX_WORKERS          = 15
@@ -264,14 +257,14 @@ def fetch_raw_candles(pair, resolution=RESOLUTION):
     df = _drop_incomplete_last_candle(df, resolution)
     df = df.dropna(subset=["open", "high", "low", "close"]).reset_index(drop=True)
 
-    if len(df) < max(EMA_LENGTH, SWING_LEFT_BARS + SWING_RIGHT_BARS) + 2:
+    if len(df) < EMA_LENGTH + 2:
         return None
 
     return df
 
 
 # =====================================================================================
-# INDICATORS — EMA 9 + swing high
+# INDICATORS — EMA 9
 # =====================================================================================
 
 def add_ema(df, length=EMA_LENGTH):
@@ -279,27 +272,8 @@ def add_ema(df, length=EMA_LENGTH):
     return df
 
 
-def find_swing_high(df, upto_idx, left=SWING_LEFT_BARS, right=SWING_RIGHT_BARS,
-                    max_lookback=SWING_MAX_LOOKBACK, above=None):
-    """
-    Index of the most recent CONFIRMED pivot high at or before `upto_idx`, else None.
-    Confirmed = its `right` candles are all closed (i + right <= upto_idx).
-    Pivot: high[i] > every high in the `left` candles before it and >= every high in
-    the `right` candles after it. With `above`, the pivot high must also be > above.
-    """
-    highs = df["high"].to_numpy()
-    stop = max(left, upto_idx - max_lookback)
-    for i in range(upto_idx - right, stop - 1, -1):
-        h = highs[i]
-        if above is not None and h <= above:
-            continue
-        if h > highs[i - left:i].max() and h >= highs[i + 1:i + right + 1].max():
-            return i
-    return None
-
-
 # =====================================================================================
-# RISK / POSITION SIZING (fixed Rs.100 risk, 7x leverage, INR only)
+# RISK / POSITION SIZING (fixed Rs.100 risk, 5x leverage, INR only)
 # =====================================================================================
 
 def get_inr_rate():
@@ -382,11 +356,10 @@ def build_short_msg(pair, entry, sl, t2, t3, t4):
         return None
 
     return (
-        f"🔴 SHORT (EMA {EMA_LENGTH} Breakdown)\n\n"
+        f"🔴 Sell Breakdown)\n\n"
         f"Name - {pair}\n"
-        f"Entry (sell below) - {entry}\n"
-        f"SL (swing high) - {sl}\n"
-        f"Quantity - {pos['quantity']:.6g}\n"
+        f"Entry - {entry}\n"
+        f"SL - {sl}\n"
         f"Capital - Rs.{pos['capital_inr']:.2f}\n"
         f"Risk per trade - Rs.{pos['actual_risk_inr']:.2f}\n"
         f"\n"
@@ -444,14 +417,13 @@ def update_watchlist():
 def check_ema_breakdown(pair):
     """
     Returns (pair, alert_message) if the last closed 1H candle is the first close
-    below EMA 9 and a valid swing high exists, else (pair, None).
+    below EMA 9, else (pair, None). SL = high of the candle before it.
     """
     df = fetch_raw_candles(pair)
     if df is None:
         return pair, None
 
     df = add_ema(df)
-    last_idx = len(df) - 1
     prev, last = df.iloc[-2], df.iloc[-1]
     if pd.isna(last["EMA"]) or pd.isna(prev["EMA"]):
         return pair, None
@@ -461,11 +433,10 @@ def check_ema_breakdown(pair):
         return pair, None
 
     entry = round(float(last["low"]), 6)
-    sw_idx = find_swing_high(df, last_idx, above=entry)
-    if sw_idx is None:
-        log.info(f"{pair}: closed below EMA {EMA_LENGTH} but no confirmed swing high — skipped")
+    sl = round(float(prev["high"]), 6)
+    if sl <= entry:
+        log.info(f"{pair}: previous candle high not above entry — skipped")
         return pair, None
-    sl = round(float(df.iloc[sw_idx]["high"]), 6)
 
     risk = sl - entry
     t2 = round(entry - 2 * risk, 6)
