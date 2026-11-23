@@ -9,7 +9,7 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795392000
+    "last_checked_ts": 1795395600
   },
   {
     "symbol": "FF_USDT",
@@ -33,7 +33,7 @@
     "confirmation_close": 2.3307,
     "ema_9": 3.859532838163955,
     "stop_loss": 6.4999,
-    "last_checked_ts": 1795392000
+    "last_checked_ts": 1795395600
   },
   {
     "symbol": "TAC_USDT",
@@ -81,7 +81,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795392000
+    "last_checked_ts": 1795395600
   },
   {
     "symbol": "CTR_USDT",
