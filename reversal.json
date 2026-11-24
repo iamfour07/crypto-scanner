@@ -9,7 +9,7 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795474800
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "FF_USDT",
@@ -33,31 +33,31 @@
     "confirmation_close": 2.3307,
     "ema_9": 3.859532838163955,
     "stop_loss": 6.4999,
-    "last_checked_ts": 1795474800
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "TAC_USDT",
     "pair": "B-TAC_USDT",
     "breakout_date": "2026-11-15",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.001102,
+    "ema_confirmation_date": "2026-11-23",
+    "confirmation_close": 0.001119,
+    "ema_9": 0.001183130596945742,
+    "stop_loss": 0.001211,
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "CROSS_USDT",
     "pair": "B-CROSS_USDT",
     "breakout_date": "2026-11-16",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.11953,
+    "ema_confirmation_date": "2026-11-23",
+    "confirmation_close": 0.12931,
+    "ema_9": 0.1414802656308704,
+    "stop_loss": 0.155,
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "O_USDT",
@@ -81,7 +81,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795474800
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "CTR_USDT",
@@ -183,25 +183,25 @@
     "symbol": "ICNT_USDT",
     "pair": "B-ICNT_USDT",
     "breakout_date": "2026-11-19",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.2992,
+    "ema_confirmation_date": "2026-11-23",
+    "confirmation_close": 0.3098,
+    "ema_9": 0.3274871061008781,
+    "stop_loss": 0.3704,
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "USDC_USDT",
     "pair": "B-USDC_USDT",
     "breakout_date": "2026-11-20",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 1.000499,
+    "ema_confirmation_date": "2026-11-23",
+    "confirmation_close": 1.000637,
+    "ema_9": 1.0008245932575435,
+    "stop_loss": 1.001121,
+    "last_checked_ts": 1795478400
   },
   {
     "symbol": "NAORIS_USDT",
@@ -231,6 +231,66 @@
     "symbol": "VVV_USDT",
     "pair": "B-VVV_USDT",
     "breakout_date": "2026-11-21",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "LISTA_USDT",
+    "pair": "B-LISTA_USDT",
+    "breakout_date": "2026-11-23",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "ELSA_USDT",
+    "pair": "B-ELSA_USDT",
+    "breakout_date": "2026-11-23",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "AVAAI_USDT",
+    "pair": "B-AVAAI_USDT",
+    "breakout_date": "2026-11-23",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "BLUR_USDT",
+    "pair": "B-BLUR_USDT",
+    "breakout_date": "2026-11-23",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "ARIA_USDT",
+    "pair": "B-ARIA_USDT",
+    "breakout_date": "2026-11-23",
     "status": "NO",
     "trigger_price": null,
     "ema_confirmation_date": null,
