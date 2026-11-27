@@ -9,7 +9,7 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795755600
+    "last_checked_ts": 1795759200
   },
   {
     "symbol": "FF_USDT",
@@ -45,19 +45,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795755600
-  },
-  {
-    "symbol": "MMT_USDT",
-    "pair": "B-MMT_USDT",
-    "breakout_date": "2026-11-17",
-    "status": "YES",
-    "trigger_price": 0.1826,
-    "ema_confirmation_date": "2026-11-26",
-    "confirmation_close": 0.2027,
-    "ema_9": 0.2222772715446886,
-    "stop_loss": 0.3267,
-    "last_checked_ts": 1795755600
+    "last_checked_ts": 1795759200
   },
   {
     "symbol": "GPS_USDT",
@@ -141,7 +129,7 @@
     "confirmation_close": 1.000637,
     "ema_9": 1.0008245932575435,
     "stop_loss": 1.001121,
-    "last_checked_ts": 1795755600
+    "last_checked_ts": 1795759200
   },
   {
     "symbol": "DODOX_USDT",
@@ -177,7 +165,7 @@
     "confirmation_close": 0.07913,
     "ema_9": 0.0852027056410045,
     "stop_loss": 0.10987,
-    "last_checked_ts": 1795755600
+    "last_checked_ts": 1795759200
   },
   {
     "symbol": "ELSA_USDT",
@@ -201,7 +189,7 @@
     "confirmation_close": 0.006123,
     "ema_9": 0.00644423113649201,
     "stop_loss": 0.007772,
-    "last_checked_ts": 1795755600
+    "last_checked_ts": 1795759200
   },
   {
     "symbol": "BLUR_USDT",
