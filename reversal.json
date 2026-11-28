@@ -9,19 +9,19 @@
     "confirmation_close": 0.12534,
     "ema_9": 0.12583835358571127,
     "stop_loss": 0.14304,
-    "last_checked_ts": 1795820400
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "FF_USDT",
     "pair": "B-FF_USDT",
     "breakout_date": "2026-11-15",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.09402,
+    "ema_confirmation_date": "2026-11-27",
+    "confirmation_close": 0.09728,
+    "ema_9": 0.10084541292590847,
+    "stop_loss": 0.10436,
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "O_USDT",
@@ -45,7 +45,7 @@
     "confirmation_close": 0.009992,
     "ema_9": 0.01056261613476998,
     "stop_loss": 0.019455,
-    "last_checked_ts": 1795820400
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "GPS_USDT",
@@ -99,13 +99,13 @@
     "symbol": "PIPPIN_USDT",
     "pair": "B-PIPPIN_USDT",
     "breakout_date": "2026-11-18",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.01709,
+    "ema_confirmation_date": "2026-11-27",
+    "confirmation_close": 0.01739,
+    "ema_9": 0.017541124999315087,
+    "stop_loss": 0.01944,
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "SENT_USDT",
@@ -153,7 +153,7 @@
     "confirmation_close": 0.07913,
     "ema_9": 0.0852027056410045,
     "stop_loss": 0.10987,
-    "last_checked_ts": 1795820400
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "ELSA_USDT",
@@ -177,19 +177,19 @@
     "confirmation_close": 0.006123,
     "ema_9": 0.00644423113649201,
     "stop_loss": 0.007772,
-    "last_checked_ts": 1795820400
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "BLUR_USDT",
     "pair": "B-BLUR_USDT",
     "breakout_date": "2026-11-23",
-    "status": "NO",
-    "trigger_price": null,
-    "ema_confirmation_date": null,
-    "confirmation_close": null,
-    "ema_9": null,
-    "stop_loss": null,
-    "last_checked_ts": null
+    "status": "YES",
+    "trigger_price": 0.006194,
+    "ema_confirmation_date": "2026-11-27",
+    "confirmation_close": 0.006933,
+    "ema_9": 0.00815966806691591,
+    "stop_loss": 0.011533,
+    "last_checked_ts": 1795824000
   },
   {
     "symbol": "ARIA_USDT",
@@ -267,6 +267,42 @@
     "symbol": "SPACE_USDT",
     "pair": "B-SPACE_USDT",
     "breakout_date": "2026-11-26",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "ACT_USDT",
+    "pair": "B-ACT_USDT",
+    "breakout_date": "2026-11-27",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "PORTAL_USDT",
+    "pair": "B-PORTAL_USDT",
+    "breakout_date": "2026-11-27",
+    "status": "NO",
+    "trigger_price": null,
+    "ema_confirmation_date": null,
+    "confirmation_close": null,
+    "ema_9": null,
+    "stop_loss": null,
+    "last_checked_ts": null
+  },
+  {
+    "symbol": "GMX_USDT",
+    "pair": "B-GMX_USDT",
+    "breakout_date": "2026-11-27",
     "status": "NO",
     "trigger_price": null,
     "ema_confirmation_date": null,
